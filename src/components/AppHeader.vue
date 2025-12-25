@@ -68,30 +68,20 @@
           <span>Главная</span>
         </router-link>
 
-        <router-link to="/history" class="nav-item" :class="{ active: $route.path === '/history' }">
+        <router-link to="/genres" class="nav-item" :class="{ active: $route.path === '/genres' }">
           <svg viewBox="0 0 24 24" class="nav-icon">
             <path
-              d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"
+              d="M12 2l-5.5 9h11z M17.5 11L12 20l5.5-9z M6.5 11L12 2 6.5 11z M12 20l-5.5-9H6.5L12 20z"
               fill="currentColor"
             />
           </svg>
-          <span>История</span>
-        </router-link>
-
-        <router-link to="/profile" class="nav-item" :class="{ active: $route.path === '/profile' }">
-          <svg viewBox="0 0 24 24" class="nav-icon">
-            <path
-              d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"
-              fill="currentColor"
-            />
-          </svg>
-          <span>Профиль</span>
+          <span>Жанры</span>
         </router-link>
       </nav>
 
       <!-- Правая часть -->
       <div class="header-actions">
-        <!-- Поиск (иконка) -->
+        <!-- Поиск -->
         <button class="action-btn search-btn" @click="toggleSearch" title="Поиск">
           <svg viewBox="0 0 24 24" class="action-icon">
             <path
@@ -101,26 +91,15 @@
           </svg>
         </button>
 
-        <!-- Уведомления -->
-        <button class="action-btn notification-btn" title="Уведомления">
-          <svg viewBox="0 0 24 24" class="action-icon">
-            <path
-              d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"
-              fill="currentColor"
-            />
-          </svg>
-          <span class="notification-badge">3</span>
-        </button>
-
         <!-- Аватар -->
         <div class="user-avatar" @click="toggleUserMenu">
-          <img src="https://i.pravatar.cc/150?img=68" alt="User" class="avatar-img" />
+          <img :src="userAvatar" alt="User" class="avatar-img" />
           <div class="avatar-status"></div>
         </div>
       </div>
     </div>
 
-    <!-- Выдвижная панель поиска -->
+    <!-- Панель поиска -->
     <transition name="slide-down">
       <div v-if="searchOpen" class="search-panel" @click.stop>
         <div class="search-panel-container">
@@ -157,44 +136,44 @@
       <div v-if="userMenuOpen" class="user-menu-backdrop" @click="toggleUserMenu">
         <div class="user-menu" @click.stop>
           <div class="user-menu-header">
-            <img src="https://i.pravatar.cc/150?img=68" alt="User" class="user-menu-avatar" />
+            <img :src="userAvatar" alt="User" class="user-menu-avatar" />
             <div class="user-menu-info">
-              <h4>Anime Fan</h4>
-              <p>anime.fan@mail.com</p>
+              <h4>{{ userName }}</h4>
+              <p>{{ userEmail }}</p>
             </div>
           </div>
           <div class="user-menu-divider"></div>
           <nav class="user-menu-nav">
-            <a href="#" class="user-menu-item">
+            <router-link :to="`/profile`" class="user-menu-item" @click="toggleUserMenu">
               <svg viewBox="0 0 24 24" class="menu-item-icon">
                 <path
                   d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"
                   fill="currentColor"
                 />
               </svg>
-              Мой профиль
-            </a>
-            <a href="#" class="user-menu-item">
+              Личный кабинет
+            </router-link>
+            <router-link to="/favorites" class="user-menu-item" @click="toggleUserMenu">
               <svg viewBox="0 0 24 24" class="menu-item-icon">
                 <path
-                  d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
+                  d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
                   fill="currentColor"
                 />
               </svg>
-              Мои списки
-            </a>
-            <a href="#" class="user-menu-item">
+              Избранное
+            </router-link>
+            <router-link to="/history" class="user-menu-item" @click="toggleUserMenu">
               <svg viewBox="0 0 24 24" class="menu-item-icon">
                 <path
-                  d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94L14.4 2.81c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41L9.25 5.35C8.66 5.59 8.12 5.92 7.63 6.29L5.24 5.33c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58C4.84 11.36 4.8 11.69 4.8 12s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"
+                  d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"
                   fill="currentColor"
                 />
               </svg>
-              Настройки
-            </a>
+              История просмотра
+            </router-link>
           </nav>
           <div class="user-menu-divider"></div>
-          <a href="#" class="user-menu-item logout">
+          <a href="#" @click.prevent="handleLogout" class="user-menu-item logout">
             <svg viewBox="0 0 24 24" class="menu-item-icon">
               <path
                 d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"
@@ -210,6 +189,8 @@
 </template>
 
 <script>
+import { animeApi } from '@/api/animeApi'
+
 export default {
   name: 'AppHeader',
   data() {
@@ -217,9 +198,26 @@ export default {
       searchOpen: false,
       searchQuery: '',
       userMenuOpen: false,
+      userName: 'Загрузка...',
+      userEmail: '',
+      userAvatar: 'https://i.pravatar.cc/150?img=68',
     }
   },
+  mounted() {
+    this.loadUserProfile()
+  },
   methods: {
+    async loadUserProfile() {
+      try {
+        const profile = await animeApi.getProfile()
+        this.userName = profile.name
+        this.userEmail = profile.username
+        this.userAvatar = profile.avatar_url
+      } catch (err) {
+        console.error('Ошибка загрузки профиля:', err)
+      }
+    },
+
     toggleSearch() {
       this.searchOpen = !this.searchOpen
       if (this.searchOpen) {
@@ -239,6 +237,11 @@ export default {
 
     toggleUserMenu() {
       this.userMenuOpen = !this.userMenuOpen
+    },
+
+    handleLogout() {
+      animeApi.logout()
+      this.$router.push('/login')
     },
   },
 }

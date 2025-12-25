@@ -1,21 +1,67 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
-import AnimeView from '../views/AnimeView.vue'
-import LoginView from '../views/LoginView.vue'
+import { animeApi } from '@/api/animeApi'
 
 const routes = [
-  { path: '/', component: HomeView },
-  { path: '/anime/:id', component: AnimeView, props: true },
   {
     path: '/login',
-    name: 'Login',
-    component: LoginView,
+    name: 'login',
+    component: () => import('../views/LoginView.vue'),
+    meta: { requiresGuest: true },
+  },
+  {
+    path: '/',
+    name: 'home',
+    component: () => import('../views/HomeView.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/anime/:id',
+    name: 'anime',
+    component: () => import('../views/AnimeView.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/genres',
+    name: 'genres',
+    component: () => import('../views/GenresView.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/profile/:id?',
+    name: 'profile',
+    component: () => import('../views/ProfileView.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/favorites',
+    name: 'favorites',
+    component: () => import('../views/FavoritesView.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/history',
+    name: 'history',
+    component: () => import('../views/HistoryView.vue'),
+    meta: { requiresAuth: true },
   },
 ]
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory(import.meta.env.BASE_URL),
   routes,
+})
+
+// Защита роутов
+router.beforeEach((to, from, next) => {
+  const isAuthenticated = animeApi.isAuthenticated()
+
+  if (to.meta.requiresAuth && !isAuthenticated) {
+    next({ name: 'login' })
+  } else if (to.meta.requiresGuest && isAuthenticated) {
+    next({ name: 'home' })
+  } else {
+    next()
+  }
 })
 
 export default router

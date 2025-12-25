@@ -37,23 +37,27 @@
         <p>Войдите в аккаунт</p>
       </div>
 
+      <!-- Ошибка -->
+      <div v-if="error" class="error-message">
+        {{ error }}
+      </div>
+
       <!-- Форма -->
       <form class="login-form" @submit.prevent="handleLogin">
-        <!-- Логин -->
         <div class="form-group">
-          <label for="login">Логин</label>
+          <label for="username">Логин</label>
           <input
-            id="login"
-            v-model="login"
+            id="username"
+            v-model="username"
             type="text"
             placeholder="Введите логин"
             class="form-input"
             required
             autocomplete="username"
+            :disabled="loading"
           />
         </div>
 
-        <!-- Пароль -->
         <div class="form-group">
           <label for="password">Пароль</label>
           <div class="password-wrapper">
@@ -65,8 +69,14 @@
               class="form-input"
               required
               autocomplete="current-password"
+              :disabled="loading"
             />
-            <button type="button" @click="showPassword = !showPassword" class="password-toggle">
+            <button
+              type="button"
+              @click="showPassword = !showPassword"
+              class="password-toggle"
+              :disabled="loading"
+            >
               <svg v-if="!showPassword" viewBox="0 0 24 24">
                 <path
                   d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"
@@ -83,7 +93,6 @@
           </div>
         </div>
 
-        <!-- Кнопка входа -->
         <button type="submit" class="login-btn" :disabled="loading">
           <span v-if="!loading">Войти</span>
           <div v-else class="btn-spinner"></div>
@@ -94,25 +103,34 @@
 </template>
 
 <script>
+import { animeApi } from '@/api/animeApi'
+
 export default {
   name: 'LoginView',
   data() {
     return {
-      login: '',
+      username: '',
       password: '',
       showPassword: false,
       loading: false,
+      error: null,
     }
   },
   methods: {
     async handleLogin() {
+      this.error = null
       this.loading = true
 
-      // Симуляция входа
-      setTimeout(() => {
-        this.loading = false
+      try {
+        await animeApi.login(this.username, this.password)
+
+        // Редирект на главную
         this.$router.push('/')
-      }, 1500)
+      } catch (err) {
+        this.error = err.message || 'Ошибка входа'
+      } finally {
+        this.loading = false
+      }
     },
   },
 }
@@ -254,6 +272,32 @@ export default {
   font-size: 16px;
   color: rgba(255, 255, 255, 0.6);
   margin: 0;
+}
+
+.error-message {
+  padding: 14px 18px;
+  background: rgba(244, 67, 54, 0.1);
+  border: 1px solid rgba(244, 67, 54, 0.3);
+  border-radius: 12px;
+  color: #f44336;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: 24px;
+  animation: shake 0.5s;
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-10px);
+  }
+  75% {
+    transform: translateX(10px);
+  }
 }
 
 /* ═══════════════════════════════════════════ */

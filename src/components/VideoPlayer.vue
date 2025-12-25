@@ -33,6 +33,35 @@
           </div>
         </transition>
 
+        <!-- ВОССТАНОВЛЕНИЯ ПРОГРЕССА -->
+        <transition name="fade">
+          <div v-if="showRestoreDialog" class="restore-dialog">
+            <div class="restore-content">
+              <div class="restore-icon">▶️</div>
+              <div class="restore-info">
+                <h3>Продолжить просмотр?</h3>
+                <p>
+                  Вы остановились на <strong>{{ restoreTimeString }}</strong>
+                </p>
+              </div>
+              <div class="restore-actions">
+                <button @click="continueFromProgress" class="restore-btn primary">
+                  <svg viewBox="0 0 24 24" class="btn-icon">
+                    <path d="M8 5v14l11-7z" fill="currentColor" />
+                  </svg>
+                  Продолжить
+                </button>
+                <button @click="startFromBeginning" class="restore-btn secondary">
+                  <svg viewBox="0 0 24 24" class="btn-icon">
+                    <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" fill="currentColor" />
+                  </svg>
+                  Сначала
+                </button>
+              </div>
+            </div>
+          </div>
+        </transition>
+
         <!-- Индикатор перемотки -->
         <transition name="fade">
           <div v-if="isSeeking && !loading" class="seek-indicator">
@@ -198,6 +227,23 @@
                     </transition>
                   </div>
 
+                  <!-- Picture-in-Picture -->
+                  <button
+                    class="control-btn pip-btn"
+                    @click="togglePiP"
+                    :class="{ active: isPiP }"
+                    title="Picture-in-Picture (Test)"
+                  >
+                    <svg v-if="!isPiP" viewBox="0 0 24 24">
+                      <path
+                        d="M19 7h-8v6h8V7zm2-4H3c-1.1 0-2 .9-2 2v14c0 1.1.9 1.98 2 1.98h18c1.1 0 2-.88 2-1.98V5c0-1.1-.9-2-2-2zm0 16.01H3V4.98h18v14.03z"
+                      />
+                    </svg>
+                    <svg v-else viewBox="0 0 24 24">
+                      <path d="M19 11h-8v6h8v-6zm4-6H1v14h22V5zm-2 12H3V7h18v10z" />
+                    </svg>
+                  </button>
+
                   <!-- Полноэкранный режим -->
                   <button class="control-btn" @click="toggleFullscreen">
                     <svg v-if="!isFullscreen" viewBox="0 0 24 24">
@@ -297,9 +343,26 @@ import { animeApi } from '@/api/animeApi'
 export default {
   name: 'VideoPlayer',
   props: {
-    animeId: String,
-    episodesCount: Number,
-    translations: Array,
+    animeId: {
+      type: String,
+      required: true,
+    },
+    animeTitle: {
+      type: String,
+      default: '',
+    },
+    animePoster: {
+      type: String,
+      default: '',
+    },
+    episodesCount: {
+      type: Number,
+      default: 1,
+    },
+    translations: {
+      type: Array,
+      default: () => [],
+    },
   },
   data() {
     return {
@@ -309,6 +372,9 @@ export default {
       playbackRate: 1,
       hls: null,
       loading: false,
+
+      isPiP: false,
+      supportsPiP: false,
 
       // Видео состояние
       isPlaying: false,
@@ -331,15 +397,27 @@ export default {
       mouseMoving: false,
 
       // История просмотров
-      watchedEpisodes: new Set(),
+      watchedEpisodesSet: new Set(),
+      progressSaveTimeout: null,
+      lastSavedProgress: 0,
+
+      // Восстановление прогресса
+      showRestoreDialog: false,
+      restoreProgressSeconds: 0,
+      restoreTimeString: '',
     }
   },
   computed: {
     episodes() {
-      if (this.currentTranslation && this.translations) {
+      // Проверяем что translations существует и не пустой
+      if (!this.translations || this.translations.length === 0) {
+        if (!this.episodesCount || this.episodesCount <= 1) return [1]
+        return Array.from({ length: this.episodesCount }, (_, i) => i + 1)
+      }
+
+      if (this.currentTranslation) {
         const currentTrans = this.translations.find((t) => t.id === this.currentTranslation)
         if (currentTrans && currentTrans.name) {
-          // Извлекаем количество эпизодов из названия озвучки (например "AniDUB (220 эп.)")
           const match = currentTrans.name.match(/\((\d+)\s*эп\.\)/)
           if (match) {
             const episodesCount = parseInt(match[1])
@@ -348,7 +426,7 @@ export default {
         }
       }
 
-      // Fallback на общее количество серий
+      // Fallback
       if (!this.episodesCount || this.episodesCount <= 1) return [1]
       return Array.from({ length: this.episodesCount }, (_, i) => i + 1)
     },
@@ -358,6 +436,9 @@ export default {
     },
 
     currentTranslationName() {
+      if (!this.translations || this.translations.length === 0) return ''
+      if (!this.currentTranslation) return ''
+
       const translation = this.translations.find((t) => t.id === this.currentTranslation)
       return translation ? translation.name : ''
     },
@@ -373,19 +454,24 @@ export default {
     },
     currentTranslation(newVal, oldVal) {
       if (oldVal && newVal !== oldVal) {
-        // Проверяем, доступна ли текущая серия в новой озвучке
         if (this.currentEpisode > this.episodes.length) {
           this.currentEpisode = 1
         }
       }
     },
+    translations: {
+      immediate: true,
+      handler(newVal) {
+        if (newVal && newVal.length > 0 && !this.currentTranslation) {
+          this.currentTranslation = newVal[0].id
+          this.$nextTick(() => {
+            this.loadVideo()
+          })
+        }
+      },
+    },
   },
   mounted() {
-    if (this.translations && this.translations.length > 0) {
-      this.currentTranslation = this.translations[0].id
-      this.loadVideo()
-    }
-
     // Загружаем историю просмотров
     this.loadWatchHistory()
 
@@ -402,6 +488,13 @@ export default {
       container.addEventListener('mousemove', this.handleMouseMove)
       container.addEventListener('mouseleave', this.handleMouseLeave)
     }
+
+    // Слушаем события Picture-in-Picture
+    const video = this.$refs.video
+    if (video) {
+      video.addEventListener('enterpictureinpicture', this.onEnterPiP)
+      video.addEventListener('leavepictureinpicture', this.onLeavePiP)
+    }
   },
   beforeUnmount() {
     this.destroyPlayer()
@@ -411,12 +504,6 @@ export default {
     document.removeEventListener('webkitfullscreenchange', this.onFullscreenChange)
     document.removeEventListener('mozfullscreenchange', this.onFullscreenChange)
     document.removeEventListener('keydown', this.handleKeyPress)
-
-    const container = this.$refs.playerContainer
-    if (container) {
-      container.removeEventListener('mousemove', this.handleMouseMove)
-      container.removeEventListener('mouseleave', this.handleMouseLeave)
-    }
   },
   methods: {
     // ═══════════════════════════════════════════
@@ -442,12 +529,50 @@ export default {
         }
 
         this.initPlayer(url)
+
+        const video = this.$refs.video
+        if (video) {
+          const restoreHandler = () => {
+            console.log('Метаданные загружены, восстанавливаем прогресс')
+            this.restoreProgress()
+            video.removeEventListener('loadedmetadata', restoreHandler)
+          }
+          video.addEventListener('loadedmetadata', restoreHandler)
+        }
       } catch (err) {
         console.error('Load video error:', err)
         alert(`Ошибка: ${err.message}`)
       } finally {
         this.loading = false
       }
+    },
+
+    // ═══════════════════════════════════════════
+    // PICTURE-IN-PICTURE
+    // ═══════════════════════════════════════════
+    async togglePiP() {
+      const video = this.$refs.video
+      if (!video) return
+
+      try {
+        if (document.pictureInPictureElement) {
+          await document.exitPictureInPicture()
+        } else if (document.pictureInPictureEnabled) {
+          await video.requestPictureInPicture()
+        }
+      } catch (error) {
+        console.error('PiP error:', error)
+      }
+    },
+
+    onEnterPiP() {
+      this.isPiP = true
+      console.log('Entered PiP mode')
+    },
+
+    onLeavePiP() {
+      this.isPiP = false
+      console.log('Left PiP mode')
     },
 
     // ═══════════════════════════════════════════
@@ -521,7 +646,7 @@ export default {
         this.hls.attachMedia(video)
 
         this.hls.on(Hls.Events.MANIFEST_PARSED, () => {
-          video.play()
+          console.log('HLS манифест загружен')
         })
 
         this.hls.on(Hls.Events.BUFFER_APPENDED, () => {
@@ -536,7 +661,7 @@ export default {
         })
       } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
         video.src = url
-        video.play()
+        // video.play() <- УБРАЛИ
       }
 
       video.volume = this.volume
@@ -683,12 +808,19 @@ export default {
     // ═══════════════════════════════════════════
     onTimeUpdate(event) {
       this.currentTime = event.target.currentTime
-
       this.updateBuffered()
 
       // Автоматически отмечаем как просмотренное при 90%
       if (this.duration > 0 && this.currentTime / this.duration > 0.9) {
         this.markAsWatched(this.currentEpisode)
+      }
+
+      // Сохраняем прогресс каждые 10 секунд
+      const timeSinceLastSave = Math.abs(this.currentTime - this.lastSavedProgress)
+
+      if (timeSinceLastSave >= 10) {
+        console.log(`⏱️ Прошло ${Math.floor(timeSinceLastSave)}с, сохраняем прогресс`)
+        this.saveProgressToAPI()
       }
     },
 
@@ -698,6 +830,7 @@ export default {
 
     onVideoEnded() {
       this.markAsWatched(this.currentEpisode)
+      this.saveProgressToAPI(true)
 
       // Автоматический переход к следующей серии
       if (this.currentEpisode < this.episodes.length) {
@@ -734,26 +867,189 @@ export default {
     // ═══════════════════════════════════════════
     // ИСТОРИЯ ПРОСМОТРОВ
     // ═══════════════════════════════════════════
-    loadWatchHistory() {
-      const key = `watched_${this.animeId}`
-      const stored = localStorage.getItem(key)
-      if (stored) {
-        this.watchedEpisodes = new Set(JSON.parse(stored))
+    async loadWatchHistory() {
+      try {
+        // Загружаем из API
+        const result = await animeApi.checkWatched(this.animeId)
+
+        // Если есть данные, восстанавливаем прогресс
+        if (result && result.is_watched) {
+          // Отмечаем просмотренные серии (можно доработать)
+          this.watchedEpisodesSet = new Set()
+        }
+
+        // Также загружаем историю просмотра
+        const history = await animeApi.getWatchHistory(50)
+        const watchedInHistory = history
+          .filter((h) => h.anime_id === parseInt(this.animeId))
+          .map((h) => h.episode_num)
+
+        this.watchedEpisodesSet = new Set(watchedInHistory)
+      } catch (err) {
+        console.error('Ошибка загрузки истории:', err)
+        // Fallback на localStorage
+        this.loadWatchHistoryLocal()
       }
     },
 
-    saveWatchHistory() {
+    loadWatchHistoryLocal() {
       const key = `watched_${this.animeId}`
-      localStorage.setItem(key, JSON.stringify([...this.watchedEpisodes]))
+      const stored = localStorage.getItem(key)
+      if (stored) {
+        this.watchedEpisodesSet = new Set(JSON.parse(stored))
+      }
     },
 
-    markAsWatched(ep) {
-      this.watchedEpisodes.add(ep)
-      this.saveWatchHistory()
+    saveWatchHistoryLocal() {
+      const key = `watched_${this.animeId}`
+      localStorage.setItem(key, JSON.stringify([...this.watchedEpisodesSet]))
+    },
+
+    async markAsWatched(ep) {
+      this.watchedEpisodesSet.add(ep)
+      this.saveWatchHistoryLocal() // Локальный backup
+
+      // Сохраняем в БД через API
+      try {
+        await animeApi.updateWatched({
+          anime_id: this.animeId,
+          episodes_watched: ep,
+          total_episodes: this.episodes.length,
+          is_completed: ep >= this.episodes.length,
+          title: this.animeTitle,
+          poster: this.animePoster,
+        })
+      } catch (err) {
+        console.error('Ошибка сохранения просмотренного:', err)
+      }
     },
 
     isWatched(ep) {
-      return this.watchedEpisodes.has(ep)
+      return this.watchedEpisodesSet.has(ep)
+    },
+
+    // ═══════════════════════════════════════════
+    // СОХРАНЕНИЕ ПРОГРЕССА В РЕАЛЬНОМ ВРЕМЕНИ
+    // ═══════════════════════════════════════════
+    async saveProgressToAPI(isCompleted = false) {
+      if (this.progressSaveTimeout) {
+        clearTimeout(this.progressSaveTimeout)
+      }
+
+      this.progressSaveTimeout = setTimeout(async () => {
+        try {
+          const translationId = String(this.currentTranslation)
+
+          const data = {
+            anime_id: this.animeId,
+            episode_num: this.currentEpisode,
+            progress_seconds: Math.floor(this.currentTime),
+            duration_seconds: Math.floor(this.duration),
+            title: this.animeTitle,
+            poster: this.animePoster,
+            translation_id: translationId,
+          }
+
+          console.log('💾 Сохранение прогресса:', data)
+
+          await animeApi.addToHistory(data)
+
+          this.lastSavedProgress = this.currentTime
+
+          console.log('✅ Прогресс сохранён успешно')
+        } catch (err) {
+          console.error('❌ Ошибка сохранения прогресса:', err)
+        }
+      }, 1000)
+    },
+
+    // ═══════════════════════════════════════════
+    // ВОССТАНОВЛЕНИЕ ПРОГРЕССА
+    // ═══════════════════════════════════════════
+    async restoreProgress() {
+      try {
+        const history = await animeApi.getWatchHistory(50)
+
+        console.log('История просмотров:', history)
+
+        // Находим последний просмотр ЭТОЙ СЕРИИ этого аниме
+        const lastWatch = history.find((h) => {
+          const matchAnime = String(h.anime_id) === String(this.animeId)
+          const matchEpisode = Number(h.episode_num) === Number(this.currentEpisode)
+          const matchTranslation = String(h.translation_id) === String(this.currentTranslation)
+
+          return matchAnime && matchEpisode && matchTranslation
+        })
+
+        console.log('Найденный прогресс:', lastWatch)
+
+        if (lastWatch && lastWatch.progress_seconds > 30) {
+          // Форматируем время
+          const minutes = Math.floor(lastWatch.progress_seconds / 60)
+          const seconds = lastWatch.progress_seconds % 60
+          const timeStr = `${minutes}:${seconds.toString().padStart(2, '0')}`
+
+          // Показываем диалог восстановления
+          this.restoreProgressSeconds = lastWatch.progress_seconds
+          this.restoreTimeString = timeStr
+          this.showRestoreDialog = true
+
+          console.log('Показан диалог восстановления:', timeStr)
+        } else {
+          // Нет прогресса - запускаем с начала
+          console.log('Прогресс не найден, запуск с начала')
+          this.$nextTick(() => {
+            if (this.$refs.video) {
+              this.$refs.video.play()
+            }
+          })
+        }
+      } catch (err) {
+        console.error('Ошибка восстановления прогресса:', err)
+        // При ошибке просто запускаем с начала
+        this.$nextTick(() => {
+          if (this.$refs.video) {
+            this.$refs.video.play()
+          }
+        })
+      }
+    },
+
+    continueFromProgress() {
+      if (this.$refs.video) {
+        this.$refs.video.currentTime = this.restoreProgressSeconds
+        this.$refs.video.play()
+        console.log('✅ Прогресс восстановлен:', this.restoreProgressSeconds)
+      }
+      this.showRestoreDialog = false
+    },
+
+    startFromBeginning() {
+      if (this.$refs.video) {
+        this.$refs.video.currentTime = 0
+        this.$refs.video.play()
+        console.log('▶️ Начало с 0:00')
+      }
+      this.showRestoreDialog = false
+    },
+    showRestorePrompt(progressSeconds, timeStr) {
+      // Останавливаем автовоспроизведение
+      const video = this.$refs.video
+      if (video && !video.paused) {
+        video.pause()
+      }
+
+      const shouldRestore = confirm(`Вы остановились на ${timeStr}\n\nПродолжить просмотр?`)
+
+      if (shouldRestore && this.$refs.video) {
+        this.$refs.video.currentTime = progressSeconds
+        this.$refs.video.play()
+        console.log('✅ Прогресс восстановлен:', progressSeconds)
+      } else {
+        // Если отказался, начинаем с начала
+        this.$refs.video.play()
+        console.log('❌ Пользователь отказался от восстановления')
+      }
     },
 
     // ═══════════════════════════════════════════
@@ -817,6 +1113,10 @@ export default {
         case 'arrowdown':
           e.preventDefault()
           this.volume = Math.max(0, this.volume - 0.1)
+          break
+        case 'p':
+          e.preventDefault()
+          this.togglePiP()
           break
       }
     },
@@ -949,6 +1249,161 @@ export default {
 }
 
 /* ═══════════════════════════════════════════ */
+/* ДИАЛОГ ВОССТАНОВЛЕНИЯ ПРОГРЕССА */
+/* ═══════════════════════════════════════════ */
+.restore-dialog {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 20;
+  animation: slideUp 0.4s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -40%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+}
+
+.restore-content {
+  background: rgba(0, 0, 0, 0.95);
+  backdrop-filter: blur(20px);
+  border: 2px solid rgba(255, 65, 108, 0.5);
+  border-radius: 20px;
+  padding: 32px;
+  min-width: 400px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+
+.restore-icon {
+  font-size: 64px;
+  line-height: 1;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+}
+
+.restore-info {
+  text-align: center;
+}
+
+.restore-info h3 {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0 0 12px;
+  color: white;
+}
+
+.restore-info p {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0;
+}
+
+.restore-info strong {
+  color: #ff416c;
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.restore-actions {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+}
+
+.restore-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 24px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s;
+  border: none;
+  white-space: nowrap;
+}
+
+.restore-btn.primary {
+  background: linear-gradient(135deg, #ff416c, #ff4b2b);
+  color: white;
+  box-shadow: 0 8px 24px rgba(255, 65, 108, 0.4);
+}
+
+.restore-btn.primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(255, 65, 108, 0.5);
+}
+
+.restore-btn.secondary {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.restore-btn.secondary:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.restore-btn .btn-icon {
+  width: 20px;
+  height: 20px;
+}
+
+/* Адаптив для диалога */
+@media (max-width: 768px) {
+  .restore-content {
+    min-width: 320px;
+    padding: 24px;
+  }
+
+  .restore-icon {
+    font-size: 48px;
+  }
+
+  .restore-info h3 {
+    font-size: 20px;
+  }
+
+  .restore-info p {
+    font-size: 14px;
+  }
+
+  .restore-actions {
+    flex-direction: column;
+  }
+
+  .restore-btn {
+    width: 100%;
+  }
+}
+
+/* ═══════════════════════════════════════════ */
 /* ВЕРХНИЕ КОНТРОЛЫ */
 /* ═══════════════════════════════════════════ */
 .controls-top {
@@ -1013,6 +1468,42 @@ export default {
   background: #1a1a1a;
   color: white;
   padding: 8px;
+}
+
+/* ═══════════════════════════════════════════ */
+/* PICTURE-IN-PICTURE */
+/* ═══════════════════════════════════════════ */
+.pip-btn {
+  position: relative;
+}
+
+.pip-btn.active {
+  background: rgba(255, 65, 108, 0.2);
+}
+
+.pip-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 6px;
+  height: 6px;
+  background: #ff416c;
+  border-radius: 50%;
+  animation: pipPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pipPulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: translateX(-50%) scale(1.5);
+  }
 }
 
 /* ═══════════════════════════════════════════ */

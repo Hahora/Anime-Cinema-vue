@@ -25,9 +25,44 @@
               <!-- Название и действия -->
               <div class="header-info">
                 <h1 class="header-title">{{ anime.title }}</h1>
-                <div class="header-actions">
-                  <FavoriteButton :anime-id="anime.id" />
-                  <WatchedButton :anime-id="anime.id" />
+                <div class="header-right">
+                  <!-- Следующий эпизод -->
+                  <div class="next-episode-compact" v-if="anime.next_episode_at">
+                    <div class="next-episode-icon">📅</div>
+                    <div class="next-episode-text">
+                      <span class="next-episode-label">Следующий эпизод</span>
+                      <span class="next-episode-date">{{
+                        formatDateCompact(anime.next_episode_at)
+                      }}</span>
+                    </div>
+                  </div>
+
+                  <!-- Кнопки действий -->
+                  <div class="header-actions">
+                    <FavoriteButton
+                      v-if="anime"
+                      :animeId="anime.id"
+                      :animeData="{
+                        title: anime.title,
+                        poster: anime.poster,
+                        year: anime.year,
+                        rating: anime.rating,
+                      }"
+                      @favorite-added="onFavoriteAdded"
+                      @favorite-removed="onFavoriteRemoved"
+                    />
+
+                    <WatchedButton
+                      v-if="anime"
+                      :animeId="anime.id"
+                      :totalEpisodes="anime.episodes_count || anime.series_count"
+                      :animeData="{
+                        title: anime.title,
+                        poster: anime.poster,
+                      }"
+                      @watched-changed="onWatchedChanged"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -37,9 +72,12 @@
         <div class="anime-container">
           <div class="anime-main">
             <VideoPlayer
-              :anime-id="anime.id"
-              :episodes-count="anime.series_count"
-              :translations="anime.translations"
+              v-if="anime"
+              :animeId="anime.id"
+              :animeTitle="anime.title"
+              :animePoster="anime.poster"
+              :episodesCount="anime.episodes_count || anime.series_count"
+              :translations="translations"
             />
 
             <div class="anime-info">
@@ -263,6 +301,7 @@ export default {
   data() {
     return {
       anime: null,
+      translations: [],
       loading: true,
       loadingProgress: 0,
       selectedImage: null,
@@ -284,7 +323,6 @@ export default {
       this.loadingProgress = 0
 
       try {
-        // Симуляция прогресса
         const progressInterval = setInterval(() => {
           if (this.loadingProgress < 90) {
             this.loadingProgress += 15
@@ -292,6 +330,8 @@ export default {
         }, 150)
 
         this.anime = await animeApi.getAnimeDetails(this.$route.params.id)
+
+        this.translations = this.anime?.translations || []
 
         clearInterval(progressInterval)
         this.loadingProgress = 100
@@ -306,6 +346,26 @@ export default {
           this.loading = false
         }, 400)
       }
+    },
+
+    formatDateCompact(dateString) {
+      if (!dateString) return ''
+      const date = new Date(dateString)
+      const now = new Date()
+      const diff = date - now
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+
+      if (days === 0) return 'Сегодня'
+      if (days === 1) return 'Завтра'
+      if (days > 1 && days < 7) return `Через ${days} дн.`
+
+      const options = {
+        day: 'numeric',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit',
+      }
+      return date.toLocaleDateString('ru-RU', options)
     },
 
     getStatusClass(status) {
@@ -335,6 +395,19 @@ export default {
         minute: '2-digit',
       }
       return date.toLocaleDateString('ru-RU', options)
+    },
+
+    onFavoriteAdded() {
+      console.log('Добавлено в избранное')
+      // Можно показать уведомление
+    },
+
+    onFavoriteRemoved() {
+      console.log('Удалено из избранного')
+    },
+
+    onWatchedChanged(data) {
+      console.log('Статус просмотра изменён:', data)
     },
 
     openImage(img) {
@@ -379,6 +452,61 @@ export default {
   align-items: center;
   gap: 30px;
   padding: 0 4px;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-shrink: 0;
+}
+
+.next-episode-compact {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.2), rgba(56, 142, 60, 0.2));
+  border: 2px solid rgba(76, 175, 80, 0.4);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(76, 175, 80, 0);
+  }
+}
+
+.next-episode-icon {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.next-episode-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.next-episode-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.next-episode-date {
+  font-size: 14px;
+  font-weight: 700;
+  color: #4caf50;
+  white-space: nowrap;
 }
 
 .header-title {
@@ -965,6 +1093,20 @@ export default {
 /* ═══════════════════════════════════════════ */
 /* АДАПТИВ */
 /* ═══════════════════════════════════════════ */
+
+@media (max-width: 968px) {
+  .header-right {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .next-episode-compact {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
 @media (max-width: 1200px) {
   .anime-container {
     grid-template-columns: 1fr;
@@ -975,19 +1117,38 @@ export default {
   }
 }
 
-@media (max-width: 768px) {
-  .anime-header {
-    height: 280px;
+@media (max-width: 480px) {
+  .header-title {
+    font-size: 24px;
   }
 
-  .header-content {
-    padding: 20px;
+  .header-actions > * {
+    min-width: 100%;
+  }
+
+  .next-episode-compact {
+    padding: 10px 16px;
+  }
+
+  .next-episode-date {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 768px) {
+  .anime-header {
+    height: auto;
+    min-height: 280px;
   }
 
   .header-info {
     flex-direction: column;
     align-items: flex-start;
     gap: 16px;
+  }
+
+  .header-right {
+    width: 100%;
   }
 
   .header-title {

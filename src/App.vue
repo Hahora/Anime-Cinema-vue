@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <AppHeader />
+    <AppHeader v-if="showHeader" />
     <router-view />
   </div>
 </template>
@@ -12,6 +12,12 @@ export default {
   name: 'App',
   components: {
     AppHeader,
+  },
+  computed: {
+    showHeader() {
+      // Не показываем header на странице логина
+      return this.$route.name !== 'login'
+    },
   },
 }
 </script>
