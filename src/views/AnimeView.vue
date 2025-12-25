@@ -11,15 +11,26 @@
         <div class="anime-header">
           <div class="header-bg" :style="{ backgroundImage: `url(${anime.poster})` }"></div>
           <div class="header-content">
-            <button @click="$router.go(-1)" class="back-btn">
-              <svg viewBox="0 0 24 24" class="back-icon">
-                <path
-                  d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"
-                  fill="currentColor"
-                />
-              </svg>
-              Назад
-            </button>
+            <div class="header-top">
+              <button @click="$router.go(-1)" class="back-btn">
+                <svg viewBox="0 0 24 24" class="back-icon">
+                  <path
+                    d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"
+                    fill="currentColor"
+                  />
+                </svg>
+                Назад
+              </button>
+
+              <!-- Название и действия -->
+              <div class="header-info">
+                <h1 class="header-title">{{ anime.title }}</h1>
+                <div class="header-actions">
+                  <FavoriteButton :anime-id="anime.id" />
+                  <WatchedButton :anime-id="anime.id" />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -237,6 +248,8 @@
 <script>
 import PageLoader from '@/components/PageLoader.vue'
 import VideoPlayer from '@/components/VideoPlayer.vue'
+import FavoriteButton from '@/components/FavoriteButton.vue'
+import WatchedButton from '@/components/WatchedButton.vue'
 import { animeApi } from '@/api/animeApi'
 
 export default {
@@ -244,6 +257,8 @@ export default {
   components: {
     PageLoader,
     VideoPlayer,
+    FavoriteButton,
+    WatchedButton,
   },
   data() {
     return {
@@ -350,6 +365,36 @@ export default {
   position: relative;
   height: 350px;
   overflow: hidden;
+}
+
+.header-top {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.header-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 30px;
+  padding: 0 4px;
+}
+
+.header-title {
+  font-size: 42px;
+  font-weight: 900;
+  margin: 0;
+  line-height: 1.2;
+  color: white;
+  text-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  flex: 1;
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
+  flex-shrink: 0;
 }
 
 .header-bg {
@@ -932,11 +977,31 @@ export default {
 
 @media (max-width: 768px) {
   .anime-header {
-    height: 250px;
+    height: 280px;
   }
 
   .header-content {
     padding: 20px;
+  }
+
+  .header-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .header-title {
+    font-size: 28px;
+  }
+
+  .header-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .header-actions > * {
+    flex: 1;
+    min-width: calc(50% - 6px);
   }
 
   .anime-container {
