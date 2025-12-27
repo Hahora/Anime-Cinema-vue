@@ -127,11 +127,29 @@
 
             <div class="controls-bottom-wrapper">
               <!-- Прогресс бар -->
-              <div class="progress-container" @click="seek">
+              <div
+                class="progress-container"
+                @click="seek"
+                @mousemove="handleProgressMouseMove"
+                @mouseleave="handleProgressMouseLeave"
+              >
                 <div class="progress-bar">
                   <div class="progress-buffered" :style="{ width: buffered + '%' }"></div>
                   <div class="progress-filled" :style="{ width: progressPercent + '%' }"></div>
                   <div class="progress-handle" :style="{ left: progressPercent + '%' }"></div>
+
+                  <transition name="fade">
+                    <div
+                      v-if="showTimePreview"
+                      class="time-preview"
+                      :style="{ left: previewPosition + '%' }"
+                    >
+                      <div class="time-preview-bubble">
+                        {{ formatTime(previewTime) }}
+                      </div>
+                      <div class="time-preview-line"></div>
+                    </div>
+                  </transition>
                 </div>
               </div>
 
@@ -405,6 +423,15 @@ export default {
       showRestoreDialog: false,
       restoreProgressSeconds: 0,
       restoreTimeString: '',
+      hasRestoredProgress: false,
+      userChoseTranslation: false,
+      savedEpisode: null,
+      savedTranslation: null,
+
+      // Превью времени на прогресс-баре
+      showTimePreview: false,
+      previewTime: 0,
+      previewPosition: 0,
     }
   },
   computed: {
@@ -513,6 +540,8 @@ export default {
       if (!this.animeId || !this.currentTranslation) return
 
       this.loading = true
+      this.showRestoreDialog = false
+      this.lastSavedProgress = 0
 
       try {
         const ep = this.episodesCount > 1 ? this.currentEpisode : 0
@@ -533,8 +562,17 @@ export default {
         const video = this.$refs.video
         if (video) {
           const restoreHandler = () => {
-            console.log('Метаданные загружены, восстанавливаем прогресс')
-            this.restoreProgress()
+            console.log('📥 Метаданные загружены')
+
+            if (!this.hasRestoredProgress && !this.userChoseTranslation) {
+              console.log('🔄 Первая загрузка - показываем диалог восстановления')
+              this.restoreProgress()
+              this.hasRestoredProgress = true
+            } else {
+              console.log('▶️ Не первая загрузка - просто запускаем видео')
+              video.play()
+            }
+
             video.removeEventListener('loadedmetadata', restoreHandler)
           }
           video.addEventListener('loadedmetadata', restoreHandler)
@@ -747,16 +785,57 @@ export default {
 
     // В секции ВЫБОР СЕРИЙ И ОЗВУЧЕК
     changeEpisode() {
-      console.log('Changing episode to:', this.currentEpisode)
+      console.log('📺 Смена серии через селект:', this.currentEpisode)
+
+      this.userChoseTranslation = true
+      this.showRestoreDialog = false
+
       if (this.controlsTimeout) {
         clearTimeout(this.controlsTimeout)
       }
       this.loadVideo()
     },
 
+    continueFromProgress() {
+      console.log('✅ Пользователь выбрал продолжить')
+
+      this.showRestoreDialog = false
+      this.userChoseTranslation = false
+
+      if (this.savedEpisode) {
+        this.currentEpisode = this.savedEpisode
+      }
+      if (this.savedTranslation) {
+        this.currentTranslation = this.savedTranslation
+      }
+
+      this.$nextTick(() => {
+        this.loadVideo()
+
+        const video = this.$refs.video
+        if (video) {
+          const setTimeHandler = () => {
+            video.currentTime = this.restoreProgressSeconds
+            video.play()
+            console.log(
+              '⏩ Восстановлено: серия',
+              this.currentEpisode,
+              'время',
+              this.restoreProgressSeconds,
+            )
+            video.removeEventListener('loadedmetadata', setTimeHandler)
+          }
+          video.addEventListener('loadedmetadata', setTimeHandler)
+        }
+      })
+    },
+
     changeTranslation() {
-      console.log('Changing translation to:', this.currentTranslation)
+      console.log('🎵 Смена озвучки через селект:', this.currentTranslation)
+
+      this.userChoseTranslation = true
       this.showSettingsMenu = false
+      this.showRestoreDialog = false
 
       if (this.controlsTimeout) {
         clearTimeout(this.controlsTimeout)
@@ -815,11 +894,12 @@ export default {
         this.markAsWatched(this.currentEpisode)
       }
 
-      // Сохраняем прогресс каждые 10 секунд
-      const timeSinceLastSave = Math.abs(this.currentTime - this.lastSavedProgress)
+      const timeSinceLastSave = this.currentTime - this.lastSavedProgress
 
       if (timeSinceLastSave >= 10) {
-        console.log(`⏱️ Прошло ${Math.floor(timeSinceLastSave)}с, сохраняем прогресс`)
+        console.log(
+          `⏱️ Прошло ${Math.floor(timeSinceLastSave)}с с последнего сохранения, текущее время: ${Math.floor(this.currentTime)}/${Math.floor(this.duration)}`,
+        )
         this.saveProgressToAPI()
       }
     },
@@ -844,13 +924,21 @@ export default {
     // ВЫБОР СЕРИЙ И ОЗВУЧЕК
     // ═══════════════════════════════════════════
     selectEpisode(ep) {
+      console.log('📺 Пользователь выбрал серию:', ep)
+
       this.currentEpisode = ep
+      this.userChoseTranslation = true
+      this.showRestoreDialog = false
       this.loadVideo()
     },
 
     selectTranslation(id) {
+      console.log('🎵 Пользователь выбрал озвучку:', id)
+
       this.currentTranslation = id
+      this.userChoseTranslation = true
       this.showSettingsMenu = false
+      this.showRestoreDialog = false
 
       this.$nextTick(() => {
         if (this.currentEpisode > this.episodes.length) {
@@ -869,25 +957,23 @@ export default {
     // ═══════════════════════════════════════════
     async loadWatchHistory() {
       try {
-        // Загружаем из API
-        const result = await animeApi.checkWatched(this.animeId)
+        const history = await animeApi.getWatchHistory(2000)
 
-        // Если есть данные, восстанавливаем прогресс
-        if (result && result.is_watched) {
-          // Отмечаем просмотренные серии (можно доработать)
-          this.watchedEpisodesSet = new Set()
-        }
+        console.log('📊 История для галочек:', history)
 
-        // Также загружаем историю просмотра
-        const history = await animeApi.getWatchHistory(50)
         const watchedInHistory = history
-          .filter((h) => h.anime_id === parseInt(this.animeId))
+          .filter((h) => {
+            const matchAnime = String(h.anime_id) === String(this.animeId)
+            const isWatched = h.progress_seconds / h.duration_seconds > 0.8 // 80% просмотрено
+            return matchAnime && isWatched
+          })
           .map((h) => h.episode_num)
 
         this.watchedEpisodesSet = new Set(watchedInHistory)
+
+        console.log('✅ Просмотренные серии:', [...this.watchedEpisodesSet])
       } catch (err) {
-        console.error('Ошибка загрузки истории:', err)
-        // Fallback на localStorage
+        console.error('❌ Ошибка загрузки истории:', err)
         this.loadWatchHistoryLocal()
       }
     },
@@ -932,6 +1018,9 @@ export default {
     // СОХРАНЕНИЕ ПРОГРЕССА В РЕАЛЬНОМ ВРЕМЕНИ
     // ═══════════════════════════════════════════
     async saveProgressToAPI(isCompleted = false) {
+      const currentProgress = this.currentTime
+      this.lastSavedProgress = currentProgress
+
       if (this.progressSaveTimeout) {
         clearTimeout(this.progressSaveTimeout)
       }
@@ -943,24 +1032,59 @@ export default {
           const data = {
             anime_id: this.animeId,
             episode_num: this.currentEpisode,
-            progress_seconds: Math.floor(this.currentTime),
+            progress_seconds: Math.floor(currentProgress),
             duration_seconds: Math.floor(this.duration),
             title: this.animeTitle,
             poster: this.animePoster,
             translation_id: translationId,
           }
 
-          console.log('💾 Сохранение прогресса:', data)
+          console.log('💾 Отправка на сервер:', data)
 
           await animeApi.addToHistory(data)
 
-          this.lastSavedProgress = this.currentTime
-
-          console.log('✅ Прогресс сохранён успешно')
+          console.log('✅ Прогресс сохранён на сервере')
         } catch (err) {
           console.error('❌ Ошибка сохранения прогресса:', err)
+          this.lastSavedProgress = 0
         }
       }, 1000)
+    },
+
+    // ═══════════════════════════════════════════
+    // ПРОГРЕСС БАР С ПРЕВЬЮ
+    // ═══════════════════════════════════════════
+    handleProgressMouseMove(event) {
+      const rect = event.currentTarget.getBoundingClientRect()
+      const percent = (event.clientX - rect.left) / rect.width
+
+      this.previewTime = percent * this.duration
+      this.previewPosition = percent * 100
+      this.showTimePreview = true
+    },
+
+    handleProgressMouseLeave() {
+      this.showTimePreview = false
+    },
+
+    seek(event) {
+      const video = this.$refs.video
+      if (!video || !this.duration) return
+
+      const rect = event.currentTarget.getBoundingClientRect()
+      const percent = (event.clientX - rect.left) / rect.width
+
+      this.isSeeking = true
+
+      video.currentTime = percent * this.duration
+
+      // Скрываем превью после клика
+      this.showTimePreview = false
+
+      // Обновляем буфер после перемотки
+      setTimeout(() => {
+        this.updateBuffered()
+      }, 100)
     },
 
     // ═══════════════════════════════════════════
@@ -970,34 +1094,42 @@ export default {
       try {
         const history = await animeApi.getWatchHistory(50)
 
-        console.log('История просмотров:', history)
+        console.log('📜 История просмотров:', history)
 
-        // Находим последний просмотр ЭТОЙ СЕРИИ этого аниме
-        const lastWatch = history.find((h) => {
-          const matchAnime = String(h.anime_id) === String(this.animeId)
-          const matchEpisode = Number(h.episode_num) === Number(this.currentEpisode)
-          const matchTranslation = String(h.translation_id) === String(this.currentTranslation)
+        // Берём самую последнюю запись для этого аниме
+        const lastWatchForThisAnime = history
+          .filter((h) => String(h.anime_id) === String(this.animeId))
+          .sort((a, b) => new Date(b.watched_at) - new Date(a.watched_at))[0]
 
-          return matchAnime && matchEpisode && matchTranslation
-        })
+        console.log('🎬 Последний просмотр:', lastWatchForThisAnime)
 
-        console.log('Найденный прогресс:', lastWatch)
+        if (lastWatchForThisAnime && lastWatchForThisAnime.progress_seconds > 30) {
+          const savedEpisode = lastWatchForThisAnime.episode_num
+          const savedTranslation = String(lastWatchForThisAnime.translation_id)
+          const savedProgress = lastWatchForThisAnime.progress_seconds
 
-        if (lastWatch && lastWatch.progress_seconds > 30) {
           // Форматируем время
-          const minutes = Math.floor(lastWatch.progress_seconds / 60)
-          const seconds = lastWatch.progress_seconds % 60
+          const minutes = Math.floor(savedProgress / 60)
+          const seconds = savedProgress % 60
           const timeStr = `${minutes}:${seconds.toString().padStart(2, '0')}`
 
-          // Показываем диалог восстановления
-          this.restoreProgressSeconds = lastWatch.progress_seconds
-          this.restoreTimeString = timeStr
+          // Находим название озвучки
+          const translation = this.translations.find((t) => String(t.id) === savedTranslation)
+          const translationName = translation ? translation.name : 'Неизвестная озвучка'
+
+          // Сохраняем данные для восстановления
+          this.restoreProgressSeconds = savedProgress
+          this.restoreTimeString = `${timeStr} (Серия ${savedEpisode}, ${translationName})`
+
+          // Сохраняем серию и озвучку для кнопки "Продолжить"
+          this.savedEpisode = savedEpisode
+          this.savedTranslation = savedTranslation
+
           this.showRestoreDialog = true
 
-          console.log('Показан диалог восстановления:', timeStr)
+          console.log('✅ Диалог восстановления показан:', this.restoreTimeString)
         } else {
-          // Нет прогресса - запускаем с начала
-          console.log('Прогресс не найден, запуск с начала')
+          console.log('ℹ️ Прогресс не найден, запуск с начала')
           this.$nextTick(() => {
             if (this.$refs.video) {
               this.$refs.video.play()
@@ -1005,8 +1137,7 @@ export default {
           })
         }
       } catch (err) {
-        console.error('Ошибка восстановления прогресса:', err)
-        // При ошибке просто запускаем с начала
+        console.error('❌ Ошибка восстановления:', err)
         this.$nextTick(() => {
           if (this.$refs.video) {
             this.$refs.video.play()
@@ -1015,22 +1146,29 @@ export default {
       }
     },
 
-    continueFromProgress() {
-      if (this.$refs.video) {
-        this.$refs.video.currentTime = this.restoreProgressSeconds
-        this.$refs.video.play()
-        console.log('✅ Прогресс восстановлен:', this.restoreProgressSeconds)
-      }
-      this.showRestoreDialog = false
-    },
-
     startFromBeginning() {
-      if (this.$refs.video) {
-        this.$refs.video.currentTime = 0
-        this.$refs.video.play()
-        console.log('▶️ Начало с 0:00')
-      }
+      console.log('🔄 Пользователь выбрал начать сначала')
+
       this.showRestoreDialog = false
+      this.userChoseTranslation = true
+
+      // Начинаем с серии 1
+      this.currentEpisode = 1
+
+      this.$nextTick(() => {
+        this.loadVideo()
+
+        const video = this.$refs.video
+        if (video) {
+          const playHandler = () => {
+            video.currentTime = 0
+            video.play()
+            console.log('▶️ Начало с серии 1')
+            video.removeEventListener('loadedmetadata', playHandler)
+          }
+          video.addEventListener('loadedmetadata', playHandler)
+        }
+      })
     },
     showRestorePrompt(progressSeconds, timeStr) {
       // Останавливаем автовоспроизведение
@@ -1571,6 +1709,41 @@ export default {
 }
 
 /* ═══════════════════════════════════════════ */
+/* ПРЕВЬЮ ВРЕМЕНИ НА ПРОГРЕСС-БАРЕ */
+/* ═══════════════════════════════════════════ */
+.time-preview {
+  position: absolute;
+  bottom: 100%;
+  transform: translateX(-50%);
+  pointer-events: none;
+  z-index: 10;
+  margin-bottom: 12px;
+}
+
+.time-preview-bubble {
+  background: rgba(0, 0, 0, 0.95);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 65, 108, 0.5);
+  backdrop-filter: blur(10px);
+}
+
+.time-preview-line {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  height: 20px;
+  background: linear-gradient(to bottom, rgba(255, 65, 108, 0.8), transparent);
+}
+
+/* ═══════════════════════════════════════════ */
 /* КАСТОМНЫЕ КОНТРОЛЫ */
 /* ═══════════════════════════════════════════ */
 .video-controls {
@@ -1644,8 +1817,9 @@ export default {
   z-index: 3;
 }
 
-.progress-container:hover .progress-handle {
-  opacity: 1;
+.progress-container:hover .progress-bar {
+  height: 7px;
+  transition: height 0.2s;
 }
 
 .controls-bottom {

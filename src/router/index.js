@@ -1,6 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { animeApi } from '@/api/animeApi'
 
+import UsersView from '@/views/UsersView.vue'
+
 const routes = [
   {
     path: '/login',
@@ -42,6 +44,12 @@ const routes = [
     path: '/history',
     name: 'history',
     component: () => import('../views/HistoryView.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/users',
+    name: 'Users',
+    component: UsersView,
     meta: { requiresAuth: true },
   },
 ]

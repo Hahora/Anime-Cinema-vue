@@ -2,6 +2,18 @@ const API_URL = 'http://localhost:8000/api'
 
 class AnimeAPI {
   // ═══════════════════════════════════════════
+  // HELPERS
+  // ═══════════════════════════════════════════
+
+  getHeaders() {
+    const token = this.getToken()
+    return {
+      'Content-Type': 'application/json',
+      ...(token && { Authorization: `Bearer ${token}` }),
+    }
+  }
+
+  // ═══════════════════════════════════════════
   // AUTH
   // ═══════════════════════════════════════════
 
@@ -92,6 +104,134 @@ class AnimeAPI {
     })
 
     if (!res.ok) throw new Error('Ошибка обновления профиля')
+    return await res.json()
+  }
+
+  // ═══════════════════════════════════════════
+  // USERS (ПОИСК И СПИСОК)
+  // ═══════════════════════════════════════════
+
+  async searchUsers(query, limit = 20) {
+    const token = this.getToken()
+    if (!token) throw new Error('Не авторизован')
+
+    const res = await fetch(
+      `${API_URL}/users/search?query=${encodeURIComponent(query)}&limit=${limit}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    )
+
+    if (!res.ok) throw new Error('Ошибка поиска пользователей')
+    return await res.json()
+  }
+
+  async getAllUsers(limit = 50, offset = 0) {
+    const token = this.getToken()
+    if (!token) throw new Error('Не авторизован')
+
+    const res = await fetch(`${API_URL}/users?limit=${limit}&offset=${offset}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+
+    if (!res.ok) throw new Error('Ошибка загрузки пользователей')
+    return await res.json()
+  }
+
+  // ═══════════════════════════════════════════
+  // FRIENDS
+  // ═══════════════════════════════════════════
+
+  async getFriends() {
+    const token = this.getToken()
+    if (!token) throw new Error('Не авторизован')
+
+    const res = await fetch(`${API_URL}/friends`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+
+    if (!res.ok) throw new Error('Ошибка загрузки друзей')
+    return await res.json()
+  }
+
+  async getFriendRequests() {
+    const token = this.getToken()
+    if (!token) throw new Error('Не авторизован')
+
+    const res = await fetch(`${API_URL}/friends/requests`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+
+    if (!res.ok) throw new Error('Ошибка загрузки заявок')
+    return await res.json()
+  }
+
+  async addFriend(userId) {
+    const token = this.getToken()
+    if (!token) throw new Error('Не авторизован')
+
+    const res = await fetch(`${API_URL}/friends/add`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ friend_id: userId }),
+    })
+
+    if (!res.ok) {
+      const error = await res.json()
+      throw new Error(error.detail || 'Ошибка добавления в друзья')
+    }
+    return await res.json()
+  }
+
+  async acceptFriendRequest(friendshipId) {
+    const token = this.getToken()
+    if (!token) throw new Error('Не авторизован')
+
+    const res = await fetch(`${API_URL}/friends/accept/${friendshipId}`, {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${token}` },
+    })
+
+    if (!res.ok) throw new Error('Ошибка принятия заявки')
+    return await res.json()
+  }
+
+  async rejectFriendRequest(friendshipId) {
+    const token = this.getToken()
+    if (!token) throw new Error('Не авторизован')
+
+    const res = await fetch(`${API_URL}/friends/reject/${friendshipId}`, {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${token}` },
+    })
+
+    if (!res.ok) throw new Error('Ошибка отклонения заявки')
+  }
+
+  async removeFriend(friendshipId) {
+    const token = this.getToken()
+    if (!token) throw new Error('Не авторизован')
+
+    const res = await fetch(`${API_URL}/friends/${friendshipId}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    })
+
+    if (!res.ok) throw new Error('Ошибка удаления из друзей')
+  }
+
+  async checkFriendship(userId) {
+    const token = this.getToken()
+    if (!token) return { is_friend: false, status: null, friendship_id: null, is_sender: false }
+
+    const res = await fetch(`${API_URL}/friends/check/${userId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+
+    if (!res.ok) return { is_friend: false, status: null, friendship_id: null, is_sender: false }
     return await res.json()
   }
 
@@ -191,15 +331,15 @@ class AnimeAPI {
     return await res.json()
   }
 
-  async getWatched() {
+  async getWatched(limit = 100) {
     const token = this.getToken()
     if (!token) throw new Error('Не авторизован')
 
-    const res = await fetch(`${API_URL}/watched`, {
+    const res = await fetch(`${API_URL}/watched?limit=${limit}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
 
-    if (!res.ok) throw new Error('Ошибка загрузки просмотренного')
+    if (!res.ok) throw new Error('Ошибка загрузки отмеченных аниме')
     return await res.json()
   }
 
@@ -219,18 +359,6 @@ class AnimeAPI {
     return await res.json()
   }
 
-  async getWatched(limit = 100) {
-    const token = this.getToken()
-    if (!token) throw new Error('Не авторизован')
-
-    const res = await fetch(`${API_URL}/watched?limit=${limit}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-
-    if (!res.ok) throw new Error('Ошибка загрузки отмеченных аниме')
-    return await res.json()
-  }
-
   async addToHistory(data) {
     const token = this.getToken()
     if (!token) return // Тихо пропускаем для неавторизованных
@@ -246,8 +374,76 @@ class AnimeAPI {
   }
 
   // ═══════════════════════════════════════════
+  // NOTIFICATIONS
+  // ═══════════════════════════════════════════
+
+  async getNotifications(limit = 20) {
+    const token = this.getToken()
+    if (!token) throw new Error('Не авторизован')
+
+    const res = await fetch(`${API_URL}/notifications?limit=${limit}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+
+    if (!res.ok) throw new Error('Ошибка загрузки уведомлений')
+    return await res.json()
+  }
+
+  async getUnreadNotificationsCount() {
+    const token = this.getToken()
+    if (!token) return { count: 0 }
+
+    const res = await fetch(`${API_URL}/notifications/unread/count`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+
+    if (!res.ok) return { count: 0 }
+    return await res.json()
+  }
+
+  async markNotificationRead(notificationId) {
+    const token = this.getToken()
+    if (!token) throw new Error('Не авторизован')
+
+    const res = await fetch(`${API_URL}/notifications/${notificationId}/read`, {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${token}` },
+    })
+
+    if (!res.ok) throw new Error('Ошибка')
+    return await res.json()
+  }
+
+  async markAllNotificationsRead() {
+    const token = this.getToken()
+    if (!token) throw new Error('Не авторизован')
+
+    const res = await fetch(`${API_URL}/notifications/read-all`, {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${token}` },
+    })
+
+    if (!res.ok) throw new Error('Ошибка')
+    return await res.json()
+  }
+
+  // ═══════════════════════════════════════════
   // ANIME (публичные методы)
   // ═══════════════════════════════════════════
+
+  async getGenres() {
+    const res = await fetch(`${API_URL}/genres`)
+    if (!res.ok) throw new Error('Ошибка загрузки жанров')
+    return await res.json()
+  }
+
+  async getAnimeByGenre(genre, page = 1, limit = 10) {
+    const res = await fetch(
+      `${API_URL}/genres/${encodeURIComponent(genre)}/anime?page=${page}&limit=${limit}`,
+    )
+    if (!res.ok) throw new Error('Ошибка загрузки аниме по жанру')
+    return await res.json()
+  }
 
   async search(title, limit = 12) {
     const res = await fetch(`${API_URL}/search?title=${encodeURIComponent(title)}&limit=${limit}`)
