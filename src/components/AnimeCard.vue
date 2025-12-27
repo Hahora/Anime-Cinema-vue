@@ -1,5 +1,5 @@
 <template>
-  <div class="anime-card" @click="$emit('click')">
+  <div class="anime-card" @click="openAnime">
     <div class="card-image">
       <img :src="anime.poster || '/placeholder.jpg'" :alt="anime.title" />
       <div class="card-overlay">
@@ -46,6 +46,12 @@ export default {
       if (status.includes('онгоинг') || status.includes('ongoing')) return 'Выходит'
       if (status.includes('анонс') || status.includes('announced')) return 'Анонс'
       return 'Вышло'
+    },
+  },
+  methods: {
+    // ✅ Добавили метод роутинга
+    openAnime() {
+      this.$router.push(`/anime/${this.anime.id}`)
     },
   },
 }
