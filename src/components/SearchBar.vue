@@ -5,17 +5,29 @@
         v-model="query"
         @keyup.enter="handleSearch"
         @input="onInput"
+        @focus="showSuggestions = query.length > 0"
+        @blur="hideSuggestions"
         placeholder="Поиск аниме... (Наруто, Атака титанов)"
         class="search-input"
       />
-      <button @click="handleSearch" :disabled="loading || !query.trim()" class="search-btn">
-        <span v-if="!loading">🔍 Найти</span>
-        <span v-else class="loader-small"></span>
-      </button>
+      <button @click="handleSearch" :disabled="!query.trim()" class="search-btn">🔍 Найти</button>
     </div>
-    <div v-if="showSuggestions" class="suggestions">
-      <div class="suggestion-item" v-for="s in suggestions" :key="s" @click="selectSuggestion(s)">
-        {{ s }}
+
+    <!-- ✅ Умные подсказки с фильтрацией -->
+    <div v-if="showSuggestions && filteredSuggestions.length" class="suggestions">
+      <div
+        class="suggestion-item"
+        v-for="s in filteredSuggestions"
+        :key="s"
+        @mousedown.prevent="selectSuggestion(s)"
+      >
+        <svg viewBox="0 0 24 24" class="suggestion-icon">
+          <path
+            d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"
+            fill="currentColor"
+          />
+        </svg>
+        <span class="suggestion-text">{{ s }}</span>
       </div>
     </div>
   </div>
@@ -24,36 +36,121 @@
 <script>
 export default {
   name: 'SearchBar',
-  props: {
-    loading: Boolean,
-  },
   data() {
     return {
       query: '',
       showSuggestions: false,
-      suggestions: [
+      // ✅ Расширенный список популярных аниме
+      allSuggestions: [
         'Наруто',
+        'Наруто: Ураганные хроники',
         'Атака титанов',
         'Блич',
         'Ван Пис',
         'Магическая битва',
         'Моя геройская академия',
+        'Токийский гуль',
+        'Стальной алхимик',
+        'Код Гиас',
+        'Тетрадь смерти',
+        'Клинок, рассекающий демонов',
+        'Хантер × Хантер',
+        'Врата Штейна',
+        'Покемон',
+        'Сага о Винланде',
+        'Мобильный воин Гандам',
+        'Ковбой Бибоп',
+        'Евангелион',
+        'Созданный в Бездне',
+        'Волейбол',
+        'Баскетбол Куроко',
+        'Реинкарнация безработного',
+        'Этот замечательный мир',
+        'Семь смертных грехов',
+        'Sword Art Online',
+        'Повелитель',
+        'Goblin Slayer',
+        'Re:Zero',
+        'Боруто',
+        'Черный клевер',
+        'Чёрный клевер',
+        'Моб Психо 100',
+        'Ванпанчмен',
+        'Наездница драконов',
+        'Фейри Тейл',
+        'Доктор Стоун',
+        'Обещанный Неверленд',
+        'Паразит',
+        'Монстр',
+        'Ягодки',
+        'Психопаспорт',
+        'Дьявольские возлюбленные',
+        'Синий экзорцист',
       ],
     }
   },
+  computed: {
+    // ✅ Умная фильтрация подсказок
+    filteredSuggestions() {
+      if (!this.query.trim()) {
+        return this.allSuggestions.slice(0, 8) // Топ-8 популярных
+      }
+
+      const searchLower = this.query.toLowerCase().trim()
+
+      // Нормализация текста (ё -> е)
+      const normalize = (text) => text.replace(/ё/gi, 'е').toLowerCase()
+
+      const normalizedSearch = normalize(searchLower)
+
+      // Фильтруем и сортируем по релевантности
+      return this.allSuggestions
+        .filter((s) => {
+          const normalizedSuggestion = normalize(s)
+          return normalizedSuggestion.includes(normalizedSearch)
+        })
+        .sort((a, b) => {
+          const aNorm = normalize(a)
+          const bNorm = normalize(b)
+
+          // Приоритет: совпадение с начала строки
+          const aStarts = aNorm.startsWith(normalizedSearch)
+          const bStarts = bNorm.startsWith(normalizedSearch)
+
+          if (aStarts && !bStarts) return -1
+          if (!aStarts && bStarts) return 1
+
+          // Затем по длине (короче = релевантнее)
+          return a.length - b.length
+        })
+        .slice(0, 6) // Показываем максимум 6 подсказок
+    },
+  },
   methods: {
     handleSearch() {
-      if (this.query.trim()) {
-        this.$emit('search', this.query)
+      const trimmed = this.query.trim()
+      if (trimmed) {
+        // ✅ Редирект на страницу поиска
+        this.$router.push({ path: '/search', query: { q: trimmed } })
         this.showSuggestions = false
       }
     },
+
     onInput() {
-      this.showSuggestions = this.query.length > 0
+      this.showSuggestions = true
     },
+
     selectSuggestion(s) {
       this.query = s
+      this.showSuggestions = false
       this.handleSearch()
+    },
+
+    hideSuggestions() {
+      // Задержка чтобы клик по подсказке успел сработать
+      setTimeout(() => {
+        this.showSuggestions = false
+      }, 200)
     },
   },
 }
@@ -64,6 +161,7 @@ export default {
   position: relative;
   max-width: 700px;
   margin: 0 auto 50px;
+  z-index: 100;
 }
 
 .search-container {
@@ -74,6 +172,12 @@ export default {
   border-radius: 16px;
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s;
+}
+
+.search-container:focus-within {
+  border-color: rgba(255, 65, 108, 0.5);
+  box-shadow: 0 0 30px rgba(255, 65, 108, 0.2);
 }
 
 .search-input {
@@ -90,7 +194,6 @@ export default {
 
 .search-input:focus {
   background: rgba(0, 0, 0, 0.6);
-  box-shadow: 0 0 20px rgba(255, 65, 108, 0.3);
 }
 
 .search-input::placeholder {
@@ -107,6 +210,7 @@ export default {
   cursor: pointer;
   transition: all 0.3s;
   font-size: 16px;
+  white-space: nowrap;
 }
 
 .search-btn:hover:not(:disabled) {
@@ -119,35 +223,43 @@ export default {
   cursor: not-allowed;
 }
 
-.loader-small {
-  display: inline-block;
-  width: 18px;
-  height: 18px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top-color: white;
-  border-radius: 50%;
-  animation: spin 0.6s linear infinite;
-}
-
+/* ═══════════════════════════════════════════ */
+/* ПОДСКАЗКИ */
+/* ═══════════════════════════════════════════ */
 .suggestions {
   position: absolute;
-  top: 100%;
+  top: calc(100% + 8px);
   left: 0;
   right: 0;
-  margin-top: 8px;
-  background: rgba(20, 20, 20, 0.95);
-  border-radius: 12px;
+  background: rgba(20, 20, 20, 0.98);
+  border-radius: 16px;
   backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   overflow: hidden;
-  z-index: 100;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .suggestion-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   padding: 14px 20px;
   cursor: pointer;
   transition: all 0.2s;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .suggestion-item:last-child {
@@ -155,13 +267,43 @@ export default {
 }
 
 .suggestion-item:hover {
-  background: rgba(255, 65, 108, 0.1);
-  padding-left: 25px;
+  background: rgba(255, 65, 108, 0.15);
+  padding-left: 28px;
+  color: white;
 }
 
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
+.suggestion-icon {
+  width: 18px;
+  height: 18px;
+  color: #ff416c;
+  flex-shrink: 0;
+}
+
+.suggestion-text {
+  font-size: 15px;
+  font-weight: 500;
+}
+
+/* ═══════════════════════════════════════════ */
+/* АДАПТИВ */
+/* ═══════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .search-container {
+    padding: 6px;
+  }
+
+  .search-input {
+    padding: 14px 16px;
+    font-size: 15px;
+  }
+
+  .search-btn {
+    padding: 14px 24px;
+    font-size: 15px;
+  }
+
+  .suggestion-item {
+    padding: 12px 16px;
   }
 }
 </style>

@@ -1,11 +1,9 @@
 <template>
   <div class="home">
-    <!-- Загрузочный экран -->
     <transition name="fade-out">
       <PageLoader v-if="initialLoading" :progress="loadingProgress" />
     </transition>
 
-    <!-- Контент страницы -->
     <transition name="fade-in">
       <div v-if="!initialLoading">
         <div class="hero">
@@ -13,45 +11,15 @@
           <p class="hero-subtitle">Смотри любимые аниме онлайн без рекламы</p>
         </div>
 
-        <SearchBar :loading="searchLoading" @search="handleSearch" />
-
-        <!-- Результаты поиска -->
-        <div v-if="searched && results.length" class="section">
-          <h2 class="section-title">Результаты поиска ({{ results.length }})</h2>
-          <div class="anime-grid">
-            <AnimeCard
-              v-for="anime in results"
-              :key="anime.id"
-              :anime="anime"
-              @click="openAnime(anime.id)"
-            />
-          </div>
-        </div>
+        <!-- ✅ Поиск редиректит на /search -->
+        <SearchBar />
 
         <!-- Популярное -->
-        <div v-if="!searched && trending.length" class="section">
+        <div v-if="trending.length" class="section">
           <h2 class="section-title">🔥 Популярное сейчас</h2>
           <div class="anime-grid">
-            <AnimeCard
-              v-for="anime in trending"
-              :key="anime.id"
-              :anime="anime"
-              @click="openAnime(anime.id)"
-            />
+            <AnimeCard v-for="anime in trending" :key="anime.id" :anime="anime" />
           </div>
-        </div>
-
-        <!-- Пустой результат -->
-        <div v-if="searched && !results.length && !searchLoading" class="empty-state">
-          <div class="empty-icon">🔍</div>
-          <h3>Ничего не найдено</h3>
-          <p>Попробуйте изменить запрос или проверьте правильность написания</p>
-        </div>
-
-        <!-- Загрузка поиска -->
-        <div v-if="searchLoading" class="loading-state">
-          <div class="loader-big"></div>
-          <p>Поиск аниме...</p>
         </div>
       </div>
     </transition>
@@ -73,12 +41,7 @@ export default {
   },
   data() {
     return {
-      results: [],
       trending: [],
-      searchLoading: false,
-      searched: false,
-
-      // Загрузка страницы
       initialLoading: true,
       loadingProgress: 0,
     }
@@ -92,21 +55,17 @@ export default {
       this.loadingProgress = 0
 
       try {
-        // Симуляция прогресса загрузки
         const progressInterval = setInterval(() => {
           if (this.loadingProgress < 90) {
             this.loadingProgress += 10
           }
         }, 200)
 
-        // Загружаем популярные аниме
         this.trending = await animeApi.getTrending()
 
-        // Завершаем прогресс
         clearInterval(progressInterval)
         this.loadingProgress = 100
 
-        // Даём время на анимацию
         setTimeout(() => {
           this.initialLoading = false
         }, 500)
@@ -117,24 +76,6 @@ export default {
           this.initialLoading = false
         }, 500)
       }
-    },
-
-    async handleSearch(query) {
-      this.searchLoading = true
-      this.searched = true
-
-      try {
-        this.results = await animeApi.search(query)
-      } catch (err) {
-        console.error('Search error:', err)
-        alert('Ошибка поиска. Попробуйте позже.')
-      } finally {
-        this.searchLoading = false
-      }
-    },
-
-    openAnime(id) {
-      this.$router.push(`/anime/${id}`)
     },
   },
 }

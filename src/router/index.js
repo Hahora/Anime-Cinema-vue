@@ -5,6 +5,7 @@ import UsersView from '@/views/UsersView.vue'
 import NotFoundView from '@/views/NotFoundView.vue'
 import ServiceUnavailableView from '@/views/ServiceUnavailableView.vue'
 import RegisterView from '@/views/RegisterView.vue'
+import SearchView from '@/views/SearchView.vue'
 
 const routes = [
   {
@@ -59,6 +60,12 @@ const routes = [
     name: 'Users',
     component: UsersView,
     meta: { requiresAuth: true },
+  },
+  {
+    path: '/search',
+    name: 'Search',
+    component: SearchView,
+    meta: { requiresAuth: false },
   },
   {
     path: '/503',

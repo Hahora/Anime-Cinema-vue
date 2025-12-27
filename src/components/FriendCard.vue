@@ -1,20 +1,20 @@
 <template>
   <div class="friend-card">
-    <router-link :to="`/profile/${friend.id}`" class="friend-link">
+    <router-link :to="`/profile/${otherUser.id}`" class="friend-link">
       <div class="friend-avatar">
-        <img :src="friend.avatar_url" :alt="friend.name" />
+        <img :src="otherUser.avatar_url" :alt="otherUser.name" />
         <div class="online-indicator"></div>
       </div>
 
       <div class="friend-info">
-        <h3 class="friend-name">{{ friend.name }}</h3>
-        <p class="friend-username">@{{ friend.username }}</p>
+        <h3 class="friend-name">{{ otherUser.name }}</h3>
+        <p class="friend-username">@{{ otherUser.username }}</p>
         <p class="friend-since">Друзья с {{ formatDate(friendship.created_at) }}</p>
       </div>
     </router-link>
 
     <div class="friend-actions">
-      <router-link :to="`/profile/${friend.id}`" class="action-btn view">
+      <router-link :to="`/profile/${otherUser.id}`" class="action-btn view">
         <svg viewBox="0 0 24 24">
           <path
             d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"
@@ -24,7 +24,7 @@
         Профиль
       </router-link>
 
-      <button class="action-btn remove" @click="handleRemove">
+      <button class="action-btn remove" @click="handleRemove" :disabled="loading">
         <svg viewBox="0 0 24 24">
           <path
             d="M14.59 8L12 10.59 9.41 8 8 9.41 10.59 12 8 14.59 9.41 16 12 13.41 14.59 16 16 14.59 13.41 12 16 9.41 14.59 8zM12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"
@@ -49,14 +49,33 @@ export default {
     },
   },
   emits: ['refresh'],
+  data() {
+    return {
+      currentUserId: null,
+      loading: false,
+    }
+  },
   computed: {
-    friend() {
-      // Определяем кто из двух пользователей - друг
-      const currentUserId = this.$route.params.userId || null
-      return this.friendship.user.id === currentUserId
-        ? this.friendship.friend
-        : this.friendship.user
+    // ✅ ИСПРАВЛЕНО: определяем "другого" пользователя
+    otherUser() {
+      if (!this.currentUserId) return this.friendship.friend || this.friendship.user
+
+      // Если я - user, возвращаем friend
+      if (this.friendship.user?.id === this.currentUserId) {
+        return this.friendship.friend
+      }
+      // Если я - friend, возвращаем user
+      return this.friendship.user
     },
+  },
+  async mounted() {
+    // ✅ Получаем ID текущего пользователя
+    try {
+      const profile = await animeApi.getProfile()
+      this.currentUserId = profile.id
+    } catch (err) {
+      console.error('Failed to get current user:', err)
+    }
   },
   methods: {
     formatDate(dateString) {
@@ -79,14 +98,17 @@ export default {
     },
 
     async handleRemove() {
-      if (!confirm(`Удалить ${this.friend.name} из друзей?`)) return
+      if (!confirm(`Удалить ${this.otherUser.name} из друзей?`)) return
 
+      this.loading = true
       try {
         await animeApi.removeFriend(this.friendship.id)
         this.$emit('refresh')
       } catch (err) {
         console.error('Ошибка:', err)
         alert('Не удалось удалить из друзей')
+      } finally {
+        this.loading = false
       }
     },
   },
@@ -197,6 +219,11 @@ export default {
   white-space: nowrap;
 }
 
+.action-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .action-btn svg {
   width: 18px;
   height: 18px;
@@ -220,7 +247,7 @@ export default {
   color: rgba(255, 255, 255, 0.6);
 }
 
-.action-btn.remove:hover {
+.action-btn.remove:hover:not(:disabled) {
   background: rgba(244, 67, 54, 0.2);
   border-color: rgba(244, 67, 54, 0.4);
   color: #f44336;
