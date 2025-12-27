@@ -2,6 +2,8 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { animeApi } from '@/api/animeApi'
 
 import UsersView from '@/views/UsersView.vue'
+import NotFoundView from '@/views/NotFoundView.vue'
+import ServiceUnavailableView from '@/views/ServiceUnavailableView.vue'
 
 const routes = [
   {
@@ -51,6 +53,18 @@ const routes = [
     name: 'Users',
     component: UsersView,
     meta: { requiresAuth: true },
+  },
+  {
+    path: '/503',
+    name: 'ServiceUnavailable',
+    component: ServiceUnavailableView,
+  },
+
+  // 404 - должен быть последним
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'NotFound',
+    component: NotFoundView,
   },
 ]
 
