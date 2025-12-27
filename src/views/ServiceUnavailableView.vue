@@ -132,7 +132,6 @@ export default {
       this.serverStatus = 'checking'
 
       try {
-        // ✅ Проверяем /api/health
         const response = await fetch(
           `${import.meta.env.VITE_API_URL || 'http://localhost:8000/api'}/health`,
           {

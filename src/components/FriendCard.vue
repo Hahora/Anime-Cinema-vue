@@ -56,7 +56,6 @@ export default {
     }
   },
   computed: {
-    // ✅ ИСПРАВЛЕНО: определяем "другого" пользователя
     otherUser() {
       if (!this.currentUserId) return this.friendship.friend || this.friendship.user
 
@@ -69,7 +68,6 @@ export default {
     },
   },
   async mounted() {
-    // ✅ Получаем ID текущего пользователя
     try {
       const profile = await animeApi.getProfile()
       this.currentUserId = profile.id

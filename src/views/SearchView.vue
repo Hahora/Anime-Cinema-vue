@@ -173,7 +173,6 @@ export default {
       this.currentQuery = query
 
       try {
-        // ✅ Убрали лимит - отображаем ВСЁ что найдено
         this.results = await animeApi.search(query, 100)
         console.log(`🔍 Найдено: ${this.results.length} аниме`)
       } catch (err) {

@@ -170,7 +170,28 @@ export default {
     },
   },
   async mounted() {
+    // ✅ Читаем tab из URL query параметров
+    const tabFromQuery = this.$route.query.tab
+    if (tabFromQuery && ['all', 'friends', 'requests'].includes(tabFromQuery)) {
+      this.currentTab = tabFromQuery
+    }
+
     await this.loadAllData()
+  },
+  watch: {
+    // ✅ Обновляем currentTab при изменении query параметров
+    '$route.query.tab'(newTab) {
+      if (newTab && ['all', 'friends', 'requests'].includes(newTab)) {
+        this.currentTab = newTab
+      }
+    },
+
+    // ✅ Обновляем URL при смене вкладки
+    currentTab(newTab) {
+      if (this.$route.query.tab !== newTab) {
+        this.$router.push({ path: '/users', query: { tab: newTab } })
+      }
+    },
   },
   methods: {
     async loadAllData() {

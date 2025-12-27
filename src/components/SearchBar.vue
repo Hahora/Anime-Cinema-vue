@@ -13,7 +13,6 @@
       <button @click="handleSearch" :disabled="!query.trim()" class="search-btn">🔍 Найти</button>
     </div>
 
-    <!-- ✅ Умные подсказки с фильтрацией -->
     <div v-if="showSuggestions && filteredSuggestions.length" class="suggestions">
       <div
         class="suggestion-item"
@@ -40,7 +39,6 @@ export default {
     return {
       query: '',
       showSuggestions: false,
-      // ✅ Расширенный список популярных аниме
       allSuggestions: [
         'Наруто',
         'Наруто: Ураганные хроники',
@@ -90,7 +88,6 @@ export default {
     }
   },
   computed: {
-    // ✅ Умная фильтрация подсказок
     filteredSuggestions() {
       if (!this.query.trim()) {
         return this.allSuggestions.slice(0, 8) // Топ-8 популярных
@@ -130,7 +127,6 @@ export default {
     handleSearch() {
       const trimmed = this.query.trim()
       if (trimmed) {
-        // ✅ Редирект на страницу поиска
         this.$router.push({ path: '/search', query: { q: trimmed } })
         this.showSuggestions = false
       }

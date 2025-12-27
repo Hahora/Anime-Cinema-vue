@@ -147,11 +147,21 @@
     <transition name="fade">
       <div v-if="userMenuOpen" class="user-menu-backdrop" @click="toggleUserMenu">
         <div class="user-menu" @click.stop>
+          <!-- ✅ Крестик закрытия -->
+          <button class="user-menu-close" @click="toggleUserMenu">
+            <svg viewBox="0 0 24 24">
+              <path
+                d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                fill="currentColor"
+              />
+            </svg>
+          </button>
+
           <div class="user-menu-header">
             <img :src="userAvatar" alt="User" class="user-menu-avatar" />
             <div class="user-menu-info">
               <h4>{{ userName }}</h4>
-              <p>{{ userEmail }}</p>
+              <p>@{{ userEmail }}</p>
             </div>
           </div>
           <div class="user-menu-divider"></div>
@@ -165,6 +175,18 @@
               </svg>
               Личный кабинет
             </router-link>
+
+            <!-- ✅ Друзья -->
+            <router-link to="/users?tab=friends" class="user-menu-item" @click="toggleUserMenu">
+              <svg viewBox="0 0 24 24" class="menu-item-icon">
+                <path
+                  d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"
+                  fill="currentColor"
+                />
+              </svg>
+              Мои друзья
+            </router-link>
+
             <router-link to="/favorites" class="user-menu-item" @click="toggleUserMenu">
               <svg viewBox="0 0 24 24" class="menu-item-icon">
                 <path
@@ -246,7 +268,7 @@ export default {
 
     performSearch() {
       if (this.searchQuery.trim()) {
-        this.$router.push({ path: '/', query: { q: this.searchQuery } })
+        this.$router.push({ path: '/search', query: { q: this.searchQuery } })
         this.searchOpen = false
         this.searchQuery = ''
       }
@@ -581,6 +603,7 @@ export default {
 }
 
 .user-menu {
+  position: relative;
   background: rgba(15, 15, 15, 0.98);
   backdrop-filter: blur(20px);
   border-radius: 20px;
@@ -589,6 +612,35 @@ export default {
   min-width: 300px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
   animation: slideInRight 0.3s ease-out;
+}
+
+.user-menu-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  transition: all 0.3s;
+  z-index: 10;
+}
+
+.user-menu-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  transform: rotate(90deg);
+}
+
+.user-menu-close svg {
+  width: 18px;
+  height: 18px;
 }
 
 @keyframes slideInRight {
@@ -732,7 +784,20 @@ export default {
   }
 
   .nav-menu {
-    display: none;
+    display: flex;
+    flex: 1;
+    justify-content: space-evenly;
+    gap: 4px;
+  }
+
+  .nav-item {
+    padding: 8px;
+    min-width: auto;
+  }
+
+  .nav-icon {
+    width: 22px;
+    height: 22px;
   }
 
   .header-actions {
@@ -750,6 +815,11 @@ export default {
 
   .user-menu-backdrop {
     padding: 70px 20px 20px;
+  }
+
+  .user-menu {
+    width: 100%;
+    max-width: 400px;
   }
 }
 </style>
