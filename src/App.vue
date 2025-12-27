@@ -23,7 +23,7 @@ export default {
   computed: {
     showHeader() {
       // Не показываем header на специальных страницах
-      const hideHeaderRoutes = ['login', 'NotFound', 'ServiceUnavailable']
+      const hideHeaderRoutes = ['login', 'NotFound', 'ServiceUnavailable', 'Register']
       return !hideHeaderRoutes.includes(this.$route.name)
     },
   },

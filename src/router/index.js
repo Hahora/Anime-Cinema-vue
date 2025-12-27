@@ -4,6 +4,7 @@ import { animeApi } from '@/api/animeApi'
 import UsersView from '@/views/UsersView.vue'
 import NotFoundView from '@/views/NotFoundView.vue'
 import ServiceUnavailableView from '@/views/ServiceUnavailableView.vue'
+import RegisterView from '@/views/RegisterView.vue'
 
 const routes = [
   {
@@ -11,6 +12,11 @@ const routes = [
     name: 'login',
     component: () => import('../views/LoginView.vue'),
     meta: { requiresGuest: true },
+  },
+  {
+    path: '/register',
+    name: 'Register',
+    component: RegisterView,
   },
   {
     path: '/',
