@@ -106,6 +106,7 @@ export default {
       totalAnime: 0,
       currentPage: 1,
       limit: 10,
+      hasMore: false,
     }
   },
   async mounted() {
@@ -115,8 +116,7 @@ export default {
     async loadGenres() {
       try {
         this.loading = true
-        const response = await fetch('http://localhost:8000/api/genres')
-        this.genres = await response.json()
+        this.genres = await animeApi.getGenres()
       } catch (err) {
         console.error('Ошибка загрузки жанров:', err)
       } finally {
@@ -135,10 +135,11 @@ export default {
       try {
         this.loadingAnime = true
 
-        const response = await fetch(
-          `http://localhost:8000/api/genres/${this.selectedGenre.slug}/anime?page=${this.currentPage}&limit=${this.limit}`,
+        const data = await animeApi.getAnimeByGenre(
+          this.selectedGenre.slug,
+          this.currentPage,
+          this.limit,
         )
-        const data = await response.json()
 
         this.animeList = [...this.animeList, ...data.results]
         this.hasMore = data.has_more

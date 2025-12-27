@@ -108,6 +108,34 @@ class AnimeAPI {
   }
 
   // ═══════════════════════════════════════════
+  // PROFILE (OTHER USERS)
+  // ═══════════════════════════════════════════
+
+  async getUserFavorites(userId, limit = 50) {
+    const token = this.getToken()
+    if (!token) throw new Error('Не авторизован')
+
+    const res = await fetch(`${API_URL}/profile/${userId}/favorites?limit=${limit}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+
+    if (!res.ok) throw new Error('Ошибка загрузки избранного')
+    return await res.json()
+  }
+
+  async getUserHistory(userId, limit = 50) {
+    const token = this.getToken()
+    if (!token) throw new Error('Не авторизован')
+
+    const res = await fetch(`${API_URL}/profile/${userId}/history?limit=${limit}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+
+    if (!res.ok) throw new Error('Ошибка загрузки истории')
+    return await res.json()
+  }
+
+  // ═══════════════════════════════════════════
   // USERS (ПОИСК И СПИСОК)
   // ═══════════════════════════════════════════
 

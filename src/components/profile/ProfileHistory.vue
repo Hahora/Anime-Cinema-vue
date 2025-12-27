@@ -76,13 +76,7 @@ export default {
         if (this.isOwnProfile) {
           this.history = await animeApi.getWatchHistory(10)
         } else {
-          const res = await fetch(
-            `http://localhost:8000/api/profile/${this.userId}/history?limit=10`,
-            {
-              headers: { Authorization: `Bearer ${animeApi.getToken()}` },
-            },
-          )
-          this.history = await res.json()
+          this.history = await animeApi.getUserHistory(this.userId, 10)
         }
       } catch (err) {
         console.error('Ошибка загрузки истории:', err)

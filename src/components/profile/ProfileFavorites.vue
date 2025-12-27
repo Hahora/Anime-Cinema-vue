@@ -73,14 +73,9 @@ export default {
       this.loading = true
       try {
         if (this.isOwnProfile) {
-          // Свой профиль
           this.favorites = await animeApi.getFavorites()
         } else {
-          // Чужой профиль
-          const res = await fetch(`http://localhost:8000/api/profile/${this.userId}/favorites`, {
-            headers: { Authorization: `Bearer ${animeApi.getToken()}` },
-          })
-          this.favorites = await res.json()
+          this.favorites = await animeApi.getUserFavorites(this.userId)
         }
       } catch (err) {
         console.error('Ошибка загрузки избранного:', err)
