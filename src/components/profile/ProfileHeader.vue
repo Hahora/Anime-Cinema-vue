@@ -44,6 +44,40 @@
 
       <!-- Действия -->
       <div class="profile-actions">
+        <button
+          v-if="!isOwnProfile"
+          @click="handleFriendAction"
+          :disabled="friendActionLoading"
+          :class="['action-btn', 'friend-btn', friendStatusClass]"
+        >
+          <svg viewBox="0 0 24 24">
+            <!-- Добавить в друзья -->
+            <path
+              v-if="friendshipStatus === 'none'"
+              d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
+              fill="currentColor"
+            />
+            <!-- Заявка отправлена -->
+            <path
+              v-else-if="friendshipStatus === 'pending_sent'"
+              d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
+              fill="currentColor"
+            />
+            <!-- Принять заявку -->
+            <path
+              v-else-if="friendshipStatus === 'pending_received'"
+              d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
+              fill="currentColor"
+            />
+            <!-- В друзьях -->
+            <path
+              v-else-if="friendshipStatus === 'friends'"
+              d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"
+              fill="currentColor"
+            />
+          </svg>
+          <span>{{ friendButtonText }}</span>
+        </button>
         <!-- Кнопка "Поделиться" для всех -->
         <button class="action-btn secondary" @click="shareProfile" :class="{ copied: copied }">
           <svg v-if="!copied" viewBox="0 0 24 24">
@@ -84,6 +118,8 @@
 </template>
 
 <script>
+import { animeApi } from '@/api/animeApi'
+
 export default {
   name: 'ProfileHeader',
   props: {
@@ -100,15 +136,99 @@ export default {
     return {
       copied: false,
       showToast: false,
+      friendshipStatus: 'none',
+      friendshipId: null,
+      friendActionLoading: false,
     }
   },
   emits: ['edit-avatar', 'open-settings'],
+  computed: {
+    friendStatusClass() {
+      return {
+        'btn-add': this.friendshipStatus === 'none',
+        'btn-pending': this.friendshipStatus === 'pending_sent',
+        'btn-accept': this.friendshipStatus === 'pending_received',
+        'btn-friends': this.friendshipStatus === 'friends',
+      }
+    },
+    friendButtonText() {
+      switch (this.friendshipStatus) {
+        case 'none':
+          return 'Добавить в друзья'
+        case 'pending_sent':
+          return 'Заявка отправлена'
+        case 'pending_received':
+          return 'Принять заявку'
+        case 'friends':
+          return 'В друзьях'
+        default:
+          return ''
+      }
+    },
+  },
+  watch: {
+    profile: {
+      immediate: true,
+      handler() {
+        if (!this.isOwnProfile && this.profile) {
+          this.loadFriendshipStatus()
+        }
+      },
+    },
+  },
   methods: {
+    async loadFriendshipStatus() {
+      try {
+        const status = await animeApi.getFriendshipStatus(this.profile.id)
+        this.friendshipStatus = status.status
+        this.friendshipId = status.friendship_id || null
+      } catch (err) {
+        console.error('Ошибка загрузки статуса дружбы:', err)
+      }
+    },
+
+    async handleFriendAction() {
+      this.friendActionLoading = true
+
+      try {
+        if (this.friendshipStatus === 'none') {
+          // Отправить заявку
+          await animeApi.addFriend(this.profile.id)
+          this.friendshipStatus = 'pending_sent'
+        } else if (this.friendshipStatus === 'pending_sent') {
+          // Отменить заявку
+          if (this.friendshipId) {
+            await animeApi.removeFriend(this.friendshipId)
+            this.friendshipStatus = 'none'
+            this.friendshipId = null
+          }
+        } else if (this.friendshipStatus === 'pending_received') {
+          // Принять заявку
+          if (this.friendshipId) {
+            await animeApi.acceptFriendRequest(this.friendshipId)
+            this.friendshipStatus = 'friends'
+          }
+        } else if (this.friendshipStatus === 'friends') {
+          // Удалить из друзей
+          const confirmed = confirm('Удалить из друзей?')
+          if (confirmed && this.friendshipId) {
+            await animeApi.removeFriend(this.friendshipId)
+            this.friendshipStatus = 'none'
+            this.friendshipId = null
+          }
+        }
+      } catch (err) {
+        console.error('Ошибка действия с другом:', err)
+        alert('Произошла ошибка. Попробуйте позже.')
+      } finally {
+        this.friendActionLoading = false
+      }
+    },
+
     async shareProfile() {
       const profileUrl = `${window.location.origin}/profile/${this.profile.id}`
 
       try {
-        // Пытаемся использовать Web Share API (для мобильных)
         if (navigator.share) {
           await navigator.share({
             title: `Профиль ${this.profile.name}`,
@@ -116,12 +236,10 @@ export default {
             url: profileUrl,
           })
         } else {
-          // Копируем в буфер обмена
           await navigator.clipboard.writeText(profileUrl)
           this.showCopiedFeedback()
         }
       } catch (err) {
-        // Fallback для старых браузеров
         this.fallbackCopyToClipboard(profileUrl)
         this.showCopiedFeedback()
       }
@@ -241,6 +359,63 @@ export default {
   width: 20px;
   height: 20px;
   color: white;
+}
+
+/* ═══════════════════════════════════════════ */
+/* КНОПКА ДРУЗЕЙ */
+/* ═══════════════════════════════════════════ */
+.friend-btn {
+  min-width: 200px;
+}
+
+.friend-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Добавить в друзья */
+.friend-btn.btn-add {
+  background: linear-gradient(135deg, #ff416c, #ff4b2b);
+  color: white;
+  box-shadow: 0 10px 30px rgba(255, 65, 108, 0.3);
+}
+
+.friend-btn.btn-add:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 40px rgba(255, 65, 108, 0.4);
+}
+
+/* Заявка отправлена */
+.friend-btn.btn-pending {
+  background: rgba(255, 193, 7, 0.15);
+  border: 1px solid rgba(255, 193, 7, 0.5);
+  color: #ffc107;
+}
+
+.friend-btn.btn-pending:hover:not(:disabled) {
+  background: rgba(255, 193, 7, 0.25);
+}
+
+/* Принять заявку */
+.friend-btn.btn-accept {
+  background: rgba(76, 175, 80, 0.15);
+  border: 1px solid rgba(76, 175, 80, 0.5);
+  color: #4caf50;
+}
+
+.friend-btn.btn-accept:hover:not(:disabled) {
+  background: rgba(76, 175, 80, 0.25);
+}
+
+/* В друзьях */
+.friend-btn.btn-friends {
+  background: rgba(33, 150, 243, 0.15);
+  border: 1px solid rgba(33, 150, 243, 0.5);
+  color: #2196f3;
+}
+
+.friend-btn.btn-friends:hover:not(:disabled) {
+  background: rgba(33, 150, 243, 0.25);
 }
 
 /* ═══════════════════════════════════════════ */

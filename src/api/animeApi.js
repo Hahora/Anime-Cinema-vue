@@ -69,6 +69,18 @@ class AnimeAPI {
     return await res.json()
   }
 
+  async getUserProfile(userId) {
+    const token = this.getToken()
+    if (!token) throw new Error('Не авторизован')
+
+    const res = await fetch(`${API_URL}/profile/${userId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+
+    if (!res.ok) throw new Error('Ошибка загрузки профиля')
+    return await res.json()
+  }
+
   async getProfileById(userId) {
     const token = this.getToken()
     if (!token) throw new Error('Не авторизован')
@@ -191,6 +203,18 @@ class AnimeAPI {
     })
 
     if (!res.ok) throw new Error('Ошибка загрузки заявок')
+    return await res.json()
+  }
+
+  async getFriendshipStatus(userId) {
+    const token = this.getToken()
+    if (!token) return { status: 'none' }
+
+    const res = await fetch(`${API_URL}/friends/status/${userId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+
+    if (!res.ok) return { status: 'none' }
     return await res.json()
   }
 
