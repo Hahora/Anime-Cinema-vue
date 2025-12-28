@@ -119,6 +119,44 @@ class AnimeAPI {
     return await res.json()
   }
 
+  // МЕТОДЫ для онлайн статусов
+
+  async getOnlineUsers() {
+    const token = this.getToken()
+    if (!token) return { online_user_ids: [], count: 0 }
+
+    const res = await fetch(`${API_URL}/users/online`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+
+    if (!res.ok) return { online_user_ids: [], count: 0 }
+    return await res.json()
+  }
+
+  async getOnlineFriends() {
+    const token = this.getToken()
+    if (!token) return { online_friend_ids: [], total_friends: 0, online_count: 0 }
+
+    const res = await fetch(`${API_URL}/friends/online`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+
+    if (!res.ok) return { online_friend_ids: [], total_friends: 0, online_count: 0 }
+    return await res.json()
+  }
+
+  async checkUserOnline(userId) {
+    const token = this.getToken()
+    if (!token) return { is_online: false }
+
+    const res = await fetch(`${API_URL}/users/${userId}/online`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+
+    if (!res.ok) return { is_online: false }
+    return await res.json()
+  }
+
   // ═══════════════════════════════════════════
   // PROFILE (OTHER USERS)
   // ═══════════════════════════════════════════

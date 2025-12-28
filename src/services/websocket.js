@@ -5,6 +5,7 @@ class WebSocketService {
     this.socket = null
     this.connected = false
     this.listeners = new Map()
+    this.onlineUsers = new Set()
   }
 
   /**
@@ -42,6 +43,8 @@ class WebSocketService {
     this.socket.on('disconnect', (reason) => {
       this.connected = false
       console.log('❌ WebSocket disconnected:', reason)
+      // Очищаем онлайн статусы при отключении
+      this.onlineUsers.clear()
     })
 
     this.socket.on('connect_error', (error) => {
@@ -52,6 +55,22 @@ class WebSocketService {
     this.socket.on('notification', (data) => {
       console.log('🔔 Notification received:', data)
       this.triggerListeners('notification', data)
+    })
+
+    // Онлайн статусы
+    this.socket.on('user_online_status', (data) => {
+      console.log('🟢 Online status update:', data)
+
+      if (data.is_online) {
+        this.onlineUsers.add(data.user_id)
+        console.log(`✅ User ${data.user_id} is now ONLINE`)
+      } else {
+        this.onlineUsers.delete(data.user_id)
+        console.log(`⚪ User ${data.user_id} is now OFFLINE`)
+      }
+
+      // Вызываем колбэки для онлайн статусов
+      this.triggerListeners('online_status_changed', data)
     })
   }
 
@@ -65,7 +84,53 @@ class WebSocketService {
       this.socket = null
       this.connected = false
       this.listeners.clear()
+      this.onlineUsers.clear()
     }
+  }
+
+  /**
+   * Проверка онлайн статуса пользователя
+   * @param {number} userId - ID пользователя
+   * @returns {boolean}
+   */
+  isUserOnline(userId) {
+    return this.onlineUsers.has(userId)
+  }
+
+  /**
+   * Получить массив всех онлайн пользователей
+   * @returns {number[]}
+   */
+  getOnlineUsers() {
+    return Array.from(this.onlineUsers)
+  }
+
+  /**
+   * Добавить пользователя в онлайн (для инициализации)
+   * @param {number} userId - ID пользователя
+   */
+  setUserOnline(userId) {
+    this.onlineUsers.add(userId)
+    console.log(`✅ Manually set user ${userId} as ONLINE`)
+  }
+
+  /**
+   * Удалить пользователя из онлайна
+   * @param {number} userId - ID пользователя
+   */
+  setUserOffline(userId) {
+    this.onlineUsers.delete(userId)
+    console.log(`⚪ Manually set user ${userId} as OFFLINE`)
+  }
+
+  /**
+   * Инициализировать онлайн статусы (загрузка с сервера)
+   * @param {number[]} userIds - Массив ID онлайн пользователей
+   */
+  initializeOnlineUsers(userIds) {
+    this.onlineUsers.clear()
+    userIds.forEach((id) => this.onlineUsers.add(id))
+    console.log(`📊 Initialized ${userIds.length} online users`)
   }
 
   /**
@@ -119,6 +184,14 @@ class WebSocketService {
    */
   isConnected() {
     return this.connected
+  }
+
+  /**
+   * Получить количество онлайн пользователей
+   * @returns {number}
+   */
+  getOnlineCount() {
+    return this.onlineUsers.size
   }
 }
 

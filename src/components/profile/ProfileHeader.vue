@@ -9,6 +9,14 @@
         <div class="avatar-section">
           <div class="avatar-wrapper">
             <img :src="profile.avatar_url" :alt="profile.name" class="profile-avatar" />
+            <div
+              v-if="!isOwnProfile"
+              :class="['online-indicator', { online: isOnline }]"
+              :title="isOnline ? 'Онлайн' : 'Не в сети'"
+            >
+              <span class="status-dot"></span>
+            </div>
+
             <!-- Кнопка редактирования только для своего профиля -->
             <button v-if="isOwnProfile" class="avatar-edit-btn" @click="$emit('edit-avatar')">
               <svg viewBox="0 0 24 24">
@@ -119,6 +127,7 @@
 
 <script>
 import { animeApi } from '@/api/animeApi'
+import { wsService } from '@/services/websocket'
 
 export default {
   name: 'ProfileHeader',
@@ -139,6 +148,7 @@ export default {
       friendshipStatus: 'none',
       friendshipId: null,
       friendActionLoading: false,
+      isOnline: false, // ✅ Добавьте это
     }
   },
   emits: ['edit-avatar', 'open-settings'],
@@ -172,11 +182,50 @@ export default {
       handler() {
         if (!this.isOwnProfile && this.profile) {
           this.loadFriendshipStatus()
+          this.checkOnlineStatus() // ✅ Проверяем онлайн статус
         }
       },
     },
   },
+  mounted() {
+    // ✅ Подписываемся на изменения онлайн статуса
+    if (!this.isOwnProfile && this.profile) {
+      this.onlineStatusHandler = (data) => {
+        if (data.user_id === this.profile.id) {
+          this.isOnline = data.is_online
+          console.log(
+            `👤 User ${this.profile.name} is now ${data.is_online ? '🟢 ONLINE' : '⚪ OFFLINE'}`,
+          )
+        }
+      }
+      wsService.on('online_status_changed', this.onlineStatusHandler)
+    }
+  },
+  beforeUnmount() {
+    // ✅ Отписываемся от событий
+    if (this.onlineStatusHandler) {
+      wsService.off('online_status_changed', this.onlineStatusHandler)
+    }
+  },
   methods: {
+    // ✅ НОВЫЙ МЕТОД: Проверка онлайн статуса
+    async checkOnlineStatus() {
+      if (!this.profile) return
+
+      try {
+        // Сначала проверяем в WebSocket сервисе
+        this.isOnline = wsService.isUserOnline(this.profile.id)
+
+        // Затем запрашиваем с сервера (на случай если WS еще не подключен)
+        const status = await animeApi.checkUserOnline(this.profile.id)
+        this.isOnline = status.is_online
+
+        console.log(`👤 User ${this.profile.name} online status:`, this.isOnline)
+      } catch (err) {
+        console.error('Ошибка проверки онлайн статуса:', err)
+      }
+    },
+
     async loadFriendshipStatus() {
       try {
         const status = await animeApi.getFriendshipStatus(this.profile.id)
@@ -192,24 +241,20 @@ export default {
 
       try {
         if (this.friendshipStatus === 'none') {
-          // Отправить заявку
           await animeApi.addFriend(this.profile.id)
           this.friendshipStatus = 'pending_sent'
         } else if (this.friendshipStatus === 'pending_sent') {
-          // Отменить заявку
           if (this.friendshipId) {
             await animeApi.removeFriend(this.friendshipId)
             this.friendshipStatus = 'none'
             this.friendshipId = null
           }
         } else if (this.friendshipStatus === 'pending_received') {
-          // Принять заявку
           if (this.friendshipId) {
             await animeApi.acceptFriendRequest(this.friendshipId)
             this.friendshipStatus = 'friends'
           }
         } else if (this.friendshipStatus === 'friends') {
-          // Удалить из друзей
           const confirmed = confirm('Удалить из друзей?')
           if (confirmed && this.friendshipId) {
             await animeApi.removeFriend(this.friendshipId)
@@ -337,8 +382,8 @@ export default {
 
 .avatar-edit-btn {
   position: absolute;
-  bottom: 10px;
-  right: 10px;
+  bottom: 8px;
+  left: 8px;
   width: 44px;
   height: 44px;
   background: linear-gradient(135deg, #ff416c, #ff4b2b);
@@ -349,16 +394,91 @@ export default {
   justify-content: center;
   cursor: pointer;
   transition: all 0.3s;
+  z-index: 2;
 }
 
 .avatar-edit-btn:hover {
   transform: scale(1.1);
+  box-shadow: 0 0 20px rgba(255, 65, 108, 0.5);
 }
 
 .avatar-edit-btn svg {
   width: 20px;
   height: 20px;
   color: white;
+}
+
+/* ═══════════════════════════════════════════ */
+/* ОНЛАЙН ИНДИКАТОР*/
+/* ═══════════════════════════════════════════ */
+.online-indicator {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  width: 32px;
+  height: 32px;
+  background: #0a0a0a;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 4px solid #0a0a0a;
+  z-index: 2;
+  cursor: help;
+  transition: all 0.3s;
+}
+
+.online-indicator:hover {
+  transform: scale(1.1);
+}
+
+.status-dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6b7280, #9ca3af);
+  transition: all 0.3s;
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.2),
+    0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Онлайн - зеленый с градиентом и свечением */
+.online-indicator.online .status-dot {
+  background: linear-gradient(135deg, #4caf50, #66bb6a);
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.1),
+    0 0 0 3px rgba(76, 175, 80, 0.2),
+    0 0 12px rgba(76, 175, 80, 0.6),
+    0 0 24px rgba(76, 175, 80, 0.4);
+  animation: pulse-online 2s ease-in-out infinite;
+}
+
+@keyframes pulse-online {
+  0%,
+  100% {
+    box-shadow:
+      inset 0 2px 4px rgba(0, 0, 0, 0.1),
+      0 0 0 3px rgba(76, 175, 80, 0.2),
+      0 0 12px rgba(76, 175, 80, 0.6),
+      0 0 24px rgba(76, 175, 80, 0.4);
+  }
+  50% {
+    box-shadow:
+      inset 0 2px 4px rgba(0, 0, 0, 0.1),
+      0 0 0 5px rgba(76, 175, 80, 0.3),
+      0 0 16px rgba(76, 175, 80, 0.8),
+      0 0 32px rgba(76, 175, 80, 0.6);
+  }
+}
+
+/* Офлайн - серый */
+.online-indicator:not(.online) .status-dot {
+  background: linear-gradient(135deg, #6b7280, #9ca3af);
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.2),
+    0 0 0 3px rgba(107, 114, 128, 0.1),
+    0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 /* ═══════════════════════════════════════════ */
@@ -597,6 +717,18 @@ export default {
     height: 120px;
   }
 
+  .avatar-edit-btn {
+    width: 36px;
+    height: 36px;
+    bottom: 6px;
+    left: 6px;
+  }
+
+  .avatar-edit-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+
   .profile-name {
     font-size: 32px;
   }
@@ -624,6 +756,27 @@ export default {
     right: 20px;
     left: 20px;
     font-size: 14px;
+  }
+
+  .online-indicator {
+    width: 28px;
+    height: 28px;
+    bottom: 6px;
+    right: 6px;
+    border-width: 3px;
+  }
+
+  .status-dot {
+    width: 16px;
+    height: 16px;
+  }
+
+  .online-indicator.online .status-dot {
+    box-shadow:
+      inset 0 1px 3px rgba(0, 0, 0, 0.1),
+      0 0 0 2px rgba(76, 175, 80, 0.2),
+      0 0 10px rgba(76, 175, 80, 0.6),
+      0 0 20px rgba(76, 175, 80, 0.4);
   }
 }
 </style>
