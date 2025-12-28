@@ -115,7 +115,6 @@
         <!-- Аватар (только на десктопе) -->
         <div class="user-avatar desktop-only" @click="toggleUserMenu">
           <img :src="userAvatar" alt="User" class="avatar-img" />
-          <div class="avatar-status"></div>
         </div>
       </div>
     </div>
@@ -499,18 +498,6 @@ export default {
   border: 2px solid rgba(255, 65, 108, 0.5);
   object-fit: cover;
   box-shadow: 0 0 15px rgba(255, 65, 108, 0.3);
-}
-
-.avatar-status {
-  position: absolute;
-  bottom: -2px;
-  right: -2px;
-  width: 14px;
-  height: 14px;
-  background: #4caf50;
-  border-radius: 50%;
-  border: 2px solid rgba(10, 10, 10, 0.95);
-  box-shadow: 0 0 8px rgba(76, 175, 80, 0.6);
 }
 
 /* ═══════════════════════════════════════════ */
