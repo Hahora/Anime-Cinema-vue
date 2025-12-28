@@ -3,6 +3,12 @@
     <router-link :to="`/profile/${sender.id}`" class="request-link">
       <div class="request-avatar">
         <img :src="sender.avatar_url" :alt="sender.name" />
+
+        <!-- ОНЛАЙН ИНДИКАТОР -->
+        <div :class="['online-indicator', { online: isOnline }]">
+          <span class="status-dot"></span>
+        </div>
+
         <div class="request-badge">
           <svg viewBox="0 0 24 24">
             <path
@@ -50,6 +56,10 @@ export default {
     request: {
       type: Object,
       required: true,
+    },
+    isOnline: {
+      type: Boolean,
+      default: false,
     },
   },
   emits: ['refresh'],
@@ -279,5 +289,50 @@ export default {
   background: rgba(244, 67, 54, 0.2);
   border-color: rgba(244, 67, 54, 0.4);
   color: #f44336;
+}
+
+.online-indicator {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 20px;
+  height: 20px;
+  background: rgba(0, 0, 0, 0.8);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid rgba(0, 0, 0, 0.8);
+  z-index: 2;
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6b7280, #9ca3af);
+  transition: all 0.3s;
+}
+
+.online-indicator.online .status-dot {
+  background: linear-gradient(135deg, #4caf50, #66bb6a);
+  box-shadow:
+    0 0 0 2px rgba(76, 175, 80, 0.2),
+    0 0 8px rgba(76, 175, 80, 0.6);
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 2px rgba(76, 175, 80, 0.2),
+      0 0 8px rgba(76, 175, 80, 0.6);
+  }
+  50% {
+    box-shadow:
+      0 0 0 3px rgba(76, 175, 80, 0.3),
+      0 0 12px rgba(76, 175, 80, 0.8);
+  }
 }
 </style>

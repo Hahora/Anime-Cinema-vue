@@ -3,6 +3,10 @@
     <router-link :to="`/profile/${user.id}`" class="user-link">
       <div class="user-avatar">
         <img :src="user.avatar_url" :alt="user.name" />
+        <!-- ОНЛАЙН ИНДИКАТОР -->
+        <div :class="['online-indicator', { online: isOnline }]">
+          <span class="status-dot"></span>
+        </div>
       </div>
 
       <div class="user-info">
@@ -74,6 +78,10 @@ export default {
     user: {
       type: Object,
       required: true,
+    },
+    isOnline: {
+      type: Boolean,
+      default: false,
     },
   },
   emits: ['refresh'],
@@ -167,6 +175,7 @@ export default {
 }
 
 .user-avatar {
+  position: relative;
   width: 60px;
   height: 60px;
   border-radius: 12px;
@@ -179,6 +188,7 @@ export default {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  border-radius: 12px;
 }
 
 .user-info {
@@ -276,5 +286,51 @@ export default {
   background: rgba(244, 67, 54, 0.2);
   border-color: rgba(244, 67, 54, 0.4);
   color: #f44336;
+}
+
+/* ОНЛАЙН ИНДИКАТОР */
+.online-indicator {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 20px;
+  height: 20px;
+  background: rgba(0, 0, 0, 0.8);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid rgba(0, 0, 0, 0.8);
+  z-index: 2;
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6b7280, #9ca3af);
+  transition: all 0.3s;
+}
+
+.online-indicator.online .status-dot {
+  background: linear-gradient(135deg, #4caf50, #66bb6a);
+  box-shadow:
+    0 0 0 2px rgba(76, 175, 80, 0.2),
+    0 0 8px rgba(76, 175, 80, 0.6);
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 2px rgba(76, 175, 80, 0.2),
+      0 0 8px rgba(76, 175, 80, 0.6);
+  }
+  50% {
+    box-shadow:
+      0 0 0 3px rgba(76, 175, 80, 0.3),
+      0 0 12px rgba(76, 175, 80, 0.8);
+  }
 }
 </style>

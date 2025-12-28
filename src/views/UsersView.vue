@@ -15,6 +15,14 @@
           Пользователи
         </h1>
 
+        <!-- СТАТИСТИКА ОНЛАЙН -->
+        <div class="online-stats">
+          <div class="online-indicator-small">
+            <span class="status-dot online"></span>
+          </div>
+          <span class="online-count">{{ onlineCount }} онлайн</span>
+        </div>
+
         <!-- Переключатель вкладок -->
         <div class="tabs">
           <button :class="['tab', { active: currentTab === 'all' }]" @click="currentTab = 'all'">
@@ -90,6 +98,7 @@
             v-for="user in displayedUsers"
             :key="user.id"
             :user="user"
+            :is-online="isUserOnline(user.id)"
             @refresh="loadAllData"
           />
           <div v-if="displayedUsers.length === 0" class="no-results">
@@ -106,6 +115,7 @@
             :key="friendship.id"
             :friendship="friendship"
             :current-user-id="currentUserId"
+            :is-online="isFriendOnline(friendship)"
             @refresh="loadAllData"
           />
 
@@ -122,6 +132,7 @@
             v-for="request in requests"
             :key="request.id"
             :request="request"
+            :is-online="isUserOnline(request.user.id)"
             @refresh="loadAllData"
           />
 
@@ -142,6 +153,7 @@ import UserCard from '@/components/UserCard.vue'
 import FriendCard from '@/components/FriendCard.vue'
 import RequestCard from '@/components/RequestCard.vue'
 import { animeApi } from '@/api/animeApi'
+import { wsService } from '@/services/websocket'
 
 export default {
   name: 'UsersView',
@@ -163,11 +175,18 @@ export default {
       searchResults: [],
       friends: [],
       requests: [],
+
+      // Онлайн пользователи
+      onlineUserIds: new Set(),
     }
   },
   computed: {
     displayedUsers() {
       return this.searchQuery ? this.searchResults : this.allUsers
+    },
+    // Количество онлайн пользователей
+    onlineCount() {
+      return this.onlineUserIds.size
     },
   },
   async mounted() {
@@ -178,6 +197,24 @@ export default {
 
     await this.loadCurrentUser()
     await this.loadAllData()
+    await this.loadOnlineUsers()
+
+    // Подписываемся на изменения онлайн статусов
+    this.onlineStatusHandler = (data) => {
+      if (data.is_online) {
+        this.onlineUserIds.add(data.user_id)
+      } else {
+        this.onlineUserIds.delete(data.user_id)
+      }
+      console.log(`👤 User ${data.user_id} is now ${data.is_online ? '🟢 ONLINE' : '⚪ OFFLINE'}`)
+    }
+    wsService.on('online_status_changed', this.onlineStatusHandler)
+  },
+  beforeUnmount() {
+    // Отписываемся от событий
+    if (this.onlineStatusHandler) {
+      wsService.off('online_status_changed', this.onlineStatusHandler)
+    }
   },
   watch: {
     '$route.query.tab'(newTab) {
@@ -187,6 +224,29 @@ export default {
     },
   },
   methods: {
+    //  Загрузка онлайн пользователей
+    async loadOnlineUsers() {
+      try {
+        const data = await animeApi.getOnlineUsers()
+        this.onlineUserIds = new Set(data.online_user_ids)
+        console.log(`🟢 Loaded ${this.onlineUserIds.size} online users`)
+      } catch (err) {
+        console.error('Ошибка загрузки онлайн пользователей:', err)
+      }
+    },
+
+    //  Проверка онлайн статуса пользователя
+    isUserOnline(userId) {
+      return wsService.isUserOnline(userId) || this.onlineUserIds.has(userId)
+    },
+
+    //Проверка онлайн статуса друга
+    isFriendOnline(friendship) {
+      const friendId =
+        friendship.user.id === this.currentUserId ? friendship.friend.id : friendship.user.id
+      return this.isUserOnline(friendId)
+    },
+
     async loadCurrentUser() {
       try {
         const profile = await animeApi.getProfile()
@@ -350,6 +410,62 @@ export default {
 
 .tab.active .tab-badge {
   background: rgba(255, 255, 255, 0.3);
+}
+
+/* ═══════════════════════════════════════════ */
+/* СТАТИСТИКА ОНЛАЙН */
+/* ═══════════════════════════════════════════ */
+.online-stats {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  background: rgba(76, 175, 80, 0.1);
+  border: 1px solid rgba(76, 175, 80, 0.3);
+  border-radius: 12px;
+  margin-bottom: 24px;
+  width: fit-content;
+}
+
+.online-indicator-small {
+  width: 24px;
+  height: 24px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.online-indicator-small .status-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4caf50, #66bb6a);
+  box-shadow:
+    0 0 0 2px rgba(76, 175, 80, 0.2),
+    0 0 8px rgba(76, 175, 80, 0.6);
+  animation: pulse-small 2s ease-in-out infinite;
+}
+
+@keyframes pulse-small {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 2px rgba(76, 175, 80, 0.2),
+      0 0 8px rgba(76, 175, 80, 0.6);
+  }
+  50% {
+    box-shadow:
+      0 0 0 3px rgba(76, 175, 80, 0.3),
+      0 0 12px rgba(76, 175, 80, 0.8);
+  }
+}
+
+.online-count {
+  font-size: 15px;
+  font-weight: 700;
+  color: #4caf50;
 }
 
 /* ═══════════════════════════════════════════ */
