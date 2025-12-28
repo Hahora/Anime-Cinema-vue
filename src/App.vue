@@ -7,6 +7,8 @@
 
 <script>
 import AppHeader from './components/AppHeader.vue'
+import { wsService } from './services/websocket'
+import { animeApi } from './api/animeApi'
 
 export default {
   name: 'App',
@@ -22,7 +24,6 @@ export default {
   },
   computed: {
     showHeader() {
-      // Не показываем header на специальных страницах
       const hideHeaderRoutes = ['login', 'NotFound', 'ServiceUnavailable', 'Register']
       return !hideHeaderRoutes.includes(this.$route.name)
     },
@@ -36,31 +37,47 @@ export default {
     this.healthCheckInterval = setInterval(() => {
       this.checkServerHealth()
     }, 30000)
+
+    // ✅ Подключаем WebSocket если пользователь авторизован
+    await this.connectWebSocket()
   },
   beforeUnmount() {
     if (this.healthCheckInterval) {
       clearInterval(this.healthCheckInterval)
     }
+
+    // ✅ Отключаем WebSocket при выходе
+    wsService.disconnect()
   },
   watch: {
-    // Блокируем навигацию если сервер недоступен
-    $route(to) {
-      if (!this.serverAvailable && to.name !== 'ServiceUnavailable') {
-        this.$router.push('/503')
+    async $route(to, from) {
+      // ✅ Подключаем WebSocket после логина/регистрации
+      if (from.name === 'login' || from.name === 'Register') {
+        await this.connectWebSocket()
+      }
+
+      // ✅ Отключаем WebSocket на странице логина/регистрации
+      if (to.name === 'login' || to.name === 'Register') {
+        wsService.disconnect()
       }
     },
   },
   methods: {
     async checkServerHealth() {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 5000)
+
       try {
         const response = await fetch(
           `${import.meta.env.VITE_API_URL || 'http://localhost:8000/api'}/health`,
           {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' },
-            signal: AbortSignal.timeout(5000), // Timeout 5 секунд
+            signal: controller.signal,
           },
         )
+
+        clearTimeout(timeoutId)
 
         if (!response.ok) {
           this.serverAvailable = false
@@ -78,24 +95,37 @@ export default {
             this.$router.push('/503')
           }
         } else {
-          // Сервер восстановлен
           const wasUnavailable = !this.serverAvailable
           this.serverAvailable = true
 
-          // Если сервер восстановился и мы на странице 503, перезагружаем
           if (wasUnavailable && this.$route.name === 'ServiceUnavailable') {
             window.location.href = '/'
           }
         }
       } catch (err) {
-        // Ошибка подключения
+        clearTimeout(timeoutId)
         console.error('Health check failed:', err)
         this.serverAvailable = false
 
-        // Редиректим на 503 только если уже прошла первая проверка
         if (this.initialCheckDone && this.$route.name !== 'ServiceUnavailable') {
           this.$router.push('/503')
         }
+      }
+    },
+
+    async connectWebSocket() {
+      const token = localStorage.getItem('token')
+      if (!token) {
+        console.log('⚠️ No token found, skipping WebSocket connection')
+        return
+      }
+
+      try {
+        const profile = await animeApi.getProfile()
+        console.log('👤 Connecting WebSocket for user:', profile.id)
+        wsService.connect(profile.id)
+      } catch (err) {
+        console.error('❌ Failed to connect WebSocket:', err)
       }
     },
   },

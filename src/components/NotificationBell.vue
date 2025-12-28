@@ -1,58 +1,65 @@
 <template>
   <div class="notification-bell">
-    <button class="bell-button" @click="toggleNotifications" :class="{ active: showNotifications }">
+    <button class="bell-button" @click="togglePanel" :class="{ active: showPanel }">
       <svg viewBox="0 0 24 24" class="bell-icon">
         <path
           d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"
           fill="currentColor"
         />
       </svg>
-      <span v-if="unreadCount > 0" class="notification-badge">{{ unreadCount }}</span>
+      <span v-if="unreadCount > 0" class="badge">{{ unreadCount }}</span>
     </button>
 
-    <!-- Выпадающий список уведомлений -->
-    <transition name="dropdown">
-      <div v-if="showNotifications" class="notifications-dropdown" @click.stop>
-        <div class="dropdown-header">
+    <!-- Панель уведомлений -->
+    <transition name="slide-down">
+      <div v-if="showPanel" class="notifications-panel">
+        <div class="panel-header">
           <h3>Уведомления</h3>
-          <button v-if="notifications.length > 0" @click="markAllAsRead" class="mark-read-btn">
-            Отметить все
+          <button v-if="notifications.length > 0" @click="markAllRead" class="mark-all-btn">
+            Прочитать все
           </button>
         </div>
 
-        <div class="notifications-list">
+        <div v-if="loading" class="panel-loading">
+          <div class="spinner"></div>
+          <p>Загрузка...</p>
+        </div>
+
+        <div v-else-if="notifications.length === 0" class="panel-empty">
+          <svg viewBox="0 0 24 24" class="empty-icon">
+            <path
+              d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"
+              fill="currentColor"
+            />
+          </svg>
+          <p>Нет уведомлений</p>
+        </div>
+
+        <div v-else class="notifications-list">
           <div
             v-for="notification in notifications"
             :key="notification.id"
             class="notification-item"
-            :class="{ unread: !notification.read }"
+            :class="{ unread: !notification.is_read }"
             @click="handleNotificationClick(notification)"
           >
             <div class="notification-avatar">
-              <img :src="notification.avatar" :alt="notification.title" />
-              <div class="notification-type-badge" :class="notification.type">
-                <svg v-if="notification.type === 'friend_request'" viewBox="0 0 24 24">
-                  <path
-                    d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
-                    fill="currentColor"
-                  />
-                </svg>
-                <svg v-else-if="notification.type === 'friend_accepted'" viewBox="0 0 24 24">
-                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" fill="currentColor" />
-                </svg>
+              <img
+                v-if="notification.sender_avatar"
+                :src="notification.sender_avatar"
+                :alt="notification.sender_name"
+              />
+              <div v-else class="avatar-placeholder">
+                {{ notification.sender_name?.[0] || '?' }}
               </div>
             </div>
 
             <div class="notification-content">
-              <p class="notification-title">{{ notification.title }}</p>
               <p class="notification-message">{{ notification.message }}</p>
-              <span class="notification-time">{{ formatTimeAgo(notification.timestamp) }}</span>
+              <span class="notification-time">{{ formatTime(notification.created_at) }}</span>
             </div>
-          </div>
 
-          <div v-if="notifications.length === 0" class="no-notifications">
-            <div class="no-notifications-icon">🔔</div>
-            <p>Нет уведомлений</p>
+            <div v-if="!notification.is_read" class="unread-dot"></div>
           </div>
         </div>
       </div>
@@ -62,132 +69,175 @@
 
 <script>
 import { animeApi } from '@/api/animeApi'
+import { wsService } from '@/services/websocket'
 
 export default {
   name: 'NotificationBell',
   data() {
     return {
-      showNotifications: false,
-      unreadCount: 0,
+      showPanel: false,
       notifications: [],
-      checkInterval: null,
+      unreadCount: 0,
+      loading: false,
     }
   },
-  async mounted() {
-    await this.loadNotifications()
-    // Проверяем новые уведомления каждые 5 секунд
-    this.checkInterval = setInterval(() => {
-      this.loadNotifications()
-    }, 5000)
+  mounted() {
+    this.loadNotifications()
+    this.loadUnreadCount()
 
-    document.addEventListener('click', this.handleClickOutside)
+    // ✅ Подписываемся на WebSocket уведомления
+    wsService.on('notification', this.handleNewNotification)
   },
   beforeUnmount() {
-    if (this.checkInterval) {
-      clearInterval(this.checkInterval)
-    }
-    document.removeEventListener('click', this.handleClickOutside)
+    // ✅ Отписываемся от WebSocket
+    wsService.off('notification', this.handleNewNotification)
   },
   methods: {
     async loadNotifications() {
+      this.loading = true
       try {
-        const notifications = await animeApi.getNotifications(20)
-
-        this.notifications = notifications.map((n) => ({
-          id: n.id,
-          type: n.type,
-          title: n.title,
-          message: n.message,
-          avatar: n.sender_avatar,
-          timestamp: n.created_at,
-          read: n.is_read,
-          senderId: n.sender_id,
-        }))
-
-        this.unreadCount = this.notifications.filter((n) => !n.read).length
+        this.notifications = await animeApi.getNotifications()
       } catch (err) {
         console.error('Ошибка загрузки уведомлений:', err)
+      } finally {
+        this.loading = false
       }
     },
 
-    toggleNotifications() {
-      this.showNotifications = !this.showNotifications
+    async loadUnreadCount() {
+      try {
+        const data = await animeApi.getUnreadNotificationsCount()
+        this.unreadCount = data.count
+      } catch (err) {
+        console.error('Ошибка загрузки счётчика:', err)
+      }
     },
 
-    handleClickOutside(event) {
-      const bell = this.$el
-      if (!bell.contains(event.target)) {
-        this.showNotifications = false
+    // ✅ Обработка нового уведомления через WebSocket
+    handleNewNotification(data) {
+      console.log('🔔 New notification:', data)
+
+      // Создаём объект уведомления
+      const notification = {
+        id: Date.now(), // Временный ID
+        type: data.type,
+        message: data.message,
+        sender_id: data.sender_id || data.accepter_id || data.rejecter_id,
+        sender_name: data.sender_name || data.accepter_name || data.rejecter_name,
+        sender_avatar: null,
+        is_read: false,
+        created_at: new Date().toISOString(),
+      }
+
+      // Добавляем в начало списка
+      this.notifications.unshift(notification)
+
+      // Увеличиваем счётчик
+      this.unreadCount++
+
+      // ✅ Показываем браузерное уведомление (опционально)
+      this.showBrowserNotification(notification)
+
+      // Перезагружаем данные с сервера
+      setTimeout(() => {
+        this.loadNotifications()
+        this.loadUnreadCount()
+      }, 1000)
+    },
+
+    // ✅ Браузерные уведомления
+    showBrowserNotification(notification) {
+      if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification('Anime Cinema', {
+          body: notification.message,
+          icon: '/logo.png',
+          badge: '/logo.png',
+        })
+      } else if ('Notification' in window && Notification.permission !== 'denied') {
+        Notification.requestPermission().then((permission) => {
+          if (permission === 'granted') {
+            new Notification('Anime Cinema', {
+              body: notification.message,
+              icon: '/logo.png',
+            })
+          }
+        })
+      }
+    },
+
+    togglePanel() {
+      this.showPanel = !this.showPanel
+      if (this.showPanel) {
+        this.loadNotifications()
       }
     },
 
     async handleNotificationClick(notification) {
-      if (!notification.read) {
+      // Помечаем как прочитанное
+      if (!notification.is_read && notification.id) {
         try {
           await animeApi.markNotificationRead(notification.id)
-          notification.read = true
-          this.unreadCount = this.notifications.filter((n) => !n.read).length
+          notification.is_read = true
+          this.unreadCount = Math.max(0, this.unreadCount - 1)
         } catch (err) {
-          console.error('Ошибка:', err)
+          console.error('Ошибка пометки уведомления:', err)
         }
       }
 
-      // Переход в зависимости от типа
+      // Закрываем панель
+      this.showPanel = false
+
+      // Переходим на нужную страницу
       if (notification.type === 'friend_request') {
         this.$router.push('/users?tab=requests')
       } else if (notification.type === 'friend_accepted') {
         this.$router.push('/users?tab=friends')
-      } else if (notification.senderId) {
-        this.$router.push(`/profile/${notification.senderId}`)
       }
-
-      this.showNotifications = false
     },
 
-    async markAllAsRead() {
+    async markAllRead() {
       try {
         await animeApi.markAllNotificationsRead()
-        this.notifications = this.notifications.map((n) => ({ ...n, read: true }))
+        this.notifications.forEach((n) => (n.is_read = true))
         this.unreadCount = 0
       } catch (err) {
         console.error('Ошибка:', err)
       }
     },
 
-    formatTimeAgo(dateString) {
-      const date = new Date(dateString)
+    formatTime(timestamp) {
+      const date = new Date(timestamp)
       const now = new Date()
-      const diffMs = now - date
-      const diffMins = Math.floor(diffMs / 60000)
-      const diffHours = Math.floor(diffMs / 3600000)
-      const diffDays = Math.floor(diffMs / 86400000)
+      const diff = Math.floor((now - date) / 1000)
 
-      if (diffMins < 1) return 'только что'
-      if (diffMins < 60) return `${diffMins} мин. назад`
-      if (diffHours < 24) return `${diffHours} ч. назад`
-      if (diffDays < 7) return `${diffDays} дн. назад`
+      if (diff < 60) return 'только что'
+      if (diff < 3600) return `${Math.floor(diff / 60)} мин назад`
+      if (diff < 86400) return `${Math.floor(diff / 3600)} ч назад`
+      if (diff < 604800) return `${Math.floor(diff / 86400)} д назад`
 
-      return date.toLocaleDateString('ru-RU')
+      return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })
     },
   },
 }
 </script>
 
 <style scoped>
+/* ... (стили остаются без изменений) */
 .notification-bell {
   position: relative;
 }
 
 .bell-button {
   position: relative;
-  width: 44px;
-  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 44px;
+  height: 44px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
+  color: white;
   cursor: pointer;
   transition: all 0.3s;
 }
@@ -196,15 +246,15 @@ export default {
 .bell-button.active {
   background: rgba(255, 255, 255, 0.1);
   border-color: rgba(255, 65, 108, 0.5);
+  transform: translateY(-2px);
 }
 
 .bell-icon {
-  width: 24px;
-  height: 24px;
-  color: white;
+  width: 22px;
+  height: 22px;
 }
 
-.notification-badge {
+.badge {
   position: absolute;
   top: -4px;
   right: -4px;
@@ -215,99 +265,113 @@ export default {
   align-items: center;
   justify-content: center;
   background: linear-gradient(135deg, #ff416c, #ff4b2b);
-  color: white;
-  font-size: 12px;
-  font-weight: 700;
   border-radius: 10px;
-  border: 2px solid #0a0a0a;
-  animation: pulse 2s ease-in-out infinite;
+  font-size: 11px;
+  font-weight: 700;
+  color: white;
+  border: 2px solid rgba(10, 10, 10, 0.95);
 }
 
-@keyframes pulse {
-  0%,
-  100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.1);
-  }
-}
-
-/* ═══════════════════════════════════════════ */
-/* ВЫПАДАЮЩИЙ СПИСОК */
-/* ═══════════════════════════════════════════ */
-.notifications-dropdown {
+.notifications-panel {
   position: absolute;
   top: calc(100% + 12px);
   right: 0;
   width: 400px;
-  max-height: 600px;
-  background: rgba(20, 20, 20, 0.98);
+  max-height: 500px;
+  background: rgba(15, 15, 15, 0.98);
   backdrop-filter: blur(20px);
+  border-radius: 20px;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  z-index: 9999;
   overflow: hidden;
-  z-index: 1000;
+  display: flex;
+  flex-direction: column;
 }
 
-.dropdown-header {
+.panel-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   padding: 20px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.dropdown-header h3 {
+.panel-header h3 {
   font-size: 18px;
   font-weight: 700;
-  margin: 0;
   color: white;
+  margin: 0;
 }
 
-.mark-read-btn {
+.mark-all-btn {
   padding: 6px 12px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 8px;
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 13px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s;
 }
 
-.mark-read-btn:hover {
+.mark-all-btn:hover {
   background: rgba(255, 255, 255, 0.1);
   color: white;
 }
 
+.panel-loading,
+.panel-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  gap: 16px;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  border-top-color: #ff416c;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.panel-loading p,
+.panel-empty p {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 14px;
+}
+
+.empty-icon {
+  width: 60px;
+  height: 60px;
+  color: rgba(255, 255, 255, 0.3);
+}
+
 .notifications-list {
-  max-height: 500px;
   overflow-y: auto;
-}
-
-.notifications-list::-webkit-scrollbar {
-  width: 6px;
-}
-
-.notifications-list::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.02);
-}
-
-.notifications-list::-webkit-scrollbar-thumb {
-  background: rgba(255, 65, 108, 0.5);
-  border-radius: 3px;
+  max-height: 400px;
 }
 
 .notification-item {
   display: flex;
+  align-items: flex-start;
   gap: 12px;
   padding: 16px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   cursor: pointer;
   transition: all 0.3s;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  position: relative;
 }
 
 .notification-item:hover {
@@ -319,44 +383,29 @@ export default {
 }
 
 .notification-avatar {
-  position: relative;
-  width: 48px;
-  height: 48px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  overflow: hidden;
   flex-shrink: 0;
 }
 
 .notification-avatar img {
   width: 100%;
   height: 100%;
-  border-radius: 12px;
   object-fit: cover;
 }
 
-.notification-type-badge {
-  position: absolute;
-  bottom: -4px;
-  right: -4px;
-  width: 24px;
-  height: 24px;
+.avatar-placeholder {
+  width: 100%;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
-  border: 2px solid rgba(20, 20, 20, 0.98);
-}
-
-.notification-type-badge.friend_request {
-  background: linear-gradient(135deg, #ffc107, #ff9800);
-}
-
-.notification-type-badge.friend_accepted {
-  background: linear-gradient(135deg, #4caf50, #45a049);
-}
-
-.notification-type-badge svg {
-  width: 14px;
-  height: 14px;
+  background: linear-gradient(135deg, #ff416c, #ff4b2b);
   color: white;
+  font-weight: 700;
+  font-size: 18px;
 }
 
 .notification-content {
@@ -364,67 +413,44 @@ export default {
   min-width: 0;
 }
 
-.notification-title {
-  font-size: 15px;
-  font-weight: 700;
-  margin: 0 0 4px;
-  color: white;
-}
-
 .notification-message {
   font-size: 14px;
-  color: rgba(255, 255, 255, 0.7);
-  margin: 0 0 6px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  color: white;
+  margin: 0 0 4px;
+  line-height: 1.4;
 }
 
 .notification-time {
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.4);
-}
-
-.no-notifications {
-  padding: 60px 20px;
-  text-align: center;
-}
-
-.no-notifications-icon {
-  font-size: 60px;
-  margin-bottom: 16px;
-  opacity: 0.3;
-}
-
-.no-notifications p {
   color: rgba(255, 255, 255, 0.5);
-  font-size: 15px;
-  margin: 0;
 }
 
-/* ═══════════════════════════════════════════ */
-/* АНИМАЦИИ */
-/* ═══════════════════════════════════════════ */
-.dropdown-enter-active,
-.dropdown-leave-active {
-  transition: all 0.3s ease;
+.unread-dot {
+  width: 8px;
+  height: 8px;
+  background: #ff416c;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 6px;
 }
 
-.dropdown-enter-from {
+.slide-down-enter-active,
+.slide-down-leave-active {
+  transition: all 0.3s ease-out;
+}
+
+.slide-down-enter-from {
   opacity: 0;
   transform: translateY(-10px);
 }
 
-.dropdown-leave-to {
+.slide-down-leave-to {
   opacity: 0;
-  transform: translateY(10px);
+  transform: translateY(-5px);
 }
 
-/* ═══════════════════════════════════════════ */
-/* АДАПТИВ */
-/* ═══════════════════════════════════════════ */
 @media (max-width: 768px) {
-  .notifications-dropdown {
+  .notifications-panel {
     width: calc(100vw - 40px);
     right: -20px;
   }
