@@ -1566,6 +1566,8 @@ export default {
   transform: translate(-50%, -50%);
   z-index: 20;
   animation: slideUp 0.4s ease-out;
+  max-width: 90%;
+  width: 100%;
 }
 
 @keyframes slideUp {
@@ -1585,7 +1587,8 @@ export default {
   border: 2px solid rgba(255, 65, 108, 0.5);
   border-radius: 20px;
   padding: 32px;
-  min-width: 400px;
+  min-width: auto;
+  max-width: 500px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
   display: flex;
   flex-direction: column;
@@ -1613,6 +1616,7 @@ export default {
 
 .restore-info {
   text-align: center;
+  width: 100%;
 }
 
 .restore-info h3 {
@@ -1620,24 +1624,31 @@ export default {
   font-weight: 700;
   margin: 0 0 12px;
   color: white;
+  word-wrap: break-word;
 }
 
 .restore-info p {
   font-size: 16px;
   color: rgba(255, 255, 255, 0.7);
   margin: 0;
+  word-wrap: break-word;
+  line-height: 1.5;
 }
 
 .restore-info strong {
   color: #ff416c;
   font-weight: 700;
   font-size: 18px;
+  display: block;
+  margin-top: 8px;
+  word-wrap: break-word;
 }
 
 .restore-actions {
   display: flex;
   gap: 12px;
   width: 100%;
+  flex-wrap: wrap;
 }
 
 .restore-btn {
@@ -1654,6 +1665,7 @@ export default {
   transition: all 0.3s;
   border: none;
   white-space: nowrap;
+  min-width: 120px;
 }
 
 .restore-btn.primary {
@@ -1681,34 +1693,85 @@ export default {
 .restore-btn .btn-icon {
   width: 20px;
   height: 20px;
+  flex-shrink: 0;
 }
 
 /* Адаптив для диалога */
 @media (max-width: 768px) {
-  .control-btn {
-    padding: 12px;
-    min-width: 44px;
-    min-height: 44px;
+  .restore-dialog {
+    max-width: 95%;
+    padding: 0 10px;
   }
 
-  .control-btn svg {
-    width: 24px;
-    height: 24px;
+  .restore-content {
+    padding: 24px 20px;
+    border-radius: 16px;
+    gap: 20px;
   }
 
-  .progress-container {
-    padding: 16px 0;
-    cursor: pointer;
-    touch-action: none;
+  .restore-icon {
+    font-size: 48px;
   }
 
-  .progress-bar {
-    height: 8px;
+  .restore-info h3 {
+    font-size: 18px;
+    margin: 0 0 8px;
   }
 
-  .progress-handle {
-    width: 20px;
-    height: 20px;
+  .restore-info p {
+    font-size: 14px;
+    line-height: 1.4;
+  }
+
+  .restore-info strong {
+    font-size: 15px;
+    margin-top: 4px;
+  }
+
+  .restore-actions {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .restore-btn {
+    width: 100%;
+    min-width: auto;
+    padding: 12px 20px;
+    font-size: 14px;
+  }
+
+  .restore-btn .btn-icon {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .restore-content {
+    padding: 20px 16px;
+    gap: 16px;
+  }
+
+  .restore-icon {
+    font-size: 40px;
+  }
+
+  .restore-info h3 {
+    font-size: 16px;
+  }
+
+  .restore-info p {
+    font-size: 13px;
+  }
+
+  .restore-info strong {
+    font-size: 14px;
+  }
+
+  .restore-btn {
+    padding: 10px 16px;
+    font-size: 13px;
+    gap: 6px;
   }
 }
 
