@@ -1,8 +1,16 @@
 <template>
   <header class="app-header">
     <div class="header-container">
+      <!-- Бургер-меню (только на мобильных) -->
+      <button class="burger-btn" @click="toggleMobileMenu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+
       <!-- Логотип -->
       <router-link to="/" class="logo">
+        <!-- ✅ ВАШ ОРИГИНАЛЬНЫЙ ЛОГОТИП -->
         <div class="logo-icon">
           <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path
@@ -59,8 +67,8 @@
         </div>
       </router-link>
 
-      <!-- Навигация -->
-      <nav class="nav-menu">
+      <!-- Навигация (только на десктопе) -->
+      <nav class="nav-menu desktop-only">
         <router-link to="/" class="nav-item" :class="{ active: $route.path === '/' }">
           <svg viewBox="0 0 24 24" class="nav-icon">
             <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" fill="currentColor" />
@@ -89,65 +97,34 @@
         </router-link>
       </nav>
 
-      <!-- Правая часть -->
+      <!-- Действия справа -->
       <div class="header-actions">
         <!-- Поиск -->
-        <button class="action-btn search-btn" @click="toggleSearch" title="Поиск">
+        <router-link to="/search" class="action-btn search-btn" title="Поиск">
           <svg viewBox="0 0 24 24" class="action-icon">
             <path
               d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
               fill="currentColor"
             />
           </svg>
-        </button>
+        </router-link>
 
+        <!-- Уведомления -->
         <NotificationBell />
 
-        <!-- Аватар -->
-        <div class="user-avatar" @click="toggleUserMenu">
+        <!-- Аватар (только на десктопе) -->
+        <div class="user-avatar desktop-only" @click="toggleUserMenu">
           <img :src="userAvatar" alt="User" class="avatar-img" />
           <div class="avatar-status"></div>
         </div>
       </div>
     </div>
 
-    <!-- Панель поиска -->
-    <transition name="slide-down">
-      <div v-if="searchOpen" class="search-panel" @click.stop>
-        <div class="search-panel-container">
-          <input
-            ref="searchInput"
-            v-model="searchQuery"
-            @keyup.enter="performSearch"
-            type="text"
-            placeholder="Поиск аниме..."
-            class="search-panel-input"
-          />
-          <button @click="performSearch" class="search-panel-btn">
-            <svg viewBox="0 0 24 24">
-              <path
-                d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
-                fill="currentColor"
-              />
-            </svg>
-          </button>
-          <button @click="toggleSearch" class="search-panel-close">
-            <svg viewBox="0 0 24 24">
-              <path
-                d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
-                fill="currentColor"
-              />
-            </svg>
-          </button>
-        </div>
-      </div>
-    </transition>
-
-    <!-- Меню пользователя -->
+    <!-- Меню пользователя (десктоп) -->
     <transition name="fade">
-      <div v-if="userMenuOpen" class="user-menu-backdrop" @click="toggleUserMenu">
+      <div v-if="userMenuOpen" class="user-menu-backdrop desktop-only" @click="toggleUserMenu">
         <div class="user-menu" @click.stop>
-          <!-- ✅ Крестик закрытия -->
+          <!-- Крестик -->
           <button class="user-menu-close" @click="toggleUserMenu">
             <svg viewBox="0 0 24 24">
               <path
@@ -157,6 +134,7 @@
             </svg>
           </button>
 
+          <!-- Профиль -->
           <div class="user-menu-header">
             <img :src="userAvatar" alt="User" class="user-menu-avatar" />
             <div class="user-menu-info">
@@ -164,9 +142,12 @@
               <p>@{{ userEmail }}</p>
             </div>
           </div>
+
           <div class="user-menu-divider"></div>
+
+          <!-- Навигация -->
           <nav class="user-menu-nav">
-            <router-link :to="`/profile`" class="user-menu-item" @click="toggleUserMenu">
+            <router-link to="/profile" class="user-menu-item" @click="toggleUserMenu">
               <svg viewBox="0 0 24 24" class="menu-item-icon">
                 <path
                   d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"
@@ -176,7 +157,6 @@
               Личный кабинет
             </router-link>
 
-            <!-- ✅ Друзья -->
             <router-link to="/users?tab=friends" class="user-menu-item" @click="toggleUserMenu">
               <svg viewBox="0 0 24 24" class="menu-item-icon">
                 <path
@@ -196,6 +176,7 @@
               </svg>
               Избранное
             </router-link>
+
             <router-link to="/history" class="user-menu-item" @click="toggleUserMenu">
               <svg viewBox="0 0 24 24" class="menu-item-icon">
                 <path
@@ -203,10 +184,13 @@
                   fill="currentColor"
                 />
               </svg>
-              История просмотра
+              История
             </router-link>
           </nav>
+
           <div class="user-menu-divider"></div>
+
+          <!-- Выход -->
           <a href="#" @click.prevent="handleLogout" class="user-menu-item logout">
             <svg viewBox="0 0 24 24" class="menu-item-icon">
               <path
@@ -219,24 +203,33 @@
         </div>
       </div>
     </transition>
+
+    <!-- Мобильное меню -->
+    <MobileMenu
+      :is-open="mobileMenuOpen"
+      :user-name="userName"
+      :user-email="userEmail"
+      :user-avatar="userAvatar"
+      @close="toggleMobileMenu"
+    />
   </header>
 </template>
 
 <script>
 import { animeApi } from '@/api/animeApi'
 import NotificationBell from './NotificationBell.vue'
+import MobileMenu from './MobileMenu.vue'
 
 export default {
   name: 'AppHeader',
-
   components: {
     NotificationBell,
+    MobileMenu,
   },
   data() {
     return {
-      searchOpen: false,
-      searchQuery: '',
       userMenuOpen: false,
+      mobileMenuOpen: false,
       userName: 'Загрузка...',
       userEmail: '',
       userAvatar: 'https://i.pravatar.cc/150?img=68',
@@ -257,25 +250,18 @@ export default {
       }
     },
 
-    toggleSearch() {
-      this.searchOpen = !this.searchOpen
-      if (this.searchOpen) {
-        this.$nextTick(() => {
-          this.$refs.searchInput?.focus()
-        })
-      }
-    },
-
-    performSearch() {
-      if (this.searchQuery.trim()) {
-        this.$router.push({ path: '/search', query: { q: this.searchQuery } })
-        this.searchOpen = false
-        this.searchQuery = ''
-      }
-    },
-
     toggleUserMenu() {
       this.userMenuOpen = !this.userMenuOpen
+    },
+
+    toggleMobileMenu() {
+      this.mobileMenuOpen = !this.mobileMenuOpen
+      // Блокируем скролл body
+      if (this.mobileMenuOpen) {
+        document.body.style.overflow = 'hidden'
+      } else {
+        document.body.style.overflow = ''
+      }
     },
 
     handleLogout() {
@@ -303,10 +289,40 @@ export default {
 .header-container {
   max-width: 1600px;
   margin: 0 auto;
-  padding: 16px 40px;
+  padding: 12px 20px;
   display: flex;
   align-items: center;
-  gap: 40px;
+  gap: 20px;
+}
+
+/* ═══════════════════════════════════════════ */
+/* БУРГЕР-МЕНЮ */
+/* ═══════════════════════════════════════════ */
+.burger-btn {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  width: 40px;
+  height: 40px;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.burger-btn:hover {
+  background: rgba(255, 65, 108, 0.1);
+  border-color: rgba(255, 65, 108, 0.3);
+}
+
+.burger-btn span {
+  width: 100%;
+  height: 2px;
+  background: white;
+  border-radius: 2px;
+  transition: all 0.3s;
 }
 
 /* ═══════════════════════════════════════════ */
@@ -315,10 +331,9 @@ export default {
 .logo {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   text-decoration: none;
   transition: all 0.3s;
-  cursor: pointer;
 }
 
 .logo:hover {
@@ -345,7 +360,6 @@ export default {
 .logo-text {
   display: flex;
   flex-direction: column;
-  gap: 2px;
 }
 
 .logo-title {
@@ -359,9 +373,9 @@ export default {
 }
 
 .logo-subtitle {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.5);
   text-transform: uppercase;
   letter-spacing: 1px;
 }
@@ -379,21 +393,22 @@ export default {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 20px;
+  padding: 10px 18px;
   border-radius: 12px;
   color: rgba(255, 255, 255, 0.7);
   text-decoration: none;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   transition: all 0.3s;
   position: relative;
+  overflow: hidden;
 }
 
 .nav-item::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(255, 65, 108, 0.1), rgba(255, 75, 43, 0.1));
+  background: linear-gradient(135deg, rgba(255, 65, 108, 0.15), rgba(255, 75, 43, 0.15));
   border-radius: 12px;
   opacity: 0;
   transition: opacity 0.3s;
@@ -410,18 +425,19 @@ export default {
 
 .nav-item.active {
   color: white;
-  background: rgba(255, 65, 108, 0.15);
-  border: 1px solid rgba(255, 65, 108, 0.3);
+  background: linear-gradient(135deg, rgba(255, 65, 108, 0.2), rgba(255, 75, 43, 0.2));
+  border: 1px solid rgba(255, 65, 108, 0.4);
+  box-shadow: 0 0 20px rgba(255, 65, 108, 0.2);
 }
 
 .nav-icon {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   transition: transform 0.3s;
 }
 
 .nav-item:hover .nav-icon {
-  transform: scale(1.1);
+  transform: scale(1.15);
 }
 
 /* ═══════════════════════════════════════════ */
@@ -430,7 +446,7 @@ export default {
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .action-btn {
@@ -438,42 +454,27 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
+  width: 42px;
+  height: 42px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   color: white;
+  text-decoration: none;
   cursor: pointer;
   transition: all 0.3s;
 }
 
 .action-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 65, 108, 0.5);
+  background: rgba(255, 65, 108, 0.15);
+  border-color: rgba(255, 65, 108, 0.4);
   transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 65, 108, 0.3);
 }
 
 .action-icon {
-  width: 22px;
-  height: 22px;
-}
-
-.notification-badge {
-  position: absolute;
-  top: -4px;
-  right: -4px;
   width: 20px;
   height: 20px;
-  background: linear-gradient(135deg, #ff416c, #ff4b2b);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  font-weight: 700;
-  color: white;
-  border: 2px solid rgba(10, 10, 10, 0.95);
 }
 
 /* ═══════════════════════════════════════════ */
@@ -481,14 +482,14 @@ export default {
 /* ═══════════════════════════════════════════ */
 .user-avatar {
   position: relative;
-  width: 44px;
-  height: 44px;
+  width: 42px;
+  height: 42px;
   cursor: pointer;
   transition: transform 0.3s;
 }
 
 .user-avatar:hover {
-  transform: scale(1.05);
+  transform: scale(1.08);
 }
 
 .avatar-img {
@@ -497,103 +498,28 @@ export default {
   border-radius: 50%;
   border: 2px solid rgba(255, 65, 108, 0.5);
   object-fit: cover;
+  box-shadow: 0 0 15px rgba(255, 65, 108, 0.3);
 }
 
 .avatar-status {
   position: absolute;
-  bottom: 0;
-  right: 0;
+  bottom: -2px;
+  right: -2px;
   width: 14px;
   height: 14px;
   background: #4caf50;
   border-radius: 50%;
   border: 2px solid rgba(10, 10, 10, 0.95);
+  box-shadow: 0 0 8px rgba(76, 175, 80, 0.6);
 }
 
 /* ═══════════════════════════════════════════ */
-/* ПАНЕЛЬ ПОИСКА */
-/* ═══════════════════════════════════════════ */
-.search-panel {
-  background: rgba(15, 15, 15, 0.98);
-  backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  padding: 20px 40px;
-}
-
-.search-panel-container {
-  max-width: 800px;
-  margin: 0 auto;
-  display: flex;
-  gap: 12px;
-}
-
-.search-panel-input {
-  flex: 1;
-  padding: 16px 24px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 2px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  color: white;
-  font-size: 16px;
-  outline: none;
-  transition: all 0.3s;
-}
-
-.search-panel-input:focus {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 65, 108, 0.5);
-  box-shadow: 0 0 20px rgba(255, 65, 108, 0.2);
-}
-
-.search-panel-input::placeholder {
-  color: rgba(255, 255, 255, 0.4);
-}
-
-.search-panel-btn,
-.search-panel-close {
-  width: 54px;
-  height: 54px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 14px;
-  border: none;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.search-panel-btn {
-  background: linear-gradient(135deg, #ff416c, #ff4b2b);
-  color: white;
-}
-
-.search-panel-btn:hover {
-  transform: scale(1.05);
-  box-shadow: 0 8px 24px rgba(255, 65, 108, 0.4);
-}
-
-.search-panel-btn svg,
-.search-panel-close svg {
-  width: 24px;
-  height: 24px;
-}
-
-.search-panel-close {
-  background: rgba(255, 255, 255, 0.05);
-  color: white;
-}
-
-.search-panel-close:hover {
-  background: rgba(255, 255, 255, 0.1);
-}
-
-/* ═══════════════════════════════════════════ */
-/* МЕНЮ ПОЛЬЗОВАТЕЛЯ */
+/* МЕНЮ ПОЛЬЗОВАТЕЛЯ (ДЕСКТОП) */
 /* ═══════════════════════════════════════════ */
 .user-menu-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(4px);
   z-index: 2000;
   display: flex;
@@ -612,6 +538,17 @@ export default {
   min-width: 300px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
   animation: slideInRight 0.3s ease-out;
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .user-menu-close {
@@ -641,17 +578,6 @@ export default {
 .user-menu-close svg {
   width: 18px;
   height: 18px;
-}
-
-@keyframes slideInRight {
-  from {
-    opacity: 0;
-    transform: translateX(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
 }
 
 .user-menu-header {
@@ -729,21 +655,6 @@ export default {
 /* ═══════════════════════════════════════════ */
 /* АНИМАЦИИ */
 /* ═══════════════════════════════════════════ */
-.slide-down-enter-active,
-.slide-down-leave-active {
-  transition: all 0.3s ease-out;
-}
-
-.slide-down-enter-from {
-  opacity: 0;
-  transform: translateY(-20px);
-}
-
-.slide-down-leave-to {
-  opacity: 0;
-  transform: translateY(-10px);
-}
-
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.3s;
@@ -757,10 +668,13 @@ export default {
 /* ═══════════════════════════════════════════ */
 /* АДАПТИВ */
 /* ═══════════════════════════════════════════ */
+.desktop-only {
+  display: flex;
+}
+
 @media (max-width: 1024px) {
   .header-container {
-    padding: 16px 20px;
-    gap: 20px;
+    gap: 12px;
   }
 
   .nav-item span {
@@ -769,57 +683,26 @@ export default {
 
   .nav-item {
     padding: 10px;
-    min-width: 44px;
+    min-width: 42px;
     justify-content: center;
-  }
-
-  .logo-text {
-    display: none;
   }
 }
 
 @media (max-width: 768px) {
-  .header-container {
-    gap: 12px;
-  }
-
-  .nav-menu {
+  .burger-btn {
     display: flex;
-    flex: 1;
-    justify-content: space-evenly;
-    gap: 4px;
   }
 
-  .nav-item {
-    padding: 8px;
-    min-width: auto;
+  .desktop-only {
+    display: none !important;
   }
 
-  .nav-icon {
-    width: 22px;
-    height: 22px;
+  .logo-subtitle {
+    display: none;
   }
 
   .header-actions {
-    gap: 8px;
-  }
-
-  .action-btn {
-    width: 40px;
-    height: 40px;
-  }
-
-  .search-panel {
-    padding: 16px 20px;
-  }
-
-  .user-menu-backdrop {
-    padding: 70px 20px 20px;
-  }
-
-  .user-menu {
-    width: 100%;
-    max-width: 400px;
+    margin-left: auto;
   }
 }
 </style>
