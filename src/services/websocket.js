@@ -43,7 +43,6 @@ class WebSocketService {
     this.socket.on('disconnect', (reason) => {
       this.connected = false
       console.log('❌ WebSocket disconnected:', reason)
-      // Очищаем онлайн статусы при отключении
       this.onlineUsers.clear()
     })
 
@@ -69,8 +68,19 @@ class WebSocketService {
         console.log(`⚪ User ${data.user_id} is now OFFLINE`)
       }
 
-      // Вызываем колбэки для онлайн статусов
       this.triggerListeners('online_status_changed', data)
+    })
+
+    // ✅ НОВОЕ: Обработка новых сообщений
+    this.socket.on('new_message', (data) => {
+      console.log('💬 New message received:', data)
+      this.triggerListeners('new_message', data)
+    })
+
+    // ✅ НОВОЕ: Обработка "печатает"
+    this.socket.on('user_typing', (data) => {
+      console.log('⌨️ User typing:', data)
+      this.triggerListeners('user_typing', data)
     })
   }
 
@@ -85,6 +95,18 @@ class WebSocketService {
       this.connected = false
       this.listeners.clear()
       this.onlineUsers.clear()
+    }
+  }
+
+  //  Отправить "печатаю"
+  /**
+   * Отправить событие "печатаю" в чат
+   * @param {number} chatId - ID чата
+   */
+  sendTyping(chatId) {
+    if (this.socket && this.connected) {
+      this.socket.emit('typing', { chat_id: chatId })
+      console.log(`⌨️ Sent typing event to chat ${chatId}`)
     }
   }
 

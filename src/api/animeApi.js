@@ -326,6 +326,92 @@ class AnimeAPI {
   }
 
   // ═══════════════════════════════════════════
+  // ЧАТЫ И СООБЩЕНИЯ
+  // ═══════════════════════════════════════════
+
+  async getChats() {
+    const token = this.getToken()
+    if (!token) throw new Error('Не авторизован')
+
+    const res = await fetch(`${API_URL}/chats`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+
+    if (!res.ok) throw new Error('Ошибка загрузки чатов')
+    return await res.json()
+  }
+
+  async createChat(friendId) {
+    const token = this.getToken()
+    if (!token) throw new Error('Не авторизован')
+
+    const res = await fetch(`${API_URL}/chats`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ friend_id: friendId }),
+    })
+
+    if (!res.ok) {
+      const error = await res.json()
+      throw new Error(error.detail || 'Ошибка создания чата')
+    }
+    return await res.json()
+  }
+
+  async getChatMessages(chatId, limit = 50, beforeId = null) {
+    const token = this.getToken()
+    if (!token) throw new Error('Не авторизован')
+
+    let url = `${API_URL}/chats/${chatId}/messages?limit=${limit}`
+    if (beforeId) {
+      url += `&before_id=${beforeId}`
+    }
+
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+
+    if (!res.ok) throw new Error('Ошибка загрузки сообщений')
+    return await res.json()
+  }
+
+  async sendMessage(chatId, content) {
+    const token = this.getToken()
+    if (!token) throw new Error('Не авторизован')
+
+    const res = await fetch(`${API_URL}/chats/${chatId}/messages`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ content }),
+    })
+
+    if (!res.ok) {
+      const error = await res.json()
+      throw new Error(error.detail || 'Ошибка отправки сообщения')
+    }
+    return await res.json()
+  }
+
+  async markChatRead(chatId) {
+    const token = this.getToken()
+    if (!token) throw new Error('Не авторизован')
+
+    const res = await fetch(`${API_URL}/chats/${chatId}/read`, {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${token}` },
+    })
+
+    if (!res.ok) throw new Error('Ошибка отметки прочитанного')
+    return await res.json()
+  }
+
+  // ═══════════════════════════════════════════
   // FAVORITES
   // ═══════════════════════════════════════════
 

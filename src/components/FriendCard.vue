@@ -145,7 +145,7 @@ export default {
   border-radius: 12px;
   overflow: hidden;
   flex-shrink: 0;
-  border: 2px solid rgba(76, 175, 80, 0.5);
+  border: 2px solid rgba(255, 255, 255, 0.1);
 }
 
 .friend-avatar img {

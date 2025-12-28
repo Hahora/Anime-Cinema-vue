@@ -6,6 +6,7 @@ import NotFoundView from '@/views/NotFoundView.vue'
 import ServiceUnavailableView from '@/views/ServiceUnavailableView.vue'
 import RegisterView from '@/views/RegisterView.vue'
 import SearchView from '@/views/SearchView.vue'
+import MessagesView from '@/views/MessagesView.vue'
 
 const routes = [
   {
@@ -78,6 +79,12 @@ const routes = [
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
     component: NotFoundView,
+  },
+  {
+    path: '/messages',
+    name: 'Messages',
+    component: MessagesView,
+    meta: { requiresAuth: true },
   },
 ]
 

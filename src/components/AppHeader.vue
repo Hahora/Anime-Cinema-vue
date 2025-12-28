@@ -10,7 +10,6 @@
 
       <!-- Логотип -->
       <router-link to="/" class="logo">
-        <!-- ✅ ВАШ ОРИГИНАЛЬНЫЙ ЛОГОТИП -->
         <div class="logo-icon">
           <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path
@@ -109,6 +108,19 @@
           </svg>
         </router-link>
 
+        <router-link to="/messages" class="action-btn messages-btn" title="Сообщения">
+          <svg viewBox="0 0 24 24" class="action-icon">
+            <path
+              d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"
+              fill="currentColor"
+            />
+          </svg>
+          <!-- Бейдж непрочитанных -->
+          <span v-if="unreadMessagesCount > 0" class="badge">
+            {{ unreadMessagesCount > 99 ? '99+' : unreadMessagesCount }}
+          </span>
+        </router-link>
+
         <!-- Уведомления -->
         <NotificationBell />
 
@@ -154,6 +166,19 @@
                 />
               </svg>
               Личный кабинет
+            </router-link>
+
+            <router-link to="/messages" class="user-menu-item" @click="toggleUserMenu">
+              <svg viewBox="0 0 24 24" class="menu-item-icon">
+                <path
+                  d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"
+                  fill="currentColor"
+                />
+              </svg>
+              Сообщения
+              <span v-if="unreadMessagesCount > 0" class="menu-badge">
+                {{ unreadMessagesCount }}
+              </span>
             </router-link>
 
             <router-link to="/users?tab=friends" class="user-menu-item" @click="toggleUserMenu">
@@ -209,6 +234,7 @@
       :user-name="userName"
       :user-email="userEmail"
       :user-avatar="userAvatar"
+      :unread-messages-count="unreadMessagesCount"
       @close="toggleMobileMenu"
     />
   </header>
@@ -216,6 +242,7 @@
 
 <script>
 import { animeApi } from '@/api/animeApi'
+import { wsService } from '@/services/websocket'
 import NotificationBell from './NotificationBell.vue'
 import MobileMenu from './MobileMenu.vue'
 
@@ -232,10 +259,23 @@ export default {
       userName: 'Загрузка...',
       userEmail: '',
       userAvatar: 'https://i.pravatar.cc/150?img=68',
+      unreadMessagesCount: 0,
     }
   },
-  mounted() {
-    this.loadUserProfile()
+  async mounted() {
+    await this.loadUserProfile()
+    await this.loadUnreadCount()
+
+    // Подписываемся на новые сообщения
+    this.newMessageHandler = () => {
+      this.loadUnreadCount()
+    }
+    wsService.on('new_message', this.newMessageHandler)
+  },
+  beforeUnmount() {
+    if (this.newMessageHandler) {
+      wsService.off('new_message', this.newMessageHandler)
+    }
   },
   methods: {
     async loadUserProfile() {
@@ -249,13 +289,21 @@ export default {
       }
     },
 
+    async loadUnreadCount() {
+      try {
+        const chats = await animeApi.getChats()
+        this.unreadMessagesCount = chats.reduce((sum, chat) => sum + chat.unread_count, 0)
+      } catch (err) {
+        console.error('Ошибка загрузки непрочитанных:', err)
+      }
+    },
+
     toggleUserMenu() {
       this.userMenuOpen = !this.userMenuOpen
     },
 
     toggleMobileMenu() {
       this.mobileMenuOpen = !this.mobileMenuOpen
-      // Блокируем скролл body
       if (this.mobileMenuOpen) {
         document.body.style.overflow = 'hidden'
       } else {
@@ -322,6 +370,64 @@ export default {
   background: white;
   border-radius: 2px;
   transition: all 0.3s;
+}
+
+/* ═══════════════════════════════════════════ */
+/* БЕЙДЖ НЕПРОЧИТАННЫХ */
+/* ═══════════════════════════════════════════ */
+.action-btn {
+  position: relative;
+}
+
+.badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #ff416c, #ff4b2b);
+  border: 2px solid #0a0a0a;
+  border-radius: 9px;
+  font-size: 10px;
+  font-weight: 700;
+  color: white;
+  animation: badge-pulse 2s infinite;
+}
+
+@keyframes badge-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+/* ═══════════════════════════════════════════ */
+/* БЕЙДЖ В МЕНЮ */
+/* ═══════════════════════════════════════════ */
+.user-menu-item {
+  position: relative;
+}
+
+.menu-badge {
+  margin-left: auto;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #ff416c, #ff4b2b);
+  border-radius: 11px;
+  font-size: 11px;
+  font-weight: 700;
+  color: white;
 }
 
 /* ═══════════════════════════════════════════ */
