@@ -47,18 +47,19 @@ export default {
       type: Object,
       required: true,
     },
+    currentUserId: {
+      type: Number,
+      required: true,
+    },
   },
   emits: ['refresh'],
   data() {
     return {
-      currentUserId: null,
       loading: false,
     }
   },
   computed: {
     otherUser() {
-      if (!this.currentUserId) return this.friendship.friend || this.friendship.user
-
       // Если я - user, возвращаем friend
       if (this.friendship.user?.id === this.currentUserId) {
         return this.friendship.friend
@@ -66,14 +67,6 @@ export default {
       // Если я - friend, возвращаем user
       return this.friendship.user
     },
-  },
-  async mounted() {
-    try {
-      const profile = await animeApi.getProfile()
-      this.currentUserId = profile.id
-    } catch (err) {
-      console.error('Failed to get current user:', err)
-    }
   },
   methods: {
     formatDate(dateString) {

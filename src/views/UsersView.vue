@@ -92,7 +92,6 @@
             :user="user"
             @refresh="loadAllData"
           />
-
           <div v-if="displayedUsers.length === 0" class="no-results">
             <div class="no-results-icon">🔍</div>
             <h3>Пользователи не найдены</h3>
@@ -106,6 +105,7 @@
             v-for="friendship in friends"
             :key="friendship.id"
             :friendship="friendship"
+            :current-user-id="currentUserId"
             @refresh="loadAllData"
           />
 
@@ -158,6 +158,7 @@ export default {
       searchQuery: '',
       searchTimeout: null,
 
+      currentUserId: null,
       allUsers: [],
       searchResults: [],
       friends: [],
@@ -170,30 +171,31 @@ export default {
     },
   },
   async mounted() {
-    // ✅ Читаем tab из URL query параметров
     const tabFromQuery = this.$route.query.tab
     if (tabFromQuery && ['all', 'friends', 'requests'].includes(tabFromQuery)) {
       this.currentTab = tabFromQuery
     }
 
+    await this.loadCurrentUser()
     await this.loadAllData()
   },
   watch: {
-    // ✅ Обновляем currentTab при изменении query параметров
     '$route.query.tab'(newTab) {
       if (newTab && ['all', 'friends', 'requests'].includes(newTab)) {
         this.currentTab = newTab
       }
     },
-
-    // ✅ Обновляем URL при смене вкладки
-    currentTab(newTab) {
-      if (this.$route.query.tab !== newTab) {
-        this.$router.push({ path: '/users', query: { tab: newTab } })
-      }
-    },
   },
   methods: {
+    async loadCurrentUser() {
+      try {
+        const profile = await animeApi.getProfile()
+        this.currentUserId = profile.id
+      } catch (err) {
+        console.error('Ошибка загрузки профиля:', err)
+      }
+    },
+
     async loadAllData() {
       try {
         this.loading = true
