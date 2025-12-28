@@ -6,12 +6,17 @@
         <video
           ref="video"
           class="video-element"
+          playsinline
+          webkit-playsinline
+          x-webkit-airplay="allow"
           @click="togglePlay"
           @timeupdate="onTimeUpdate"
           @loadedmetadata="onMetadataLoaded"
           @ended="onVideoEnded"
           @play="isPlaying = true"
           @pause="isPlaying = false"
+          @playing="isPlaying = true"
+          @waiting="isPlaying = false"
         ></video>
 
         <!-- Загрузка -->
@@ -432,6 +437,10 @@ export default {
       showTimePreview: false,
       previewTime: 0,
       previewPosition: 0,
+
+      touchStartTime: 0,
+      touchStartX: 0,
+      touchStartY: 0,
     }
   },
   computed: {
@@ -479,6 +488,16 @@ export default {
         }
       }
     },
+    isPlaying(newVal) {
+      if (newVal) {
+        // Видео играет - скрываем центральную кнопку
+        this.showPlayButton = false
+      } else {
+        // Видео на паузе - показываем центральную кнопку
+        this.showPlayButton = true
+        this.showControls = true
+      }
+    },
     currentTranslation(newVal, oldVal) {
       if (oldVal && newVal !== oldVal) {
         if (this.currentEpisode > this.episodes.length) {
@@ -506,6 +525,7 @@ export default {
     document.addEventListener('fullscreenchange', this.onFullscreenChange)
     document.addEventListener('webkitfullscreenchange', this.onFullscreenChange)
     document.addEventListener('mozfullscreenchange', this.onFullscreenChange)
+    document.addEventListener('msfullscreenchange', this.onFullscreenChange)
 
     // Горячие клавиши
     document.addEventListener('keydown', this.handleKeyPress)
@@ -514,11 +534,17 @@ export default {
     if (container) {
       container.addEventListener('mousemove', this.handleMouseMove)
       container.addEventListener('mouseleave', this.handleMouseLeave)
+
+      //Touch события
+      container.addEventListener('touchstart', this.handleTouchStart, { passive: false })
+      container.addEventListener('touchend', this.handleTouchEnd, { passive: false })
     }
 
     // Слушаем события Picture-in-Picture
     const video = this.$refs.video
     if (video) {
+      video.addEventListener('webkitbeginfullscreen', this.onFullscreenChange)
+      video.addEventListener('webkitendfullscreen', this.onFullscreenChange)
       video.addEventListener('enterpictureinpicture', this.onEnterPiP)
       video.addEventListener('leavepictureinpicture', this.onLeavePiP)
     }
@@ -527,10 +553,28 @@ export default {
     this.destroyPlayer()
     clearTimeout(this.controlsTimeout)
     clearTimeout(this.bufferingTimeout)
+
     document.removeEventListener('fullscreenchange', this.onFullscreenChange)
     document.removeEventListener('webkitfullscreenchange', this.onFullscreenChange)
     document.removeEventListener('mozfullscreenchange', this.onFullscreenChange)
+    document.removeEventListener('msfullscreenchange', this.onFullscreenChange)
     document.removeEventListener('keydown', this.handleKeyPress)
+
+    const container = this.$refs.playerContainer
+    if (container) {
+      container.removeEventListener('mousemove', this.handleMouseMove)
+      container.removeEventListener('mouseleave', this.handleMouseLeave)
+      container.removeEventListener('touchstart', this.handleTouchStart)
+      container.removeEventListener('touchend', this.handleTouchEnd)
+    }
+
+    const video = this.$refs.video
+    if (video) {
+      video.removeEventListener('webkitbeginfullscreen', this.onFullscreenChange)
+      video.removeEventListener('webkitendfullscreen', this.onFullscreenChange)
+      video.removeEventListener('enterpictureinpicture', this.onEnterPiP)
+      video.removeEventListener('leavepictureinpicture', this.onLeavePiP)
+    }
   },
   methods: {
     // ═══════════════════════════════════════════
@@ -698,8 +742,20 @@ export default {
           }
         })
       } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        // iOS Safari - нативная поддержка HLS
         video.src = url
-        // video.play() <- УБРАЛИ
+
+        video.load()
+
+        // Для iOS нужен пользовательский жест
+        const playPromise = video.play()
+        if (playPromise !== undefined) {
+          playPromise.catch((error) => {
+            console.log('Autoplay prevented:', error)
+            // Показываем кнопку play
+            this.showPlayButton = true
+          })
+        }
       }
 
       video.volume = this.volume
@@ -712,7 +768,6 @@ export default {
       video.addEventListener('canplay', this.onCanPlay)
       video.addEventListener('playing', this.onPlaying)
     },
-
     destroyPlayer() {
       if (this.hls) {
         this.hls.destroy()
@@ -720,6 +775,47 @@ export default {
       }
     },
 
+    // Обработка Touch событий
+
+    handleTouchStart(e) {
+      this.touchStartTime = Date.now()
+      this.touchStartX = e.touches[0].clientX
+      this.touchStartY = e.touches[0].clientY
+
+      // Показываем контролы
+      this.showControls = true
+      this.showPlayButton = false
+
+      // Очищаем таймер скрытия
+      if (this.controlsTimeout) {
+        clearTimeout(this.controlsTimeout)
+      }
+    },
+
+    handleTouchEnd(e) {
+      const touchDuration = Date.now() - this.touchStartTime
+      const touchEndX = e.changedTouches[0].clientX
+      const touchEndY = e.changedTouches[0].clientY
+
+      // Проверяем что это был тап, а не свайп
+      const deltaX = Math.abs(touchEndX - this.touchStartX)
+      const deltaY = Math.abs(touchEndY - this.touchStartY)
+      const isTap = deltaX < 10 && deltaY < 10
+
+      const clickedControls = e.target.closest('.video-controls')
+
+      if (isTap && touchDuration < 300 && !clickedControls) {
+        e.preventDefault()
+        this.togglePlay()
+      }
+
+      // Автоскрытие контролов если видео играет
+      if (this.isPlaying && !clickedControls) {
+        this.controlsTimeout = setTimeout(() => {
+          this.showControls = false
+        }, 3000)
+      }
+    },
     // ═══════════════════════════════════════════
     // КОНТРОЛЫ ВОСПРОИЗВЕДЕНИЯ
     // ═══════════════════════════════════════════
@@ -740,14 +836,25 @@ export default {
       if (!video) return
 
       if (video.paused) {
-        video.play()
-        // Скрываем кнопку play при запуске
-        this.showPlayButton = false
+        const playPromise = video.play()
+
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => {
+              this.showPlayButton = false
+              this.isPlaying = true
+            })
+            .catch((error) => {
+              console.log('Play error:', error)
+              this.showPlayButton = true
+              this.isPlaying = false
+            })
+        }
       } else {
         video.pause()
-        // Показываем кнопку play при паузе
         this.showPlayButton = true
         this.showControls = true
+        this.isPlaying = false
       }
     },
 
@@ -854,32 +961,69 @@ export default {
     // ═══════════════════════════════════════════
     toggleFullscreen() {
       const container = this.$refs.playerContainer
+      const video = this.$refs.video
 
       if (!this.isFullscreen) {
-        if (container.requestFullscreen) {
-          container.requestFullscreen()
-        } else if (container.webkitRequestFullscreen) {
-          container.webkitRequestFullscreen()
-        } else if (container.mozRequestFullScreen) {
-          container.mozRequestFullScreen()
+        // Для iOS используем встроенный полноэкранный режим видео
+        if (video && video.webkitEnterFullscreen && /iPhone|iPad|iPod/.test(navigator.userAgent)) {
+          try {
+            video.webkitEnterFullscreen()
+            return
+          } catch (err) {
+            console.log('iOS fullscreen error:', err)
+          }
+        }
+
+        // Стандартный Fullscreen API
+        const requestFullscreen =
+          container.requestFullscreen ||
+          container.webkitRequestFullscreen ||
+          container.mozRequestFullScreen ||
+          container.msRequestFullscreen
+
+        if (requestFullscreen) {
+          requestFullscreen.call(container).catch((err) => {
+            console.log('Fullscreen error:', err)
+          })
         }
       } else {
-        if (document.exitFullscreen) {
-          document.exitFullscreen()
-        } else if (document.webkitExitFullscreen) {
-          document.webkitExitFullscreen()
-        } else if (document.mozCancelFullScreen) {
-          document.mozCancelFullScreen()
+        // Выход из полноэкранного режима
+        if (document.fullscreenElement || document.webkitFullscreenElement) {
+          const exitFullscreen =
+            document.exitFullscreen ||
+            document.webkitExitFullscreen ||
+            document.mozCancelFullScreen ||
+            document.msExitFullscreen
+
+          if (exitFullscreen) {
+            exitFullscreen.call(document).catch((err) => {
+              console.log('Exit fullscreen error:', err)
+            })
+          }
         }
       }
     },
-
     onFullscreenChange() {
-      this.isFullscreen = !!(
-        document.fullscreenElement ||
-        document.webkitFullscreenElement ||
-        document.mozFullScreenElement
-      )
+      const video = this.$refs.video
+
+      // Сохраняем состояние воспроизведения
+      const wasPlaying = !video.paused
+
+      // Проверка iOS полноэкранного режима
+      if (video && video.webkitDisplayingFullscreen !== undefined) {
+        this.isFullscreen = video.webkitDisplayingFullscreen
+      } else {
+        // Стандартная проверка
+        this.isFullscreen = !!(
+          document.fullscreenElement ||
+          document.webkitFullscreenElement ||
+          document.mozFullScreenElement ||
+          document.msFullscreenElement
+        )
+      }
+
+      // Видео продолжит играть если играло, и останется на паузе если было на паузе
+      console.log('Fullscreen changed:', this.isFullscreen, 'Was playing:', wasPlaying)
     },
 
     // ═══════════════════════════════════════════
@@ -1260,7 +1404,7 @@ export default {
     },
     handleMouseMove() {
       this.showControls = true
-      this.showPlayButton = false
+
       this.mouseMoving = true
 
       // Очищаем предыдущий таймер
@@ -1269,16 +1413,15 @@ export default {
       }
 
       this.controlsTimeout = setTimeout(() => {
-        // Проверяем все условия для скрытия
+        // Скрываем контролы только если видео играет
         if (this.isPlaying && !this.showSettingsMenu) {
           this.showControls = false
-          this.showPlayButton = false
           // Прячем курсор
           if (this.$refs.playerContainer) {
             this.$refs.playerContainer.style.cursor = 'none'
           }
         }
-      }, 3000) // 3 секунды
+      }, 3000)
 
       // Показываем курсор
       if (this.$refs.playerContainer) {
@@ -1287,10 +1430,9 @@ export default {
     },
 
     handleMouseLeave() {
-      // Сразу скрываем контролы при выходе мыши
+      // Скрываем контролы только если видео играет
       if (this.isPlaying) {
         this.showControls = false
-        this.showPlayButton = false
       }
     },
   },
@@ -1323,12 +1465,40 @@ export default {
   overflow: hidden;
   cursor: pointer;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  user-select: none;
+  touch-action: manipulation;
 }
 
 .video-element {
   width: 100%;
   height: 100%;
   display: none;
+  object-fit: contain;
+  -webkit-media-controls: none;
+}
+
+.video-element::-webkit-media-controls {
+  display: none !important;
+}
+
+.video-element::-webkit-media-controls-enclosure {
+  display: none !important;
+}
+
+.video-element::-webkit-media-controls-panel {
+  display: none !important;
+}
+
+.player-container:-webkit-full-screen .video-element {
+  width: 100%;
+  height: 100%;
+}
+
+.player-container:-webkit-full-screen {
+  width: 100%;
+  height: 100%;
 }
 
 .player-loading {
@@ -1515,29 +1685,30 @@ export default {
 
 /* Адаптив для диалога */
 @media (max-width: 768px) {
-  .restore-content {
-    min-width: 320px;
-    padding: 24px;
+  .control-btn {
+    padding: 12px;
+    min-width: 44px;
+    min-height: 44px;
   }
 
-  .restore-icon {
-    font-size: 48px;
+  .control-btn svg {
+    width: 24px;
+    height: 24px;
   }
 
-  .restore-info h3 {
-    font-size: 20px;
+  .progress-container {
+    padding: 16px 0;
+    cursor: pointer;
+    touch-action: none;
   }
 
-  .restore-info p {
-    font-size: 14px;
+  .progress-bar {
+    height: 8px;
   }
 
-  .restore-actions {
-    flex-direction: column;
-  }
-
-  .restore-btn {
-    width: 100%;
+  .progress-handle {
+    width: 20px;
+    height: 20px;
   }
 }
 
@@ -1694,12 +1865,14 @@ export default {
   justify-content: center;
   cursor: pointer;
   transition: all 0.3s;
-  z-index: 5;
+  z-index: 15;
+  pointer-events: auto;
 }
 
 .center-play-button:hover {
   transform: translate(-50%, -50%) scale(1.1);
   background: rgba(255, 65, 108, 1);
+  box-shadow: 0 0 30px rgba(255, 65, 108, 0.6);
 }
 
 .center-play-button svg {
@@ -2179,6 +2352,23 @@ export default {
 /* ═══════════════════════════════════════════ */
 /* АДАПТИВ */
 /* ═══════════════════════════════════════════ */
+@media (max-width: 1024px) and (orientation: landscape) {
+  .player-container {
+    max-height: 100vh;
+  }
+}
+
+@supports (-webkit-touch-callout: none) {
+  .video-element {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .player-container {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+}
+
 @media (max-width: 1024px) {
   .video-player {
     grid-template-columns: 1fr;
