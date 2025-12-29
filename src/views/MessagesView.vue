@@ -235,19 +235,28 @@ export default {
     await this.loadFriends()
     await this.loadOnlineUsers() //Загружаем онлайн статусы
 
+    const chatId = this.$route.query.chat
+    if (chatId) {
+      await this.selectChat(parseInt(chatId))
+      // Удаляем параметр из URL
+      this.$router.replace({ query: {} })
+    }
+
     // Подписываемся на новые сообщения
     this.newMessageHandler = (data) => {
       if (data.chat_id === this.selectedChatId) {
-        this.messages.push(data)
-        this.$nextTick(() => {
-          this.scrollToBottom()
-        })
+        // Проверяем что это не наше сообщение (оно уже добавлено)
+        const exists = this.messages.find((m) => m.id === data.id)
+        if (!exists) {
+          this.messages.push(data)
+          this.$nextTick(() => {
+            this.scrollToBottom()
+          })
+        }
       }
 
-      // Обновляем список чатов
-      this.loadChats()
+      this.updateChatInList(data)
     }
-
     this.typingHandler = (data) => {
       if (data.chat_id === this.selectedChatId && data.user_id !== this.currentUserId) {
         this.isTyping = true
@@ -256,7 +265,6 @@ export default {
         }, 3000)
       }
     }
-
     // Обработчик изменения онлайн статуса
     this.onlineStatusHandler = (data) => {
       if (data.is_online) {
@@ -293,6 +301,34 @@ export default {
       }
     },
 
+    // Обновить чат в списке
+    updateChatInList(messageData) {
+      const chatIndex = this.chats.findIndex((c) => c.id === messageData.chat_id)
+
+      if (chatIndex !== -1) {
+        // Обновляем существующий чат
+        const chat = this.chats[chatIndex]
+        chat.last_message = messageData.content
+        chat.last_message_time = messageData.created_at
+        chat.last_message_sender_id = messageData.sender_id
+
+        // Увеличиваем счетчик непрочитанных если чат не выбран и сообщение не от нас
+        if (
+          messageData.sender_id !== this.currentUserId &&
+          this.selectedChatId !== messageData.chat_id
+        ) {
+          chat.unread_count = (chat.unread_count || 0) + 1
+        }
+
+        // Перемещаем чат в начало списка
+        this.chats.splice(chatIndex, 1)
+        this.chats.unshift(chat)
+      } else {
+        // Загружаем чаты заново если чата нет в списке
+        this.loadChats()
+      }
+    },
+
     //  Загрузка онлайн пользователей
     async loadOnlineUsers() {
       try {
@@ -326,8 +362,14 @@ export default {
     async selectChat(chatId) {
       this.selectedChatId = chatId
       await this.loadMessages()
+
       await animeApi.markChatRead(chatId)
-      this.loadChats()
+
+      // Обнуляем счетчик непрочитанных локально
+      const chat = this.chats.find((c) => c.id === chatId)
+      if (chat) {
+        chat.unread_count = 0
+      }
     },
 
     async loadMessages() {
@@ -348,6 +390,9 @@ export default {
         this.sending = true
         const message = await animeApi.sendMessage(this.selectedChatId, this.messageText.trim())
         this.messages.push(message)
+
+        this.updateChatInList(message)
+
         this.messageText = ''
         this.$nextTick(() => {
           this.scrollToBottom()

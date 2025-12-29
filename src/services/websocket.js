@@ -71,13 +71,13 @@ class WebSocketService {
       this.triggerListeners('online_status_changed', data)
     })
 
-    // ✅ НОВОЕ: Обработка новых сообщений
+    //   Обработка новых сообщений
     this.socket.on('new_message', (data) => {
       console.log('💬 New message received:', data)
       this.triggerListeners('new_message', data)
     })
 
-    // ✅ НОВОЕ: Обработка "печатает"
+    //   Обработка "печатает"
     this.socket.on('user_typing', (data) => {
       console.log('⌨️ User typing:', data)
       this.triggerListeners('user_typing', data)

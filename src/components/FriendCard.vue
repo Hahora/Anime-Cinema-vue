@@ -17,24 +17,37 @@
     </router-link>
 
     <div class="friend-actions">
-      <router-link :to="`/profile/${otherUser.id}`" class="action-btn view">
-        <svg viewBox="0 0 24 24">
-          <path
-            d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"
-            fill="currentColor"
-          />
-        </svg>
-        Профиль
-      </router-link>
+      <div class="actions-row">
+        <router-link :to="`/profile/${otherUser.id}`" class="action-btn view">
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"
+              fill="currentColor"
+            />
+          </svg>
+          Профиль
+        </router-link>
 
-      <button class="action-btn remove" @click="handleRemove" :disabled="loading">
+        <button class="action-btn remove" @click="handleRemove" :disabled="loading">
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M14.59 8L12 10.59 9.41 8 8 9.41 10.59 12 8 14.59 9.41 16 12 13.41 14.59 16 16 14.59 13.41 12 16 9.41 14.59 8zM12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"
+              fill="currentColor"
+            />
+          </svg>
+          Удалить
+        </button>
+      </div>
+
+      <!-- ✅ Второй ряд: Написать на всю ширину -->
+      <button class="action-btn message full-width" @click="openChat" :disabled="loading">
         <svg viewBox="0 0 24 24">
           <path
-            d="M14.59 8L12 10.59 9.41 8 8 9.41 10.59 12 8 14.59 9.41 16 12 13.41 14.59 16 16 14.59 13.41 12 16 9.41 14.59 8zM12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"
+            d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"
             fill="currentColor"
           />
         </svg>
-        Удалить
+        Написать сообщение
       </button>
     </div>
   </div>
@@ -93,6 +106,21 @@ export default {
         'декабря',
       ]
       return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`
+    },
+
+    async openChat() {
+      try {
+        this.loading = true
+        // Создаем или получаем существующий чат
+        const chat = await animeApi.createChat(this.otherUser.id)
+        // Переходим на страницу сообщений с ID чата
+        this.$router.push(`/messages?chat=${chat.id}`)
+      } catch (err) {
+        console.error('Ошибка открытия чата:', err)
+        alert('Не удалось открыть чат')
+      } finally {
+        this.loading = false
+      }
     },
 
     async handleRemove() {
@@ -169,6 +197,36 @@ export default {
   z-index: 2;
 }
 
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6b7280, #9ca3af);
+  transition: all 0.3s;
+}
+
+.online-indicator.online .status-dot {
+  background: linear-gradient(135deg, #4caf50, #66bb6a);
+  box-shadow:
+    0 0 0 2px rgba(76, 175, 80, 0.2),
+    0 0 8px rgba(76, 175, 80, 0.6);
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 2px rgba(76, 175, 80, 0.2),
+      0 0 8px rgba(76, 175, 80, 0.6);
+  }
+  50% {
+    box-shadow:
+      0 0 0 3px rgba(76, 175, 80, 0.3),
+      0 0 12px rgba(76, 175, 80, 0.8);
+  }
+}
+
 .friend-info {
   flex: 1;
   min-width: 0;
@@ -199,7 +257,16 @@ export default {
   margin: 0;
 }
 
+/* ═══════════════════════════════════════════ */
+/* ДЕЙСТВИЯ */
+/* ═══════════════════════════════════════════ */
 .friend-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.actions-row {
   display: flex;
   gap: 8px;
 }
@@ -221,6 +288,10 @@ export default {
   white-space: nowrap;
 }
 
+.action-btn.full-width {
+  width: 100%;
+}
+
 .action-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
@@ -230,6 +301,17 @@ export default {
   width: 18px;
   height: 18px;
   flex-shrink: 0;
+}
+
+.action-btn.message {
+  background: linear-gradient(135deg, #4caf50, #45a049);
+  color: white;
+  box-shadow: 0 6px 20px rgba(76, 175, 80, 0.3);
+}
+
+.action-btn.message:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(76, 175, 80, 0.4);
 }
 
 .action-btn.view {
@@ -253,50 +335,5 @@ export default {
   background: rgba(244, 67, 54, 0.2);
   border-color: rgba(244, 67, 54, 0.4);
   color: #f44336;
-}
-
-.online-indicator {
-  position: absolute;
-  bottom: 2px;
-  right: 2px;
-  width: 20px;
-  height: 20px;
-  background: rgba(0, 0, 0, 0.8);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 2px solid rgba(0, 0, 0, 0.8);
-  z-index: 2;
-}
-
-.status-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #6b7280, #9ca3af);
-  transition: all 0.3s;
-}
-
-.online-indicator.online .status-dot {
-  background: linear-gradient(135deg, #4caf50, #66bb6a);
-  box-shadow:
-    0 0 0 2px rgba(76, 175, 80, 0.2),
-    0 0 8px rgba(76, 175, 80, 0.6);
-  animation: pulse-dot 2s ease-in-out infinite;
-}
-
-@keyframes pulse-dot {
-  0%,
-  100% {
-    box-shadow:
-      0 0 0 2px rgba(76, 175, 80, 0.2),
-      0 0 8px rgba(76, 175, 80, 0.6);
-  }
-  50% {
-    box-shadow:
-      0 0 0 3px rgba(76, 175, 80, 0.3),
-      0 0 12px rgba(76, 175, 80, 0.8);
-  }
 }
 </style>
