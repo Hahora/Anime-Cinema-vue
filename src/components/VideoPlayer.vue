@@ -67,16 +67,45 @@
           </div>
         </transition>
 
-        <!-- Индикатор перемотки -->
         <transition name="fade">
-          <div v-if="isSeeking && !loading" class="seek-indicator">
-            <svg viewBox="0 0 24 24" class="seek-icon">
-              <path
-                d="M4 13h6c.55 0 1-.45 1-1V4c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v8c0 .55.45 1 1 1zm0 8h6c.55 0 1-.45 1-1v-4c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v4c0 .55.45 1 1 1zm10 0h6c.55 0 1-.45 1-1V4c0-.55-.45-1-1-1h-6c-.55 0-1 .45-1 1v16c0 .55.45 1 1 1zM13 4h6v16h-6V4z"
-                fill="white"
-              />
-            </svg>
-            <span>{{ formatTime(currentTime) }}</span>
+          <div v-if="showSeekAnimation" class="seek-animation">
+            <div class="seek-from-to">
+              <span class="seek-time-from">{{ formatTime(seekFromTime) }}</span>
+              <svg viewBox="0 0 24 24" class="seek-arrow">
+                <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" fill="white" />
+              </svg>
+              <span class="seek-time-to">{{ formatTime(seekToTime) }}</span>
+            </div>
+          </div>
+        </transition>
+
+        <transition name="fade">
+          <div v-if="showVolumeIndicator" class="volume-indicator">
+            <div class="volume-icon-wrapper">
+              <svg v-if="volume > 0.5" viewBox="0 0 24 24" class="volume-icon">
+                <path
+                  d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"
+                  fill="white"
+                />
+              </svg>
+              <svg v-else-if="volume > 0" viewBox="0 0 24 24" class="volume-icon">
+                <path d="M7 9v6h4l5 5V4l-5 5H7z" fill="white" />
+              </svg>
+              <svg v-else viewBox="0 0 24 24" class="volume-icon">
+                <path
+                  d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zM19 12c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"
+                  fill="white"
+                />
+              </svg>
+            </div>
+
+            <div class="volume-bar-container">
+              <div class="volume-bar-bg">
+                <div class="volume-bar-fill" :style="{ height: volume * 100 + '%' }"></div>
+              </div>
+            </div>
+
+            <div class="volume-percentage">{{ Math.round(volume * 100) }}%</div>
           </div>
         </transition>
 
@@ -158,7 +187,6 @@
                 </div>
               </div>
 
-              <!-- Нижние контролы -->
               <div class="controls-bottom">
                 <div class="controls-left">
                   <!-- Play/Pause -->
@@ -177,6 +205,36 @@
                     <span class="time-separator">/</span>
                     <span>{{ formatTime(duration) }}</span>
                   </div>
+                </div>
+
+                <!-- НАВИГАЦИЯ ПО СЕРИЯМ  -->
+                <div class="controls-center">
+                  <button
+                    class="nav-episode-btn"
+                    @click="goToPreviousEpisode"
+                    :disabled="currentEpisode <= 1"
+                    title="Предыдущая серия (Shift + ←)"
+                  >
+                    <svg viewBox="0 0 24 24">
+                      <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z" fill="currentColor" />
+                    </svg>
+                    <span>Пред.</span>
+                  </button>
+
+                  <button
+                    class="nav-episode-btn"
+                    @click="goToNextEpisode"
+                    :disabled="currentEpisode >= episodes.length"
+                    title="Следующая серия (Shift + →)"
+                  >
+                    <span>След.</span>
+                    <svg viewBox="0 0 24 24">
+                      <path
+                        d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                  </button>
                 </div>
 
                 <div class="controls-right">
@@ -255,7 +313,7 @@
                     class="control-btn pip-btn"
                     @click="togglePiP"
                     :class="{ active: isPiP }"
-                    title="Picture-in-Picture (Test)"
+                    title="Picture-in-Picture"
                   >
                     <svg v-if="!isPiP" viewBox="0 0 24 24">
                       <path
@@ -441,6 +499,17 @@ export default {
       touchStartTime: 0,
       touchStartX: 0,
       touchStartY: 0,
+
+      seekFromTime: 0,
+      seekToTime: 0,
+      showSeekAnimation: false,
+
+      isRestoringFromProgress: false,
+
+      touchVolumeControl: false,
+      touchStartVolume: 0,
+      touchVolumeY: 0,
+      showVolumeIndicator: false,
     }
   },
   computed: {
@@ -480,6 +549,54 @@ export default {
     },
   },
   watch: {
+    showRestoreDialog(newVal) {
+      console.log('🔄 Диалог изменился:', newVal)
+
+      const video = this.$refs.video
+      const container = this.$refs.playerContainer
+
+      if (newVal) {
+        // ====== ДИАЛОГ ОТКРЫТ ======
+        console.log('🔒 БЛОКИРУЕМ ВСЁ')
+
+        // Останавливаем видео
+        if (video && !video.paused) {
+          video.pause()
+        }
+
+        // Блокируем видео
+        if (video) {
+          video.style.pointerEvents = 'none'
+        }
+
+        // Блокируем контейнер
+        if (container) {
+          container.style.pointerEvents = 'none'
+          container.classList.add('dialog-open')
+        }
+
+        // Блокируем body от скролла
+        document.body.style.overflow = 'hidden'
+      } else {
+        // ====== ДИАЛОГ ЗАКРЫТ ======
+        console.log('🔓 РАЗБЛОКИРУЕМ')
+
+        // Разблокируем видео
+        if (video) {
+          video.style.pointerEvents = 'auto'
+        }
+
+        // Разблокируем контейнер
+        if (container) {
+          container.style.pointerEvents = 'auto'
+          container.classList.remove('dialog-open')
+        }
+
+        // Разблокируем body
+        document.body.style.overflow = ''
+      }
+    },
+
     volume(val) {
       if (this.$refs.video) {
         this.$refs.video.volume = val
@@ -488,16 +605,20 @@ export default {
         }
       }
     },
+
     isPlaying(newVal) {
       if (newVal) {
         // Видео играет - скрываем центральную кнопку
         this.showPlayButton = false
       } else {
-        // Видео на паузе - показываем центральную кнопку
-        this.showPlayButton = true
+        // Видео на паузе - показываем кнопку ТОЛЬКО если не перемотка и не открыт диалог
+        if (!this.isSeeking && !this.showRestoreDialog && !this.loading) {
+          this.showPlayButton = true
+        }
         this.showControls = true
       }
     },
+
     currentTranslation(newVal, oldVal) {
       if (oldVal && newVal !== oldVal) {
         if (this.currentEpisode > this.episodes.length) {
@@ -505,6 +626,7 @@ export default {
         }
       }
     },
+
     translations: {
       immediate: true,
       handler(newVal) {
@@ -535,8 +657,9 @@ export default {
       container.addEventListener('mousemove', this.handleMouseMove)
       container.addEventListener('mouseleave', this.handleMouseLeave)
 
-      //Touch события
+      // Touch события
       container.addEventListener('touchstart', this.handleTouchStart, { passive: false })
+      container.addEventListener('touchmove', this.handleTouchMove, { passive: false })
       container.addEventListener('touchend', this.handleTouchEnd, { passive: false })
     }
 
@@ -548,6 +671,8 @@ export default {
       video.addEventListener('enterpictureinpicture', this.onEnterPiP)
       video.addEventListener('leavepictureinpicture', this.onLeavePiP)
     }
+
+    document.addEventListener('click', this.handleDialogClick, true)
   },
   beforeUnmount() {
     this.destroyPlayer()
@@ -565,7 +690,12 @@ export default {
       container.removeEventListener('mousemove', this.handleMouseMove)
       container.removeEventListener('mouseleave', this.handleMouseLeave)
       container.removeEventListener('touchstart', this.handleTouchStart)
+      container.removeEventListener('touchmove', this.handleTouchMove) // ← ДОБАВИТЬ
       container.removeEventListener('touchend', this.handleTouchEnd)
+    }
+
+    if (this.volumeIndicatorTimeout) {
+      clearTimeout(this.volumeIndicatorTimeout)
     }
 
     const video = this.$refs.video
@@ -575,6 +705,8 @@ export default {
       video.removeEventListener('enterpictureinpicture', this.onEnterPiP)
       video.removeEventListener('leavepictureinpicture', this.onLeavePiP)
     }
+
+    document.removeEventListener('click', this.handleDialogClick, true)
   },
   methods: {
     // ═══════════════════════════════════════════
@@ -608,13 +740,20 @@ export default {
           const restoreHandler = () => {
             console.log('📥 Метаданные загружены')
 
-            if (!this.hasRestoredProgress && !this.userChoseTranslation) {
-              console.log('🔄 Первая загрузка - показываем диалог восстановления')
+            // ВАЖНО: Проверяем флаг восстановления!
+            if (this.isRestoringFromProgress) {
+              console.log('🔄 Восстановление прогресса - не автозапуск')
+              // НЕ ЗАПУСКАЕМ ВИДЕО - это сделает continueFromProgress
+            } else if (!this.hasRestoredProgress && !this.userChoseTranslation) {
+              console.log('🔄 Первая загрузка - показываем диалог')
               this.restoreProgress()
               this.hasRestoredProgress = true
             } else {
-              console.log('▶️ Не первая загрузка - просто запускаем видео')
-              video.play()
+              console.log('▶️ Не первая загрузка - запускаем видео')
+              video.play().catch((err) => {
+                console.log('Autoplay prevented:', err)
+                this.showPlayButton = true
+              })
             }
 
             video.removeEventListener('loadedmetadata', restoreHandler)
@@ -626,6 +765,20 @@ export default {
         alert(`Ошибка: ${err.message}`)
       } finally {
         this.loading = false
+      }
+    },
+
+    handleDialogClick(e) {
+      if (this.showRestoreDialog) {
+        // Проверяем что клик именно на кнопки диалога
+        const isRestoreBtn = e.target.closest('.restore-btn')
+
+        if (!isRestoreBtn) {
+          // Клик мимо кнопок - игнорируем
+          e.preventDefault()
+          e.stopPropagation()
+          return false
+        }
       }
     },
 
@@ -669,9 +822,40 @@ export default {
       this.buffered = (bufferedEnd / this.duration) * 100
     },
 
+    seek(event) {
+      const video = this.$refs.video
+      if (!video || !this.duration) return
+
+      const rect = event.currentTarget.getBoundingClientRect()
+      const percent = (event.clientX - rect.left) / rect.width
+
+      // Сохраняем откуда перемотали
+      this.seekFromTime = this.currentTime
+      this.seekToTime = percent * this.duration
+
+      this.isSeeking = true
+      this.showPlayButton = false
+
+      // Показываем анимацию перемотки
+      this.showSeekAnimation = true
+
+      video.currentTime = percent * this.duration
+
+      // Скрываем превью после клика
+      this.showTimePreview = false
+
+      // Обновляем буфер и скрываем анимацию
+      setTimeout(() => {
+        this.updateBuffered()
+        this.isSeeking = false
+        this.showSeekAnimation = false
+      }, 800)
+    },
+
     onSeeking() {
       this.isSeeking = true
       this.isBuffering = false
+      this.showPlayButton = false
       console.log('Seeking started')
     },
 
@@ -775,12 +959,40 @@ export default {
       }
     },
 
+    // ═══════════════════════════════════════════
+    // НАВИГАЦИЯ ПО СЕРИЯМ
+    // ═══════════════════════════════════════════
+
+    goToPreviousEpisode() {
+      if (this.currentEpisode > 1) {
+        this.selectEpisode(this.currentEpisode - 1)
+      }
+    },
+
+    goToNextEpisode() {
+      if (this.currentEpisode < this.episodes.length) {
+        this.selectEpisode(this.currentEpisode + 1)
+      }
+    },
+
     // Обработка Touch событий
 
     handleTouchStart(e) {
       this.touchStartTime = Date.now()
       this.touchStartX = e.touches[0].clientX
       this.touchStartY = e.touches[0].clientY
+
+      // Определяем правую половину экрана для громкости
+      const screenWidth = window.innerWidth
+      const touchX = e.touches[0].clientX
+
+      if (touchX > screenWidth / 2) {
+        this.touchVolumeControl = true
+        this.touchStartVolume = this.volume
+        this.touchVolumeY = e.touches[0].clientY
+      } else {
+        this.touchVolumeControl = false
+      }
 
       // Показываем контролы
       this.showControls = true
@@ -792,24 +1004,96 @@ export default {
       }
     },
 
+    handleTouchMove(e) {
+      if (!this.touchVolumeControl) return
+
+      e.preventDefault()
+
+      const deltaY = this.touchVolumeY - e.touches[0].clientY
+      const sensitivity = 0.003
+
+      const volumeChange = deltaY * sensitivity
+      const newVolume = Math.max(0, Math.min(1, this.touchStartVolume + volumeChange))
+
+      this.volume = newVolume
+      this.showVolumeIndicator = true
+
+      if (this.volumeIndicatorTimeout) {
+        clearTimeout(this.volumeIndicatorTimeout)
+      }
+
+      this.volumeIndicatorTimeout = setTimeout(() => {
+        this.showVolumeIndicator = false
+      }, 1000)
+    },
+
     handleTouchEnd(e) {
+      // Игнорируем если открыт диалог
+      if (this.showRestoreDialog) {
+        return
+      }
+
       const touchDuration = Date.now() - this.touchStartTime
       const touchEndX = e.changedTouches[0].clientX
       const touchEndY = e.changedTouches[0].clientY
 
-      // Проверяем что это был тап, а не свайп
       const deltaX = Math.abs(touchEndX - this.touchStartX)
       const deltaY = Math.abs(touchEndY - this.touchStartY)
       const isTap = deltaX < 10 && deltaY < 10
 
       const clickedControls = e.target.closest('.video-controls')
+      const clickedRestoreBtn = e.target.closest('.restore-btn')
+
+      // Если был контроль громкости - не обрабатываем как тап
+      if (this.touchVolumeControl) {
+        this.touchVolumeControl = false
+        return
+      }
+
+      // Если клик на кнопку диалога - не трогаем
+      if (clickedRestoreBtn) {
+        return
+      }
 
       if (isTap && touchDuration < 300 && !clickedControls) {
         e.preventDefault()
         this.togglePlay()
       }
 
-      // Автоскрытие контролов если видео играет
+      if (this.isPlaying && !clickedControls) {
+        this.controlsTimeout = setTimeout(() => {
+          this.showControls = false
+        }, 3000)
+      }
+    },
+
+    handleTouchEnd(e) {
+      // Игнорируем если открыт диалог
+      if (this.showRestoreDialog) {
+        return
+      }
+
+      const touchDuration = Date.now() - this.touchStartTime
+      const touchEndX = e.changedTouches[0].clientX
+      const touchEndY = e.changedTouches[0].clientY
+
+      const deltaX = Math.abs(touchEndX - this.touchStartX)
+      const deltaY = Math.abs(touchEndY - this.touchStartY)
+      const isTap = deltaX < 10 && deltaY < 10
+
+      const clickedControls = e.target.closest('.video-controls')
+      const clickedRestoreBtn = e.target.closest('.restore-btn')
+
+      // Если клик на кнопку диалога - не трогаем
+      if (clickedRestoreBtn) {
+        return
+      }
+
+      if (isTap && touchDuration < 300 && !clickedControls) {
+        e.preventDefault()
+        this.togglePlay()
+      }
+
       if (this.isPlaying && !clickedControls) {
         this.controlsTimeout = setTimeout(() => {
           this.showControls = false
@@ -908,6 +1192,7 @@ export default {
 
       this.showRestoreDialog = false
       this.userChoseTranslation = false
+      this.isRestoringFromProgress = true // ВАЖНО: Устанавливаем флаг!
 
       if (this.savedEpisode) {
         this.currentEpisode = this.savedEpisode
@@ -922,16 +1207,32 @@ export default {
         const video = this.$refs.video
         if (video) {
           const setTimeHandler = () => {
+            console.log('⏱️ Установлено время:', this.restoreProgressSeconds)
+
+            // Ждём canplay перед запуском
+            const canPlayHandler = () => {
+              console.log('⏩ HLS готов, запускаем видео')
+
+              video.play().catch((err) => {
+                console.error('Play error:', err)
+                this.showPlayButton = true
+              })
+
+              // Сбрасываем флаг
+              this.isRestoringFromProgress = false
+
+              video.removeEventListener('canplay', canPlayHandler)
+            }
+
+            // Устанавливаем время
             video.currentTime = this.restoreProgressSeconds
-            video.play()
-            console.log(
-              '⏩ Восстановлено: серия',
-              this.currentEpisode,
-              'время',
-              this.restoreProgressSeconds,
-            )
+
+            // Ждём canplay
+            video.addEventListener('canplay', canPlayHandler)
+
             video.removeEventListener('loadedmetadata', setTimeHandler)
           }
+
           video.addEventListener('loadedmetadata', setTimeHandler)
         }
       })
@@ -959,47 +1260,42 @@ export default {
     // ═══════════════════════════════════════════
     // ПОЛНОЭКРАННЫЙ РЕЖИМ
     // ═══════════════════════════════════════════
-    toggleFullscreen() {
+    async toggleFullscreen() {
       const container = this.$refs.playerContainer
       const video = this.$refs.video
 
       if (!this.isFullscreen) {
-        // Для iOS используем встроенный полноэкранный режим видео
-        if (video && video.webkitEnterFullscreen && /iPhone|iPad|iPod/.test(navigator.userAgent)) {
-          try {
+        try {
+          // Пробуем все возможные методы для Android
+          if (container.requestFullscreen) {
+            await container.requestFullscreen()
+          } else if (container.webkitRequestFullscreen) {
+            await container.webkitRequestFullscreen()
+          } else if (container.mozRequestFullScreen) {
+            await container.mozRequestFullScreen()
+          } else if (container.msRequestFullscreen) {
+            await container.msRequestFullscreen()
+          } else if (video && video.webkitEnterFullscreen) {
+            // iOS fallback
             video.webkitEnterFullscreen()
-            return
-          } catch (err) {
-            console.log('iOS fullscreen error:', err)
           }
-        }
-
-        // Стандартный Fullscreen API
-        const requestFullscreen =
-          container.requestFullscreen ||
-          container.webkitRequestFullscreen ||
-          container.mozRequestFullScreen ||
-          container.msRequestFullscreen
-
-        if (requestFullscreen) {
-          requestFullscreen.call(container).catch((err) => {
-            console.log('Fullscreen error:', err)
-          })
+        } catch (err) {
+          console.error('Fullscreen error:', err)
+          alert('Полноэкранный режим недоступен')
         }
       } else {
-        // Выход из полноэкранного режима
-        if (document.fullscreenElement || document.webkitFullscreenElement) {
-          const exitFullscreen =
-            document.exitFullscreen ||
-            document.webkitExitFullscreen ||
-            document.mozCancelFullScreen ||
-            document.msExitFullscreen
-
-          if (exitFullscreen) {
-            exitFullscreen.call(document).catch((err) => {
-              console.log('Exit fullscreen error:', err)
-            })
+        try {
+          if (document.exitFullscreen) {
+            await document.exitFullscreen()
+          } else if (document.webkitExitFullscreen) {
+            await document.webkitExitFullscreen()
+          } else if (document.mozCancelFullScreen) {
+            await document.mozCancelFullScreen()
+          } else if (document.msExitFullscreen) {
+            await document.msExitFullscreen()
           }
+        } catch (err) {
+          console.error('Exit fullscreen error:', err)
         }
       }
     },
@@ -1295,24 +1591,32 @@ export default {
 
       this.showRestoreDialog = false
       this.userChoseTranslation = true
-
-      // Начинаем с серии 1
       this.currentEpisode = 1
+      this.isRestoringFromProgress = false // Сбрасываем флаг
 
-      this.$nextTick(() => {
-        this.loadVideo()
+      setTimeout(() => {
+        this.$nextTick(() => {
+          this.loadVideo()
 
-        const video = this.$refs.video
-        if (video) {
-          const playHandler = () => {
-            video.currentTime = 0
-            video.play()
-            console.log('▶️ Начало с серии 1')
-            video.removeEventListener('loadedmetadata', playHandler)
+          const video = this.$refs.video
+          if (video) {
+            const playHandler = () => {
+              video.currentTime = 0
+
+              setTimeout(() => {
+                video.play().catch((err) => {
+                  console.error('Play error:', err)
+                  this.showPlayButton = true
+                })
+              }, 100)
+
+              console.log('▶️ Начало с серии 1')
+              video.removeEventListener('loadedmetadata', playHandler)
+            }
+            video.addEventListener('loadedmetadata', playHandler)
           }
-          video.addEventListener('loadedmetadata', playHandler)
-        }
-      })
+        })
+      }, 100)
     },
     showRestorePrompt(progressSeconds, timeStr) {
       // Останавливаем автовоспроизведение
@@ -1366,6 +1670,11 @@ export default {
     handleKeyPress(e) {
       if (!this.$refs.video) return
 
+      // Не обрабатываем если открыт диалог
+      if (this.showRestoreDialog) return
+
+      const video = this.$refs.video
+
       switch (e.key.toLowerCase()) {
         case ' ':
         case 'k':
@@ -1382,11 +1691,37 @@ export default {
           break
         case 'arrowright':
           e.preventDefault()
-          this.$refs.video.currentTime += 10
+          if (e.shiftKey) {
+            this.goToNextEpisode()
+          } else {
+            // ВАЖНО: Анимация при перемотке стрелками
+            this.seekFromTime = this.currentTime
+            this.seekToTime = Math.min(this.duration, this.currentTime + 10)
+            this.showSeekAnimation = true
+
+            video.currentTime += 10
+
+            setTimeout(() => {
+              this.showSeekAnimation = false
+            }, 800)
+          }
           break
         case 'arrowleft':
           e.preventDefault()
-          this.$refs.video.currentTime -= 10
+          if (e.shiftKey) {
+            this.goToPreviousEpisode()
+          } else {
+            // ВАЖНО: Анимация при перемотке стрелками
+            this.seekFromTime = this.currentTime
+            this.seekToTime = Math.max(0, this.currentTime - 10)
+            this.showSeekAnimation = true
+
+            video.currentTime -= 10
+
+            setTimeout(() => {
+              this.showSeekAnimation = false
+            }, 800)
+          }
           break
         case 'arrowup':
           e.preventDefault()
@@ -1399,6 +1734,10 @@ export default {
         case 'p':
           e.preventDefault()
           this.togglePiP()
+          break
+        case 'n':
+          e.preventDefault()
+          this.goToNextEpisode()
           break
       }
     },
@@ -1491,16 +1830,6 @@ export default {
   display: none !important;
 }
 
-.player-container:-webkit-full-screen .video-element {
-  width: 100%;
-  height: 100%;
-}
-
-.player-container:-webkit-full-screen {
-  width: 100%;
-  height: 100%;
-}
-
 .player-loading {
   position: absolute;
   inset: 0;
@@ -1514,6 +1843,7 @@ export default {
   z-index: 10;
   backdrop-filter: blur(5px);
   animation: fadeIn 0.2s ease-out;
+  pointer-events: none;
 }
 
 @keyframes fadeIn {
@@ -1560,58 +1890,44 @@ export default {
 /* ДИАЛОГ ВОССТАНОВЛЕНИЯ ПРОГРЕССА */
 /* ═══════════════════════════════════════════ */
 .restore-dialog {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 20;
-  animation: slideUp 0.4s ease-out;
-  max-width: 90%;
-  width: 100%;
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translate(-50%, -40%);
-  }
-  to {
-    opacity: 1;
-    transform: translate(-50%, -50%);
-  }
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.97) !important;
+  backdrop-filter: blur(15px);
+  z-index: 99999 !important;
+  animation: fadeIn 0.3s ease-out;
+  padding: 20px;
+  pointer-events: auto !important;
+  cursor: default;
 }
 
 .restore-content {
-  background: rgba(0, 0, 0, 0.95);
+  background: rgba(20, 20, 20, 0.98);
   backdrop-filter: blur(20px);
   border: 2px solid rgba(255, 65, 108, 0.5);
   border-radius: 20px;
-  padding: 32px;
-  min-width: auto;
+  padding: 32px 28px;
   max-width: 500px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9);
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 24px;
+  pointer-events: auto !important;
+  position: relative;
+  z-index: 100000;
 }
 
 .restore-icon {
   font-size: 64px;
   line-height: 1;
-  animation: pulse 2s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%,
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  50% {
-    transform: scale(1.1);
-    opacity: 0.8;
-  }
 }
 
 .restore-info {
@@ -1620,19 +1936,17 @@ export default {
 }
 
 .restore-info h3 {
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 700;
   margin: 0 0 12px;
   color: white;
-  word-wrap: break-word;
 }
 
 .restore-info p {
   font-size: 16px;
   color: rgba(255, 255, 255, 0.7);
   margin: 0;
-  word-wrap: break-word;
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
 .restore-info strong {
@@ -1641,14 +1955,12 @@ export default {
   font-size: 18px;
   display: block;
   margin-top: 8px;
-  word-wrap: break-word;
 }
 
 .restore-actions {
   display: flex;
   gap: 12px;
   width: 100%;
-  flex-wrap: wrap;
 }
 
 .restore-btn {
@@ -1657,15 +1969,19 @@ export default {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 14px 24px;
+  padding: 16px 24px;
   border-radius: 12px;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
-  cursor: pointer;
+  cursor: pointer !important;
   transition: all 0.3s;
   border: none;
   white-space: nowrap;
-  min-width: 120px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  pointer-events: auto !important;
+  min-height: 56px;
+  user-select: none;
 }
 
 .restore-btn.primary {
@@ -1674,105 +1990,28 @@ export default {
   box-shadow: 0 8px 24px rgba(255, 65, 108, 0.4);
 }
 
-.restore-btn.primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 32px rgba(255, 65, 108, 0.5);
+.restore-btn.primary:active,
+.restore-btn.primary:focus {
+  transform: scale(0.96);
+  box-shadow: 0 4px 16px rgba(255, 65, 108, 0.6);
 }
 
 .restore-btn.secondary {
   background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.3);
   color: white;
 }
 
-.restore-btn.secondary:hover {
-  background: rgba(255, 255, 255, 0.15);
-  border-color: rgba(255, 255, 255, 0.3);
+.restore-btn.secondary:active,
+.restore-btn.secondary:focus {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(0.96);
 }
 
 .restore-btn .btn-icon {
   width: 20px;
   height: 20px;
   flex-shrink: 0;
-}
-
-/* Адаптив для диалога */
-@media (max-width: 768px) {
-  .restore-dialog {
-    max-width: 95%;
-    padding: 0 10px;
-  }
-
-  .restore-content {
-    padding: 24px 20px;
-    border-radius: 16px;
-    gap: 20px;
-  }
-
-  .restore-icon {
-    font-size: 48px;
-  }
-
-  .restore-info h3 {
-    font-size: 18px;
-    margin: 0 0 8px;
-  }
-
-  .restore-info p {
-    font-size: 14px;
-    line-height: 1.4;
-  }
-
-  .restore-info strong {
-    font-size: 15px;
-    margin-top: 4px;
-  }
-
-  .restore-actions {
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .restore-btn {
-    width: 100%;
-    min-width: auto;
-    padding: 12px 20px;
-    font-size: 14px;
-  }
-
-  .restore-btn .btn-icon {
-    width: 18px;
-    height: 18px;
-  }
-}
-
-@media (max-width: 480px) {
-  .restore-content {
-    padding: 20px 16px;
-    gap: 16px;
-  }
-
-  .restore-icon {
-    font-size: 40px;
-  }
-
-  .restore-info h3 {
-    font-size: 16px;
-  }
-
-  .restore-info p {
-    font-size: 13px;
-  }
-
-  .restore-info strong {
-    font-size: 14px;
-  }
-
-  .restore-btn {
-    padding: 10px 16px;
-    font-size: 13px;
-    gap: 6px;
-  }
 }
 
 /* ═══════════════════════════════════════════ */
@@ -1783,14 +2022,14 @@ export default {
   top: 0;
   left: 0;
   right: 0;
-  padding: 20px;
+  padding: 16px;
   background: linear-gradient(to bottom, rgba(0, 0, 0, 0.8), transparent);
   z-index: 10;
 }
 
 .top-controls-group {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   flex-wrap: wrap;
 }
 
@@ -1798,7 +2037,7 @@ export default {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 14px;
+  padding: 8px 12px;
   background: rgba(0, 0, 0, 0.7);
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.15);
@@ -1812,8 +2051,8 @@ export default {
 }
 
 .control-icon {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   flex-shrink: 0;
 }
 
@@ -1821,61 +2060,25 @@ export default {
   background: transparent;
   color: white;
   border: none;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   outline: none;
   padding: 4px 8px;
-  min-width: 120px;
+  min-width: 100px;
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='white' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 4px center;
-  padding-right: 24px;
+  padding-right: 20px;
 }
 
 .top-select option {
   background: #1a1a1a;
   color: white;
   padding: 8px;
-}
-
-/* ═══════════════════════════════════════════ */
-/* PICTURE-IN-PICTURE */
-/* ═══════════════════════════════════════════ */
-.pip-btn {
-  position: relative;
-}
-
-.pip-btn.active {
-  background: rgba(255, 65, 108, 0.2);
-}
-
-.pip-btn.active::after {
-  content: '';
-  position: absolute;
-  bottom: -4px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 6px;
-  height: 6px;
-  background: #ff416c;
-  border-radius: 50%;
-  animation: pipPulse 1.5s ease-in-out infinite;
-}
-
-@keyframes pipPulse {
-  0%,
-  100% {
-    opacity: 1;
-    transform: translateX(-50%) scale(1);
-  }
-  50% {
-    opacity: 0.5;
-    transform: translateX(-50%) scale(1.5);
-  }
 }
 
 /* ═══════════════════════════════════════════ */
@@ -1897,6 +2100,7 @@ export default {
   z-index: 15;
   backdrop-filter: blur(10px);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
 }
 
 .seek-icon {
@@ -1928,8 +2132,8 @@ export default {
   justify-content: center;
   cursor: pointer;
   transition: all 0.3s;
-  z-index: 15;
-  pointer-events: auto;
+  z-index: 50;
+  pointer-events: auto !important;
 }
 
 .center-play-button:hover {
@@ -1980,6 +2184,92 @@ export default {
 }
 
 /* ═══════════════════════════════════════════ */
+/* CSS: ИНДИКАТОР ГРОМКОСТИ */
+/* ═══════════════════════════════════════════ */
+
+.volume-indicator {
+  position: absolute;
+  top: 50%;
+  right: 40px;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 16px;
+  background: rgba(0, 0, 0, 0.92);
+  border-radius: 16px;
+  border: 2px solid rgba(255, 65, 108, 0.6);
+  z-index: 20;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+  pointer-events: none;
+  animation: volumeSlideIn 0.3s ease-out;
+}
+
+@keyframes volumeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-50%) translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+  }
+}
+
+.volume-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 65, 108, 0.2);
+  border-radius: 50%;
+}
+
+.volume-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.volume-bar-container {
+  height: 150px;
+  width: 8px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.volume-bar-bg {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.volume-bar-fill {
+  width: 100%;
+  background: linear-gradient(to top, #ff416c, #ff4b2b);
+  border-radius: 4px;
+  transition: height 0.1s ease-out;
+}
+
+.volume-percentage {
+  color: white;
+  font-size: 16px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  min-width: 50px;
+  text-align: center;
+}
+
+/* ═══════════════════════════════════════════ */
 /* КАСТОМНЫЕ КОНТРОЛЫ */
 /* ═══════════════════════════════════════════ */
 .video-controls {
@@ -2002,11 +2292,11 @@ export default {
 
 .controls-bottom-wrapper {
   background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, transparent 100%);
-  padding: 60px 20px 20px;
+  padding: 50px 16px 16px;
 }
 
 .progress-container {
-  margin-bottom: 16px;
+  margin-bottom: 12px;
   padding: 8px 0;
   cursor: pointer;
 }
@@ -2062,14 +2352,14 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
 }
 
 .controls-left,
 .controls-right {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
 }
 
 .control-btn {
@@ -2083,6 +2373,8 @@ export default {
   justify-content: center;
   border-radius: 8px;
   transition: all 0.2s;
+  min-width: 40px;
+  min-height: 40px;
 }
 
 .control-btn:hover {
@@ -2090,8 +2382,8 @@ export default {
 }
 
 .control-btn svg {
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   fill: white;
 }
 
@@ -2100,15 +2392,70 @@ export default {
   align-items: center;
   gap: 6px;
   color: white;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   user-select: none;
+  white-space: nowrap;
 }
 
 .time-separator {
   color: rgba(255, 255, 255, 0.5);
 }
 
+/* ═══════════════════════════════════════════ */
+/* НАВИГАЦИЯ ПО СЕРИЯМ */
+/* ═══════════════════════════════════════════ */
+.controls-center {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.nav-episode-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  white-space: nowrap;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  min-width: 40px;
+  min-height: 40px;
+}
+
+.nav-episode-btn:hover:not(:disabled) {
+  background: rgba(255, 65, 108, 0.2);
+  border-color: rgba(255, 65, 108, 0.5);
+  transform: translateY(-1px);
+}
+
+.nav-episode-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.nav-episode-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.nav-episode-btn svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}
+
+.current-episode-label {
+  display: none;
+}
 /* ═══════════════════════════════════════════ */
 /* ГРОМКОСТЬ */
 /* ═══════════════════════════════════════════ */
@@ -2119,7 +2466,7 @@ export default {
 }
 
 .volume-slider {
-  width: 80px;
+  width: 70px;
   height: 4px;
   background: rgba(255, 255, 255, 0.3);
   border-radius: 2px;
@@ -2160,7 +2507,7 @@ export default {
   background: rgba(20, 20, 20, 0.98);
   border-radius: 12px;
   padding: 12px;
-  min-width: 200px;
+  min-width: 180px;
   backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
@@ -2170,10 +2517,10 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px;
-  gap: 16px;
+  padding: 8px;
+  gap: 12px;
   color: white;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .settings-item span {
@@ -2185,8 +2532,8 @@ export default {
   color: white;
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 8px;
-  padding: 6px 10px;
-  font-size: 13px;
+  padding: 4px 8px;
+  font-size: 12px;
   cursor: pointer;
   outline: none;
 }
@@ -2196,13 +2543,156 @@ export default {
 }
 
 /* ═══════════════════════════════════════════ */
+/* CSS: АНИМАЦИЯ ПЕРЕМОТКИ */
+/* ═══════════════════════════════════════════ */
+
+.seek-animation {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 32px;
+  background: rgba(0, 0, 0, 0.9);
+  border-radius: 16px;
+  border: 2px solid rgba(255, 65, 108, 0.6);
+  z-index: 15;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+  pointer-events: none;
+  animation: seekPulse 0.8s ease-out;
+}
+
+@keyframes seekPulse {
+  0% {
+    transform: translate(-50%, -50%) scale(0.8);
+    opacity: 0;
+  }
+  20% {
+    transform: translate(-50%, -50%) scale(1.05);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+}
+
+.seek-from-to {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.seek-time-from,
+.seek-time-to {
+  color: white;
+  font-size: 20px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  min-width: 60px;
+  text-align: center;
+}
+
+.seek-time-from {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.seek-time-to {
+  color: #ff416c;
+}
+
+.seek-arrow {
+  width: 24px;
+  height: 24px;
+  animation: arrowBounce 0.8s ease-out infinite;
+}
+
+@keyframes arrowBounce {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(4px);
+  }
+}
+
+@media (min-width: 769px) {
+  .controls-center {
+    display: none !important;
+  }
+}
+
+/* Мобильная версия */
+@media (max-width: 768px) {
+  .controls-center {
+    display: flex !important;
+  }
+
+  .volume-indicator {
+    right: 20px;
+    padding: 16px 12px;
+    gap: 12px;
+  }
+
+  .volume-icon-wrapper {
+    width: 36px;
+    height: 36px;
+  }
+
+  .volume-icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .volume-bar-container {
+    height: 120px;
+    width: 6px;
+  }
+
+  .volume-percentage {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .volume-indicator {
+    right: 16px;
+    padding: 14px 10px;
+    gap: 10px;
+  }
+
+  .volume-icon-wrapper {
+    width: 32px;
+    height: 32px;
+  }
+
+  .volume-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .volume-bar-container {
+    height: 100px;
+    width: 5px;
+  }
+
+  .volume-percentage {
+    font-size: 13px;
+  }
+}
+
+/* ═══════════════════════════════════════════ */
 /* ИНФОРМАЦИЯ О СЕРИИ */
 /* ═══════════════════════════════════════════ */
 .episode-info {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 20px;
+  padding: 14px 16px;
   background: rgba(255, 255, 255, 0.03);
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.05);
@@ -2215,13 +2705,13 @@ export default {
 }
 
 .episode-number {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
   color: white;
 }
 
 .translation-name {
-  font-size: 14px;
+  font-size: 13px;
   color: rgba(255, 255, 255, 0.6);
 }
 
@@ -2229,7 +2719,7 @@ export default {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 13px;
+  font-size: 12px;
   color: rgba(255, 255, 255, 0.5);
 }
 
@@ -2389,6 +2879,17 @@ export default {
 }
 
 /* ═══════════════════════════════════════════ */
+/* PICTURE-IN-PICTURE */
+/* ═══════════════════════════════════════════ */
+.pip-btn {
+  position: relative;
+}
+
+.pip-btn.active {
+  background: rgba(255, 65, 108, 0.2);
+}
+
+/* ═══════════════════════════════════════════ */
 /* АНИМАЦИИ */
 /* ═══════════════════════════════════════════ */
 .fade-enter-active,
@@ -2413,22 +2914,57 @@ export default {
 }
 
 /* ═══════════════════════════════════════════ */
-/* АДАПТИВ */
+/* БЛОКИРОВКА ВИДЕО ПРИ ДИАЛОГЕ */
 /* ═══════════════════════════════════════════ */
-@media (max-width: 1024px) and (orientation: landscape) {
-  .player-container {
-    max-height: 100vh;
-  }
+
+/* Когда диалог открыт - блокируем всё под ним */
+.player-container.dialog-open {
+  pointer-events: none !important;
 }
 
-@supports (-webkit-touch-callout: none) {
-  .video-element {
-    -webkit-tap-highlight-color: transparent;
-  }
+.player-container.dialog-open .video-element {
+  pointer-events: none !important;
+}
 
-  .player-container {
-    -webkit-user-select: none;
-    user-select: none;
+.player-container.dialog-open .video-controls {
+  pointer-events: none !important;
+}
+
+.player-container.dialog-open .center-play-button {
+  pointer-events: none !important;
+  display: none !important;
+}
+
+/* ═══════════════════════════════════════════ */
+/* ПОЛНОЭКРАННЫЙ РЕЖИМ */
+/* ═══════════════════════════════════════════ */
+.player-container:fullscreen,
+.player-container:-webkit-full-screen,
+.player-container:-moz-full-screen,
+.player-container:-ms-fullscreen {
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: 100vw !important;
+  max-height: 100vh !important;
+  border-radius: 0 !important;
+}
+
+.player-container:fullscreen .video-element,
+.player-container:-webkit-full-screen .video-element,
+.player-container:-moz-full-screen .video-element,
+.player-container:-ms-fullscreen .video-element {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+}
+
+/* ═══════════════════════════════════════════ */
+/* АДАПТИВ */
+/* ═══════════════════════════════════════════ */
+
+@media (max-width: 1400px) {
+  .video-player {
+    grid-template-columns: 1fr 300px;
   }
 }
 
@@ -2447,26 +2983,82 @@ export default {
   }
 }
 
+/* Планшеты и мобильные */
 @media (max-width: 768px) {
   .player-sidebar {
     flex-direction: column;
+  }
+
+  /* СКРЫВАЕМ только селекты серий и озвучки на мобильных */
+  .controls-top {
+    display: none;
+  }
+
+  .controls-bottom-wrapper {
+    padding: 40px 8px 8px;
+  }
+
+  .controls-bottom {
+    gap: 4px;
+    flex-wrap: nowrap;
+  }
+
+  .controls-left {
+    gap: 2px;
+    flex-shrink: 0;
+  }
+
+  /* Кнопки навигации перемещаем в controls-center (СЛЕВА от fullscreen) */
+  .controls-center {
+    order: 3;
+    gap: 2px;
+    flex-shrink: 0;
+  }
+
+  .controls-right {
+    gap: 2px;
+    flex-shrink: 0;
   }
 
   .volume-control {
     display: none;
   }
 
-  .controls-bottom {
-    gap: 8px;
-  }
-
   .control-btn {
-    padding: 6px;
+    padding: 4px;
+    min-width: 36px;
+    min-height: 36px;
   }
 
   .control-btn svg {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
+  }
+
+  .time-display {
+    font-size: 10px;
+    gap: 3px;
+    padding: 0 2px;
+  }
+
+  .nav-episode-btn {
+    padding: 6px;
+    font-size: 11px;
+    min-width: 36px;
+    min-height: 36px;
+  }
+
+  .nav-episode-btn span {
+    display: none;
+  }
+
+  .nav-episode-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .current-episode-label {
+    display: none;
   }
 
   .episodes-grid {
@@ -2474,26 +3066,189 @@ export default {
     gap: 6px;
   }
 
-  .controls-top {
+  /* ДИАЛОГ ВОССТАНОВЛЕНИЯ НА МОБИЛЬНЫХ */
+  .restore-dialog {
     padding: 12px;
   }
 
-  .top-controls-group {
+  .restore-content {
+    padding: 24px 16px;
+    max-width: calc(100% - 24px);
+    gap: 20px;
+  }
+
+  .restore-icon {
+    font-size: 52px;
+  }
+
+  .restore-info h3 {
+    font-size: 18px;
+    margin-bottom: 10px;
+  }
+
+  .restore-info p {
+    font-size: 14px;
+  }
+
+  .restore-info strong {
+    font-size: 15px;
+    margin-top: 6px;
+  }
+
+  .restore-actions {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .restore-btn {
+    width: 100%;
+    padding: 14px 20px;
+    font-size: 15px;
+    min-height: 52px;
+  }
+
+  .restore-btn .btn-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .episode-info {
+    flex-direction: column;
     gap: 8px;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 480px) {
+  .controls-bottom-wrapper {
+    padding: 35px 6px 6px;
   }
 
-  .top-control-item {
-    padding: 6px 10px;
+  .control-btn {
+    padding: 3px;
+    min-width: 32px;
+    min-height: 32px;
   }
 
-  .control-icon {
+  .control-btn svg {
     width: 16px;
     height: 16px;
   }
 
-  .top-select {
+  .nav-episode-btn {
+    padding: 5px;
+    min-width: 32px;
+    min-height: 32px;
+  }
+
+  .nav-episode-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .time-display {
+    font-size: 9px;
+  }
+
+  .restore-dialog {
+    padding: 10px;
+  }
+
+  .restore-content {
+    padding: 20px 14px;
+    gap: 16px;
+  }
+
+  .restore-icon {
+    font-size: 48px;
+  }
+
+  .restore-info h3 {
+    font-size: 16px;
+  }
+
+  .restore-info p {
+    font-size: 13px;
+  }
+
+  .restore-info strong {
+    font-size: 14px;
+  }
+
+  .restore-btn {
+    padding: 12px 16px;
+    font-size: 14px;
+    min-height: 50px;
+  }
+}
+
+@media (max-width: 360px) {
+  .control-btn {
+    padding: 2px;
+    min-width: 28px;
+    min-height: 28px;
+  }
+
+  .control-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .nav-episode-btn {
+    padding: 4px;
+    min-width: 28px;
+    min-height: 28px;
+  }
+
+  .nav-episode-btn svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  .time-display {
+    font-size: 8px;
+  }
+
+  .restore-content {
+    padding: 18px 12px;
+  }
+
+  .restore-icon {
+    font-size: 40px;
+  }
+
+  .restore-info h3 {
+    font-size: 15px;
+  }
+
+  .restore-info p {
     font-size: 12px;
-    min-width: 100px;
+  }
+
+  .restore-info strong {
+    font-size: 13px;
+  }
+
+  .restore-btn {
+    font-size: 13px;
+    min-height: 48px;
+  }
+}
+
+/* Увеличенная область нажатия для touch */
+@media (pointer: coarse) {
+  .control-btn {
+    min-width: 40px !important;
+    min-height: 40px !important;
+  }
+
+  .restore-btn {
+    min-height: 54px !important;
+  }
+
+  .nav-episode-btn {
+    min-width: 40px !important;
+    min-height: 40px !important;
   }
 }
 </style>
