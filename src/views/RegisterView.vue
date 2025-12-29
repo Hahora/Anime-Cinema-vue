@@ -89,7 +89,7 @@
               v-model="password"
               :type="showPassword ? 'text' : 'password'"
               placeholder="Придумайте пароль"
-              class="form-input"
+              class="form-input password-input"
               required
               minlength="8"
               maxlength="72"
@@ -100,6 +100,7 @@
               @click="showPassword = !showPassword"
               class="password-toggle"
               :disabled="loading"
+              :aria-label="showPassword ? 'Скрыть пароль' : 'Показать пароль'"
             >
               <svg v-if="!showPassword" viewBox="0 0 24 24">
                 <path
@@ -126,7 +127,7 @@
               v-model="passwordConfirm"
               :type="showPasswordConfirm ? 'text' : 'password'"
               placeholder="Повторите пароль"
-              class="form-input"
+              class="form-input password-input"
               required
               :disabled="loading"
             />
@@ -135,6 +136,7 @@
               @click="showPasswordConfirm = !showPasswordConfirm"
               class="password-toggle"
               :disabled="loading"
+              :aria-label="showPasswordConfirm ? 'Скрыть пароль' : 'Показать пароль'"
             >
               <svg v-if="!showPasswordConfirm" viewBox="0 0 24 24">
                 <path
@@ -183,7 +185,7 @@
 
       <!-- Футер -->
       <div class="register-footer">
-        <p>Уже есть аккаунт?</p>
+        <p class="footer-text">Уже есть аккаунт?</p>
         <router-link to="/login" class="login-link">Войти</router-link>
       </div>
     </div>
@@ -296,16 +298,17 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 40px 20px;
+  padding: 20px;
   background: radial-gradient(circle at top, #1a0a1f, #000);
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 /* ═══════════════════════════════════════════ */
 /* ФОНОВЫЕ ЭФФЕКТЫ */
 /* ═══════════════════════════════════════════ */
 .register-bg {
-  position: absolute;
+  position: fixed;
   inset: 0;
   z-index: 0;
 }
@@ -365,12 +368,13 @@ export default {
   z-index: 10;
   width: 100%;
   max-width: 500px;
-  padding: 50px;
+  padding: 40px 30px;
   background: rgba(255, 255, 255, 0.02);
   border-radius: 24px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(20px);
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  margin: 20px 0;
 }
 
 /* ═══════════════════════════════════════════ */
@@ -378,19 +382,19 @@ export default {
 /* ═══════════════════════════════════════════ */
 .register-header {
   text-align: center;
-  margin-bottom: 40px;
+  margin-bottom: 32px;
 }
 
 .logo-icon {
-  width: 70px;
-  height: 70px;
-  margin: 0 auto 24px;
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 20px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: rgba(255, 65, 108, 0.1);
-  border-radius: 20px;
-  padding: 14px;
+  border-radius: 18px;
+  padding: 12px;
   border: 2px solid rgba(255, 65, 108, 0.3);
   animation: pulse-glow 3s infinite;
 }
@@ -411,7 +415,7 @@ export default {
 }
 
 .register-header h1 {
-  font-size: 32px;
+  font-size: 28px;
   font-weight: 900;
   margin: 0 0 8px;
   background: linear-gradient(135deg, #ff416c, #ff4b2b);
@@ -421,7 +425,7 @@ export default {
 }
 
 .register-header p {
-  font-size: 16px;
+  font-size: 15px;
   color: rgba(255, 255, 255, 0.6);
   margin: 0;
 }
@@ -485,18 +489,18 @@ export default {
 .register-form {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  margin-bottom: 30px;
+  gap: 18px;
+  margin-bottom: 24px;
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .form-group label {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   color: rgba(255, 255, 255, 0.8);
   text-transform: uppercase;
@@ -507,9 +511,10 @@ export default {
 }
 
 .key-icon {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   color: #ffc107;
+  flex-shrink: 0;
 }
 
 .form-input {
@@ -521,6 +526,8 @@ export default {
   font-size: 15px;
   outline: none;
   transition: all 0.3s;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .form-input:focus {
@@ -535,35 +542,52 @@ export default {
 
 .form-hint {
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(255, 255, 255, 0.5);
   font-style: italic;
+  font-weight: 500;
 }
 
 .password-wrapper {
   position: relative;
+  width: 100%;
+}
+
+.password-input {
+  padding-right: 48px;
 }
 
 .password-toggle {
   position: absolute;
-  right: 12px;
+  right: 8px;
   top: 50%;
   transform: translateY(-50%);
   background: none;
   border: none;
   cursor: pointer;
-  padding: 8px;
+  padding: 10px;
   border-radius: 8px;
   transition: background 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  min-height: 40px;
 }
 
-.password-toggle:hover {
+.password-toggle:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.1);
+}
+
+.password-toggle:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .password-toggle svg {
   width: 20px;
   height: 20px;
   color: rgba(255, 255, 255, 0.5);
+  display: block;
 }
 
 /* ═══════════════════════════════════════════ */
@@ -573,8 +597,8 @@ export default {
   background: rgba(255, 193, 7, 0.05);
   border: 1px solid rgba(255, 193, 7, 0.2);
   border-radius: 16px;
-  padding: 20px;
-  margin-top: 8px;
+  padding: 18px;
+  margin-top: 4px;
 }
 
 .secret-input {
@@ -588,7 +612,7 @@ export default {
 }
 
 .secret-hint {
-  color: rgba(255, 193, 7, 0.8) !important;
+  color: rgba(255, 193, 7, 0.9) !important;
   font-weight: 600 !important;
 }
 
@@ -606,12 +630,21 @@ export default {
   cursor: pointer;
   transition: all 0.3s;
   box-shadow: 0 10px 30px rgba(255, 65, 108, 0.3);
-  margin-top: 8px;
+  margin-top: 4px;
+  width: 100%;
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .register-btn:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 15px 40px rgba(255, 65, 108, 0.4);
+}
+
+.register-btn:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .register-btn:disabled {
@@ -620,13 +653,12 @@ export default {
 }
 
 .btn-spinner {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   border: 3px solid rgba(255, 255, 255, 0.3);
   border-top-color: white;
   border-radius: 50%;
   animation: spin 0.6s linear infinite;
-  margin: 0 auto;
 }
 
 @keyframes spin {
@@ -640,14 +672,19 @@ export default {
 /* ═══════════════════════════════════════════ */
 .register-footer {
   text-align: center;
-  padding-top: 30px;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  padding-top: 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
 }
 
-.register-footer p {
+.footer-text {
   font-size: 14px;
-  color: rgba(255, 255, 255, 0.6);
-  margin: 0 0 12px;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0;
+  font-weight: 500;
 }
 
 .login-link {
@@ -656,40 +693,192 @@ export default {
   text-decoration: none;
   font-size: 15px;
   font-weight: 700;
-  padding: 8px 24px;
-  border-radius: 8px;
+  padding: 10px 24px;
+  border-radius: 10px;
   background: rgba(255, 65, 108, 0.1);
   transition: all 0.3s;
+  border: 1px solid rgba(255, 65, 108, 0.2);
 }
 
 .login-link:hover {
   background: rgba(255, 65, 108, 0.2);
   transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 65, 108, 0.3);
+}
+
+.login-link:active {
+  transform: translateY(0);
 }
 
 /* ═══════════════════════════════════════════ */
 /* АДАПТИВ */
 /* ═══════════════════════════════════════════ */
-@media (max-width: 580px) {
+
+/* Планшеты */
+@media (max-width: 768px) {
+  .register-page {
+    padding: 16px;
+  }
+
   .register-card {
-    padding: 30px 24px;
+    padding: 32px 24px;
+  }
+
+  .logo-icon {
+    width: 56px;
+    height: 56px;
   }
 
   .register-header h1 {
-    font-size: 28px;
+    font-size: 26px;
+  }
+}
+
+/* Мобильные устройства */
+@media (max-width: 580px) {
+  .register-page {
+    padding: 12px;
+    align-items: flex-start;
+    padding-top: 20px;
   }
 
-  .form-input {
-    padding: 12px 14px;
+  .register-card {
+    padding: 28px 20px;
+    max-width: 100%;
+    border-radius: 20px;
+    margin: 10px 0;
+  }
+
+  .register-header {
+    margin-bottom: 24px;
+  }
+
+  .logo-icon {
+    width: 52px;
+    height: 52px;
+    margin-bottom: 16px;
+  }
+
+  .register-header h1 {
+    font-size: 24px;
+  }
+
+  .register-header p {
     font-size: 14px;
   }
 
-  .register-btn {
-    padding: 14px;
+  .register-form {
+    gap: 16px;
+  }
+
+  .form-group label {
+    font-size: 12px;
+  }
+
+  .form-input {
+    padding: 13px 14px;
+    font-size: 16px; /* Важно: >= 16px для iOS */
+  }
+
+  .password-input {
+    padding-right: 46px;
+  }
+
+  .password-toggle {
+    right: 6px;
+    padding: 8px;
+    min-width: 38px;
+    min-height: 38px;
+  }
+
+  .password-toggle svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .form-hint {
+    font-size: 11px;
   }
 
   .secret-key-group {
     padding: 16px;
+  }
+
+  .key-icon {
+    width: 14px;
+    height: 14px;
+  }
+
+  .register-btn {
+    padding: 15px;
+    font-size: 15px;
+    min-height: 50px;
+  }
+
+  .footer-text {
+    font-size: 13px;
+  }
+
+  .login-link {
+    font-size: 14px;
+    padding: 9px 20px;
+  }
+
+  .error-message,
+  .success-message {
+    font-size: 13px;
+    padding: 12px 16px;
+  }
+
+  /* Уменьшаем фоновые круги */
+  .circle-1 {
+    width: 300px;
+    height: 300px;
+  }
+
+  .circle-2 {
+    width: 400px;
+    height: 400px;
+  }
+
+  .circle-3 {
+    width: 350px;
+    height: 350px;
+  }
+}
+
+/* Очень маленькие экраны */
+@media (max-width: 360px) {
+  .register-card {
+    padding: 24px 16px;
+  }
+
+  .register-header h1 {
+    font-size: 22px;
+  }
+
+  .logo-icon {
+    width: 48px;
+    height: 48px;
+  }
+
+  .form-input {
+    padding: 12px;
+  }
+
+  .secret-key-group {
+    padding: 14px;
+  }
+
+  .register-btn {
+    min-height: 48px;
+  }
+}
+
+/* Fix для iOS Safari */
+@supports (-webkit-touch-callout: none) {
+  .form-input {
+    font-size: 16px; /* Предотвращает автозум в iOS */
   }
 }
 </style>

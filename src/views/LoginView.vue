@@ -66,7 +66,7 @@
               v-model="password"
               :type="showPassword ? 'text' : 'password'"
               placeholder="Введите пароль"
-              class="form-input"
+              class="form-input password-input"
               required
               autocomplete="current-password"
               :disabled="loading"
@@ -76,6 +76,7 @@
               @click="showPassword = !showPassword"
               class="password-toggle"
               :disabled="loading"
+              :aria-label="showPassword ? 'Скрыть пароль' : 'Показать пароль'"
             >
               <svg v-if="!showPassword" viewBox="0 0 24 24">
                 <path
@@ -98,8 +99,9 @@
           <div v-else class="btn-spinner"></div>
         </button>
       </form>
+
       <div class="login-footer">
-        <p>Нет аккаунта?</p>
+        <p class="footer-text">Нет аккаунта?</p>
         <router-link to="/register" class="register-link">Создать аккаунт</router-link>
       </div>
     </div>
@@ -147,7 +149,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 40px 20px;
+  padding: 20px;
   background: radial-gradient(circle at top, #1a0a1f, #000);
   overflow: hidden;
 }
@@ -217,7 +219,7 @@ export default {
   z-index: 10;
   width: 100%;
   max-width: 440px;
-  padding: 50px;
+  padding: 40px 30px;
   background: rgba(255, 255, 255, 0.02);
   border-radius: 24px;
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -230,19 +232,19 @@ export default {
 /* ═══════════════════════════════════════════ */
 .login-header {
   text-align: center;
-  margin-bottom: 40px;
+  margin-bottom: 32px;
 }
 
 .logo-icon {
-  width: 70px;
-  height: 70px;
-  margin: 0 auto 24px;
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 20px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: rgba(255, 65, 108, 0.1);
-  border-radius: 20px;
-  padding: 14px;
+  border-radius: 18px;
+  padding: 12px;
   border: 2px solid rgba(255, 65, 108, 0.3);
   animation: pulse-glow 3s infinite;
 }
@@ -263,7 +265,7 @@ export default {
 }
 
 .login-header h1 {
-  font-size: 32px;
+  font-size: 28px;
   font-weight: 900;
   margin: 0 0 8px;
   background: linear-gradient(135deg, #ff416c, #ff4b2b);
@@ -273,7 +275,7 @@ export default {
 }
 
 .login-header p {
-  font-size: 16px;
+  font-size: 15px;
   color: rgba(255, 255, 255, 0.6);
   margin: 0;
 }
@@ -304,40 +306,24 @@ export default {
   }
 }
 
-.register-link {
-  display: inline-block;
-  color: #ff416c;
-  text-decoration: none;
-  font-size: 15px;
-  font-weight: 700;
-  padding: 8px 24px;
-  border-radius: 8px;
-  background: rgba(255, 65, 108, 0.1);
-  transition: all 0.3s;
-}
-
-.register-link:hover {
-  background: rgba(255, 65, 108, 0.2);
-  transform: translateY(-2px);
-}
 /* ═══════════════════════════════════════════ */
 /* ФОРМА */
 /* ═══════════════════════════════════════════ */
 .login-form {
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  margin-bottom: 30px;
+  gap: 20px;
+  margin-bottom: 24px;
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .form-group label {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   color: rgba(255, 255, 255, 0.8);
   text-transform: uppercase;
@@ -345,14 +331,16 @@ export default {
 }
 
 .form-input {
-  padding: 16px 18px;
+  padding: 14px 16px;
   background: rgba(255, 255, 255, 0.05);
   border: 2px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   color: white;
-  font-size: 16px;
+  font-size: 15px;
   outline: none;
   transition: all 0.3s;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .form-input:focus {
@@ -367,36 +355,52 @@ export default {
 
 .password-wrapper {
   position: relative;
+  width: 100%;
+}
+
+.password-input {
+  padding-right: 48px;
 }
 
 .password-toggle {
   position: absolute;
-  right: 12px;
+  right: 8px;
   top: 50%;
   transform: translateY(-50%);
   background: none;
   border: none;
   cursor: pointer;
-  padding: 8px;
+  padding: 10px;
   border-radius: 8px;
   transition: background 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  min-height: 40px;
 }
 
-.password-toggle:hover {
+.password-toggle:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.1);
 }
 
+.password-toggle:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .password-toggle svg {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   color: rgba(255, 255, 255, 0.5);
+  display: block;
 }
 
 /* ═══════════════════════════════════════════ */
 /* КНОПКА */
 /* ═══════════════════════════════════════════ */
 .login-btn {
-  padding: 18px;
+  padding: 16px;
   background: linear-gradient(135deg, #ff416c, #ff4b2b);
   border: none;
   border-radius: 12px;
@@ -406,12 +410,21 @@ export default {
   cursor: pointer;
   transition: all 0.3s;
   box-shadow: 0 10px 30px rgba(255, 65, 108, 0.3);
-  margin-top: 8px;
+  margin-top: 4px;
+  width: 100%;
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .login-btn:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 15px 40px rgba(255, 65, 108, 0.4);
+}
+
+.login-btn:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .login-btn:disabled {
@@ -420,13 +433,12 @@ export default {
 }
 
 .btn-spinner {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   border: 3px solid rgba(255, 255, 255, 0.3);
   border-top-color: white;
   border-radius: 50%;
   animation: spin 0.6s linear infinite;
-  margin: 0 auto;
 }
 
 @keyframes spin {
@@ -440,45 +452,190 @@ export default {
 /* ═══════════════════════════════════════════ */
 .login-footer {
   text-align: center;
-  padding-top: 30px;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.back-link {
-  display: inline-flex;
+  padding-top: 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 8px;
-  color: rgba(255, 255, 255, 0.6);
-  text-decoration: none;
-  font-size: 14px;
-  font-weight: 600;
-  transition: all 0.3s;
+  gap: 12px;
 }
 
-.back-link:hover {
+.footer-text {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0;
+  font-weight: 500;
+}
+
+.register-link {
+  display: inline-block;
   color: #ff416c;
-  transform: translateX(-4px);
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 700;
+  padding: 10px 24px;
+  border-radius: 10px;
+  background: rgba(255, 65, 108, 0.1);
+  transition: all 0.3s;
+  border: 1px solid rgba(255, 65, 108, 0.2);
+}
+
+.register-link:hover {
+  background: rgba(255, 65, 108, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 65, 108, 0.3);
+}
+
+.register-link:active {
+  transform: translateY(0);
 }
 
 /* ═══════════════════════════════════════════ */
 /* АДАПТИВ */
 /* ═══════════════════════════════════════════ */
-@media (max-width: 480px) {
+
+/* Планшеты */
+@media (max-width: 768px) {
+  .login-page {
+    padding: 16px;
+  }
+
   .login-card {
-    padding: 30px 24px;
+    padding: 32px 24px;
+  }
+
+  .logo-icon {
+    width: 56px;
+    height: 56px;
   }
 
   .login-header h1 {
-    font-size: 28px;
+    font-size: 26px;
+  }
+}
+
+/* Мобильные устройства */
+@media (max-width: 480px) {
+  .login-page {
+    padding: 12px;
+    align-items: flex-start;
+    padding-top: 40px;
+  }
+
+  .login-card {
+    padding: 28px 20px;
+    max-width: 100%;
+    border-radius: 20px;
+  }
+
+  .login-header {
+    margin-bottom: 28px;
+  }
+
+  .logo-icon {
+    width: 52px;
+    height: 52px;
+    margin-bottom: 16px;
+  }
+
+  .login-header h1 {
+    font-size: 24px;
+  }
+
+  .login-header p {
+    font-size: 14px;
+  }
+
+  .form-group label {
+    font-size: 12px;
   }
 
   .form-input {
-    padding: 14px 16px;
-    font-size: 15px;
+    padding: 13px 14px;
+    font-size: 16px; /* Важно: >= 16px для iOS чтобы не зумило */
+  }
+
+  .password-input {
+    padding-right: 46px;
+  }
+
+  .password-toggle {
+    right: 6px;
+    padding: 8px;
+    min-width: 38px;
+    min-height: 38px;
+  }
+
+  .password-toggle svg {
+    width: 18px;
+    height: 18px;
   }
 
   .login-btn {
-    padding: 16px;
+    padding: 15px;
+    font-size: 15px;
+    min-height: 50px;
+  }
+
+  .footer-text {
+    font-size: 13px;
+  }
+
+  .register-link {
+    font-size: 14px;
+    padding: 9px 20px;
+  }
+
+  .error-message {
+    font-size: 13px;
+    padding: 12px 16px;
+  }
+
+  /* Уменьшаем фоновые круги на мобильных */
+  .circle-1 {
+    width: 300px;
+    height: 300px;
+  }
+
+  .circle-2 {
+    width: 400px;
+    height: 400px;
+  }
+
+  .circle-3 {
+    width: 350px;
+    height: 350px;
+  }
+}
+
+/* Очень маленькие экраны */
+@media (max-width: 360px) {
+  .login-card {
+    padding: 24px 16px;
+  }
+
+  .login-header h1 {
+    font-size: 22px;
+  }
+
+  .logo-icon {
+    width: 48px;
+    height: 48px;
+  }
+
+  .form-input {
+    padding: 12px;
+  }
+
+  .login-btn {
+    min-height: 48px;
+  }
+}
+
+/*Fix для iOS Safari */
+@supports (-webkit-touch-callout: none) {
+  .form-input {
+    font-size: 16px; /* Предотвращает автозум в iOS */
   }
 }
 </style>
