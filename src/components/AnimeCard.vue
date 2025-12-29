@@ -1,26 +1,78 @@
 <template>
   <div class="anime-card" @click="openAnime">
     <div class="card-image">
-      <img :src="anime.poster || '/placeholder.jpg'" :alt="anime.title" />
-      <div class="card-overlay">
-        <div class="rating" v-if="anime.rating">⭐ {{ anime.rating }}</div>
-        <div class="status" :class="statusClass">
-          {{ statusText }}
+      <div class="image-wrapper">
+        <img :src="anime.poster || '/placeholder.jpg'" :alt="anime.title" loading="lazy" />
+        <div class="image-gradient"></div>
+      </div>
+
+      <!-- Бейдж рейтинга -->
+      <div class="rating-badge" v-if="anime.rating">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <path
+            d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+          />
+        </svg>
+        <span>{{ anime.rating }}</span>
+      </div>
+
+      <!-- Бейдж статуса -->
+      <div class="status-badge" :class="statusClass">
+        <span class="status-dot"></span>
+        {{ statusText }}
+      </div>
+
+      <!-- Hover оверлей -->
+      <div class="card-hover-overlay">
+        <div class="play-button">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M8 5v14l11-7z" />
+          </svg>
+        </div>
+        <div class="hover-info">
+          <p class="hover-title">{{ anime.title }}</p>
+          <div class="hover-meta" v-if="anime.episodes || anime.year">
+            <span v-if="anime.episodes">{{ anime.episodes }} эп.</span>
+            <span v-if="anime.year">{{ anime.year }}</span>
+          </div>
         </div>
       </div>
     </div>
+
     <div class="card-content">
-      <h3 class="card-title">{{ anime.title }}</h3>
+      <h3 class="card-title" :title="anime.title">{{ anime.title }}</h3>
+
       <div class="card-meta">
-        <span v-if="anime.year">{{ anime.year }}</span>
-        <span v-if="anime.type">{{ anime.type }}</span>
+        <span v-if="anime.year" class="meta-item">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path
+              d="M9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm2-7h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z"
+            />
+          </svg>
+          {{ anime.year }}
+        </span>
+        <span v-if="anime.type" class="meta-item">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path
+              d="M21 3H3c-1.11 0-2 .89-2 2v12c0 1.1.89 2 2 2h5v2h8v-2h5c1.1 0 1.99-.9 1.99-2L23 5c0-1.11-.9-2-2-2zm0 14H3V5h18v12z"
+            />
+          </svg>
+          {{ anime.type }}
+        </span>
       </div>
+
       <div class="card-genres" v-if="anime.genres && anime.genres.length">
-        <span v-for="g in anime.genres.slice(0, 3)" :key="g" class="genre-tag">
+        <span v-for="g in anime.genres.slice(0, 2)" :key="g" class="genre-tag">
           {{ g }}
+        </span>
+        <span v-if="anime.genres.length > 2" class="genre-more">
+          +{{ anime.genres.length - 2 }}
         </span>
       </div>
     </div>
+
+    <!-- Эффект свечения -->
+    <div class="card-glow"></div>
   </div>
 </template>
 
@@ -43,13 +95,12 @@ export default {
     statusText() {
       const status = this.anime.status
       if (!status) return ''
-      if (status.includes('онгоинг') || status.includes('ongoing')) return 'Выходит'
+      if (status.includes('онгоинг') || status.includes('ongoing')) return 'Онгоинг'
       if (status.includes('анонс') || status.includes('announced')) return 'Анонс'
-      return 'Вышло'
+      return 'Завершён'
     },
   },
   methods: {
-    // ✅ Добавили метод роутинга
     openAnime() {
       this.$router.push(`/anime/${this.anime.id}`)
     },
@@ -60,131 +111,470 @@ export default {
 <style scoped>
 .anime-card {
   position: relative;
-  border-radius: 20px;
+  border-radius: 16px;
   overflow: hidden;
   cursor: pointer;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+}
+
+.anime-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(255, 65, 108, 0.3), rgba(255, 75, 43, 0.3));
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.4s;
+}
+
+.anime-card:hover::before {
+  opacity: 1;
 }
 
 .anime-card:hover {
-  transform: translateY(-10px) scale(1.02);
+  transform: translateY(-8px);
   box-shadow:
-    0 25px 50px rgba(0, 0, 0, 0.5),
-    0 0 30px rgba(255, 65, 108, 0.2);
-  border-color: rgba(255, 65, 108, 0.3);
+    0 20px 40px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 65, 108, 0.2);
 }
 
+/* ═══════════════════════════════════════════ */
+/* ИЗОБРАЖЕНИЕ */
+/* ═══════════════════════════════════════════ */
 .card-image {
   position: relative;
   width: 100%;
   height: 280px;
   overflow: hidden;
+  background: linear-gradient(135deg, #1a0a1f 0%, #000 100%);
+}
+
+.image-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
 }
 
 .card-image img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.4s;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .anime-card:hover .card-image img {
-  transform: scale(1.1);
+  transform: scale(1.08);
 }
 
-.card-overlay {
+.image-gradient {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent 60%);
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.8) 0%,
+    rgba(0, 0, 0, 0.4) 40%,
+    transparent 70%
+  );
+  pointer-events: none;
+}
+
+/* ═══════════════════════════════════════════ */
+/* БЕЙДЖИ */
+/* ═══════════════════════════════════════════ */
+.rating-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
   display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 12px;
-  opacity: 0;
-  transition: opacity 0.3s;
-}
-
-.anime-card:hover .card-overlay {
-  opacity: 1;
-}
-
-.rating {
-  align-self: flex-end;
-  background: rgba(255, 193, 7, 0.9);
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  background: rgba(255, 193, 7, 0.95);
   color: #000;
-  padding: 6px 12px;
   border-radius: 8px;
   font-weight: 700;
-  font-size: 14px;
+  font-size: 13px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+  z-index: 2;
 }
 
-.status {
+.rating-badge svg {
+  width: 14px;
+  height: 14px;
+}
+
+.status-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
   padding: 6px 12px;
   border-radius: 8px;
   font-size: 12px;
   font-weight: 600;
-  align-self: flex-start;
+  backdrop-filter: blur(10px);
+  z-index: 2;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 
 .status-ongoing {
-  background: rgba(76, 175, 80, 0.9);
+  background: rgba(76, 175, 80, 0.95);
   color: white;
+}
+
+.status-ongoing .status-dot {
+  background: #c8e6c9;
 }
 
 .status-announced {
-  background: rgba(33, 150, 243, 0.9);
+  background: rgba(33, 150, 243, 0.95);
   color: white;
+}
+
+.status-announced .status-dot {
+  background: #bbdefb;
 }
 
 .status-released {
-  background: rgba(158, 158, 158, 0.9);
+  background: rgba(158, 158, 158, 0.95);
   color: white;
 }
 
-.card-content {
-  padding: 16px;
+.status-released .status-dot {
+  background: #e0e0e0;
 }
 
-.card-title {
-  font-size: 16px;
+/* ═══════════════════════════════════════════ */
+/* HOVER ОВЕРЛЕЙ */
+/* ═══════════════════════════════════════════ */
+.card-hover-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.95) 0%,
+    rgba(0, 0, 0, 0.7) 50%,
+    rgba(0, 0, 0, 0.4) 100%
+  );
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s;
+  z-index: 1;
+}
+
+.anime-card:hover .card-hover-overlay {
+  opacity: 1;
+}
+
+.play-button {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ff416c, #ff4b2b);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+  box-shadow: 0 8px 24px rgba(255, 65, 108, 0.4);
+  transform: scale(0.9);
+  transition: transform 0.3s;
+}
+
+.anime-card:hover .play-button {
+  transform: scale(1);
+}
+
+.play-button svg {
+  width: 28px;
+  height: 28px;
+  color: white;
+  margin-left: 3px;
+}
+
+.hover-info {
+  text-align: center;
+  padding: 0 16px;
+  max-width: 100%;
+}
+
+.hover-title {
+  font-size: 15px;
   font-weight: 600;
-  margin: 0 0 8px;
   color: white;
-  line-height: 1.3;
+  margin: 0 0 8px;
+  line-height: 1.4;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
-.card-meta {
+.hover-meta {
   display: flex;
-  gap: 10px;
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.6);
-  margin-bottom: 10px;
+  justify-content: center;
+  gap: 12px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
 }
 
-.card-meta span {
-  background: rgba(255, 255, 255, 0.05);
+.hover-meta span {
   padding: 4px 10px;
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 6px;
+  backdrop-filter: blur(10px);
+}
+
+/* ═══════════════════════════════════════════ */
+/* КОНТЕНТ */
+/* ═══════════════════════════════════════════ */
+.card-content {
+  padding: 16px;
+}
+
+.card-title {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0 0 10px;
+  color: white;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 42px;
+}
+
+.card-meta {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.05);
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+.meta-item svg {
+  width: 14px;
+  height: 14px;
+  opacity: 0.7;
 }
 
 .card-genres {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+  align-items: center;
 }
 
 .genre-tag {
   font-size: 11px;
   padding: 4px 10px;
-  background: rgba(255, 65, 108, 0.15);
-  color: #ff416c;
+  background: rgba(255, 65, 108, 0.12);
+  color: #ff6b9d;
   border-radius: 6px;
-  border: 1px solid rgba(255, 65, 108, 0.3);
+  border: 1px solid rgba(255, 65, 108, 0.25);
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.genre-tag:hover {
+  background: rgba(255, 65, 108, 0.2);
+  border-color: rgba(255, 65, 108, 0.4);
+}
+
+.genre-more {
+  font-size: 11px;
+  padding: 4px 8px;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.6);
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+/* ═══════════════════════════════════════════ */
+/* ЭФФЕКТ СВЕЧЕНИЯ */
+/* ═══════════════════════════════════════════ */
+.card-glow {
+  position: absolute;
+  inset: -50%;
+  background: radial-gradient(circle at center, rgba(255, 65, 108, 0.15), transparent 70%);
+  opacity: 0;
+  transition: opacity 0.4s;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.anime-card:hover .card-glow {
+  opacity: 1;
+}
+
+/* ═══════════════════════════════════════════ */
+/* АДАПТИВ */
+/* ═══════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  .card-image {
+    height: 240px;
+  }
+
+  .card-title {
+    font-size: 14px;
+    min-height: 40px;
+  }
+
+  .play-button {
+    width: 56px;
+    height: 56px;
+  }
+
+  .play-button svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .hover-title {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .card-image {
+    height: 220px;
+  }
+
+  .rating-badge,
+  .status-badge {
+    top: 10px;
+    padding: 5px 8px;
+    font-size: 11px;
+  }
+
+  .rating-badge {
+    right: 10px;
+  }
+
+  .status-badge {
+    left: 10px;
+  }
+
+  .rating-badge svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  .card-content {
+    padding: 14px;
+  }
+
+  .card-title {
+    font-size: 13px;
+    min-height: 38px;
+  }
+
+  .meta-item {
+    font-size: 11px;
+    padding: 3px 7px;
+  }
+
+  .meta-item svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  .genre-tag {
+    font-size: 10px;
+    padding: 3px 8px;
+  }
+
+  .genre-more {
+    font-size: 10px;
+    padding: 3px 6px;
+  }
+
+  .play-button {
+    width: 48px;
+    height: 48px;
+  }
+
+  .play-button svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .hover-title {
+    font-size: 13px;
+  }
+
+  .hover-meta {
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 360px) {
+  .card-image {
+    height: 200px;
+  }
+
+  .card-title {
+    font-size: 12px;
+  }
+}
+
+/* ═══════════════════════════════════════════ */
+/* АНИМАЦИИ */
+/* ═══════════════════════════════════════════ */
+@media (prefers-reduced-motion: reduce) {
+  .anime-card,
+  .card-image img,
+  .play-button,
+  .card-hover-overlay {
+    transition: none;
+  }
+
+  .status-dot {
+    animation: none;
+  }
 }
 </style>

@@ -334,9 +334,9 @@ export default {
 }
 
 .header-container {
-  max-width: 1600px;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 12px 20px;
+  padding: 12px 30px;
   display: flex;
   align-items: center;
   gap: 20px;
@@ -782,6 +782,10 @@ export default {
 }
 
 @media (max-width: 768px) {
+  .header-container {
+    padding: 12px 20px;
+  }
+
   .burger-btn {
     display: flex;
   }
@@ -796,6 +800,31 @@ export default {
 
   .header-actions {
     margin-left: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .header-container {
+    padding: 10px 16px;
+  }
+
+  .logo-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .logo-title {
+    font-size: 18px;
+  }
+
+  .action-btn {
+    width: 38px;
+    height: 38px;
+  }
+
+  .action-icon {
+    width: 18px;
+    height: 18px;
   }
 }
 </style>
