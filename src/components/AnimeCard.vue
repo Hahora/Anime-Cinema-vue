@@ -70,9 +70,6 @@
         </span>
       </div>
     </div>
-
-    <!-- Эффект свечения -->
-    <div class="card-glow"></div>
   </div>
 </template>
 
@@ -109,31 +106,40 @@ export default {
 </script>
 
 <style scoped>
+/* ═══════════════════════════════════════════ */
+/* ОПТИМИЗАЦИЯ ПРОИЗВОДИТЕЛЬНОСТИ */
+/* ═══════════════════════════════════════════ */
+
 .anime-card {
   position: relative;
   border-radius: 16px;
   overflow: hidden;
   cursor: pointer;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(10px);
+
+  /* КРИТИЧЕСКИ ВАЖНО ДЛЯ ПРОИЗВОДИТЕЛЬНОСТИ */
+  contain: layout style paint; /* Изолирует карточку от остальной страницы */
+  will-change: transform; /* GPU acceleration */
+  transform: translateZ(0); /* Force GPU layer */
+  backface-visibility: hidden; /* Prevent flickering */
 }
 
+/* Убрали backdrop-filter — он очень тяжелый! */
+
+/* Упростили hover эффект */
 .anime-card::before {
   content: '';
   position: absolute;
   inset: 0;
   border-radius: 16px;
-  padding: 1px;
-  background: linear-gradient(135deg, rgba(255, 65, 108, 0.3), rgba(255, 75, 43, 0.3));
-  -webkit-mask:
-    linear-gradient(#fff 0 0) content-box,
-    linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
+  background: linear-gradient(135deg, rgba(255, 65, 108, 0.2), rgba(255, 75, 43, 0.2));
   opacity: 0;
-  transition: opacity 0.4s;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
 }
 
 .anime-card:hover::before {
@@ -141,10 +147,8 @@ export default {
 }
 
 .anime-card:hover {
-  transform: translateY(-8px);
-  box-shadow:
-    0 20px 40px rgba(0, 0, 0, 0.4),
-    0 0 0 1px rgba(255, 65, 108, 0.2);
+  transform: translateY(-4px) translateZ(0); /* Уменьшили смещение */
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
 }
 
 /* ═══════════════════════════════════════════ */
@@ -155,24 +159,28 @@ export default {
   width: 100%;
   height: 280px;
   overflow: hidden;
-  background: linear-gradient(135deg, #1a0a1f 0%, #000 100%);
+  background: #0a0a0a; /* Простой цвет вместо градиента */
+  contain: strict; /* Максимальная изоляция */
 }
 
 .image-wrapper {
   position: relative;
   width: 100%;
   height: 100%;
+  will-change: transform;
 }
 
 .card-image img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.4s ease;
+  will-change: transform;
+  transform: translateZ(0);
 }
 
 .anime-card:hover .card-image img {
-  transform: scale(1.08);
+  transform: scale(1.05) translateZ(0); /* Уменьшили scale */
 }
 
 .image-gradient {
@@ -180,8 +188,8 @@ export default {
   inset: 0;
   background: linear-gradient(
     to top,
-    rgba(0, 0, 0, 0.8) 0%,
-    rgba(0, 0, 0, 0.4) 40%,
+    rgba(0, 0, 0, 0.7) 0%,
+    rgba(0, 0, 0, 0.3) 40%,
     transparent 70%
   );
   pointer-events: none;
@@ -203,9 +211,10 @@ export default {
   border-radius: 8px;
   font-weight: 700;
   font-size: 13px;
-  backdrop-filter: blur(10px);
-  box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+  box-shadow: 0 2px 8px rgba(255, 193, 7, 0.3);
   z-index: 2;
+  will-change: transform;
+  transform: translateZ(0);
 }
 
 .rating-badge svg {
@@ -224,26 +233,17 @@ export default {
   border-radius: 8px;
   font-size: 12px;
   font-weight: 600;
-  backdrop-filter: blur(10px);
   z-index: 2;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  will-change: transform;
+  transform: translateZ(0);
 }
 
 .status-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  animation: pulse-dot 2s ease-in-out infinite;
-}
-
-@keyframes pulse-dot {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
+  /* Убрали анимацию — она лагает при скролле */
 }
 
 .status-ongoing {
@@ -281,21 +281,24 @@ export default {
   inset: 0;
   background: linear-gradient(
     to top,
-    rgba(0, 0, 0, 0.95) 0%,
-    rgba(0, 0, 0, 0.7) 50%,
-    rgba(0, 0, 0, 0.4) 100%
+    rgba(0, 0, 0, 0.9) 0%,
+    rgba(0, 0, 0, 0.6) 50%,
+    rgba(0, 0, 0, 0.3) 100%
   );
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   opacity: 0;
-  transition: opacity 0.3s;
+  transition: opacity 0.25s ease;
   z-index: 1;
+  will-change: opacity;
+  pointer-events: none;
 }
 
 .anime-card:hover .card-hover-overlay {
   opacity: 1;
+  pointer-events: auto;
 }
 
 .play-button {
@@ -307,13 +310,14 @@ export default {
   align-items: center;
   justify-content: center;
   margin-bottom: 16px;
-  box-shadow: 0 8px 24px rgba(255, 65, 108, 0.4);
-  transform: scale(0.9);
-  transition: transform 0.3s;
+  box-shadow: 0 4px 16px rgba(255, 65, 108, 0.4);
+  transform: scale(0.95) translateZ(0);
+  transition: transform 0.25s ease;
+  will-change: transform;
 }
 
 .anime-card:hover .play-button {
-  transform: scale(1);
+  transform: scale(1) translateZ(0);
 }
 
 .play-button svg {
@@ -351,9 +355,8 @@ export default {
 
 .hover-meta span {
   padding: 4px 10px;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.15);
   border-radius: 6px;
-  backdrop-filter: blur(10px);
 }
 
 /* ═══════════════════════════════════════════ */
@@ -361,6 +364,7 @@ export default {
 /* ═══════════════════════════════════════════ */
 .card-content {
   padding: 16px;
+  contain: layout style;
 }
 
 .card-title {
@@ -416,12 +420,11 @@ export default {
   border-radius: 6px;
   border: 1px solid rgba(255, 65, 108, 0.25);
   font-weight: 600;
-  transition: all 0.3s;
+  transition: background-color 0.2s ease;
 }
 
 .genre-tag:hover {
   background: rgba(255, 65, 108, 0.2);
-  border-color: rgba(255, 65, 108, 0.4);
 }
 
 .genre-more {
@@ -431,23 +434,6 @@ export default {
   color: rgba(255, 255, 255, 0.6);
   border-radius: 6px;
   font-weight: 600;
-}
-
-/* ═══════════════════════════════════════════ */
-/* ЭФФЕКТ СВЕЧЕНИЯ */
-/* ═══════════════════════════════════════════ */
-.card-glow {
-  position: absolute;
-  inset: -50%;
-  background: radial-gradient(circle at center, rgba(255, 65, 108, 0.15), transparent 70%);
-  opacity: 0;
-  transition: opacity 0.4s;
-  pointer-events: none;
-  z-index: 0;
-}
-
-.anime-card:hover .card-glow {
-  opacity: 1;
 }
 
 /* ═══════════════════════════════════════════ */
@@ -559,22 +545,6 @@ export default {
 
   .card-title {
     font-size: 12px;
-  }
-}
-
-/* ═══════════════════════════════════════════ */
-/* АНИМАЦИИ */
-/* ═══════════════════════════════════════════ */
-@media (prefers-reduced-motion: reduce) {
-  .anime-card,
-  .card-image img,
-  .play-button,
-  .card-hover-overlay {
-    transition: none;
-  }
-
-  .status-dot {
-    animation: none;
   }
 }
 </style>

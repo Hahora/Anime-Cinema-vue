@@ -144,6 +144,8 @@ export default {
   position: relative;
   min-height: 100vh;
   overflow-x: hidden;
+  /* КРИТИЧЕСКИ ВАЖНО ДЛЯ СКРОЛЛА */
+  contain: layout style;
 }
 
 /* ═══════════════════════════════════════════ */
@@ -153,6 +155,7 @@ export default {
   position: relative;
   z-index: 1;
   padding: 20px;
+  contain: layout style;
 }
 
 /* ═══════════════════════════════════════════ */
@@ -164,6 +167,7 @@ export default {
   margin: 0 auto;
   padding: 80px 20px 100px;
   text-align: center;
+  contain: layout style;
 }
 
 .hero-content {
@@ -183,8 +187,8 @@ export default {
   font-size: 14px;
   font-weight: 600;
   margin-bottom: 32px;
-  backdrop-filter: blur(10px);
   animation: fadeInDown 0.8s ease-out;
+  /* Убрали backdrop-filter */
 }
 
 .hero-badge svg {
@@ -208,18 +212,7 @@ export default {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  animation: gradientShift 3s ease infinite;
-  background-size: 200% 200%;
-}
-
-@keyframes gradientShift {
-  0%,
-  100% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
+  /* Убрали анимацию градиента — она тяжелая */
 }
 
 .hero-subtitle {
@@ -276,6 +269,7 @@ export default {
   max-width: 1400px;
   margin: 0 auto 80px;
   animation: fadeInUp 0.8s ease-out 0.6s both;
+  contain: layout style;
 }
 
 .section-header {
@@ -288,17 +282,7 @@ export default {
 
 .section-icon {
   font-size: 32px;
-  animation: bounce 2s ease-in-out infinite;
-}
-
-@keyframes bounce {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-5px);
-  }
+  /* Убрали анимацию bounce — она создает постоянные перерисовки */
 }
 
 .section-title {
@@ -323,6 +307,7 @@ export default {
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 24px;
   padding: 0 10px;
+  contain: layout style; /* КРИТИЧЕСКИ ВАЖНО */
 }
 
 .grid-item {
@@ -332,7 +317,7 @@ export default {
 @keyframes fadeInScale {
   from {
     opacity: 0;
-    transform: scale(0.9) translateY(20px);
+    transform: scale(0.95) translateY(20px);
   }
   to {
     opacity: 1;
@@ -351,24 +336,14 @@ export default {
   background: rgba(255, 255, 255, 0.02);
   border-radius: 24px;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(10px);
   animation: fadeInUp 0.8s ease-out;
+  /* Убрали backdrop-filter */
 }
 
 .empty-icon {
   font-size: 80px;
   margin-bottom: 24px;
-  animation: float 3s ease-in-out infinite;
-}
-
-@keyframes float {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
+  /* Убрали анимацию float */
 }
 
 .empty-state h3 {
