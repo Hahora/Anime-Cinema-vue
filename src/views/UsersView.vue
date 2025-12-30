@@ -3,27 +3,27 @@
     <PageLoader v-if="loading" />
 
     <div v-else class="users-container">
-      <!-- Заголовок -->
+      <!-- Компактный хедер -->
       <div class="page-header">
-        <h1 class="page-title">
-          <svg viewBox="0 0 24 24" class="title-icon">
-            <path
-              d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"
-              fill="currentColor"
-            />
-          </svg>
-          Пользователи
-        </h1>
+        <div class="header-top">
+          <h1 class="page-title">
+            <svg viewBox="0 0 24 24" class="title-icon">
+              <path
+                d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"
+                fill="currentColor"
+              />
+            </svg>
+            Пользователи
+          </h1>
 
-        <!-- СТАТИСТИКА ОНЛАЙН -->
-        <div class="online-stats">
-          <div class="online-indicator-small">
-            <span class="status-dot online"></span>
+          <!-- Онлайн статистика -->
+          <div class="online-stats">
+            <span class="status-dot"></span>
+            <span class="online-count">{{ onlineCount }} онлайн</span>
           </div>
-          <span class="online-count">{{ onlineCount }} онлайн</span>
         </div>
 
-        <!-- Переключатель вкладок -->
+        <!-- Вкладки -->
         <div class="tabs">
           <button :class="['tab', { active: currentTab === 'all' }]" @click="currentTab = 'all'">
             <svg viewBox="0 0 24 24">
@@ -32,7 +32,8 @@
                 fill="currentColor"
               />
             </svg>
-            Все пользователи
+            Все
+            <span v-if="allUsers.length > 0" class="tab-count">{{ allUsers.length }}</span>
           </button>
           <button
             :class="['tab', { active: currentTab === 'friends' }]"
@@ -44,7 +45,7 @@
                 fill="currentColor"
               />
             </svg>
-            Мои друзья
+            Друзья
             <span v-if="friends.length > 0" class="tab-badge">{{ friends.length }}</span>
           </button>
           <button
@@ -76,7 +77,7 @@
             v-model="searchQuery"
             @input="handleSearch"
             type="text"
-            placeholder="Поиск по имени или username..."
+            placeholder="Поиск по имени..."
             class="search-input"
           />
           <button v-if="searchQuery" @click="clearSearch" class="clear-btn">
@@ -176,7 +177,6 @@ export default {
       friends: [],
       requests: [],
 
-      // Онлайн пользователи
       onlineUserIds: new Set(),
     }
   },
@@ -184,7 +184,6 @@ export default {
     displayedUsers() {
       return this.searchQuery ? this.searchResults : this.allUsers
     },
-    // Количество онлайн пользователей
     onlineCount() {
       return this.onlineUserIds.size
     },
@@ -199,19 +198,16 @@ export default {
     await this.loadAllData()
     await this.loadOnlineUsers()
 
-    // Подписываемся на изменения онлайн статусов
     this.onlineStatusHandler = (data) => {
       if (data.is_online) {
         this.onlineUserIds.add(data.user_id)
       } else {
         this.onlineUserIds.delete(data.user_id)
       }
-      console.log(`👤 User ${data.user_id} is now ${data.is_online ? '🟢 ONLINE' : '⚪ OFFLINE'}`)
     }
     wsService.on('online_status_changed', this.onlineStatusHandler)
   },
   beforeUnmount() {
-    // Отписываемся от событий
     if (this.onlineStatusHandler) {
       wsService.off('online_status_changed', this.onlineStatusHandler)
     }
@@ -224,23 +220,19 @@ export default {
     },
   },
   methods: {
-    //  Загрузка онлайн пользователей
     async loadOnlineUsers() {
       try {
         const data = await animeApi.getOnlineUsers()
         this.onlineUserIds = new Set(data.online_user_ids)
-        console.log(`🟢 Loaded ${this.onlineUserIds.size} online users`)
       } catch (err) {
         console.error('Ошибка загрузки онлайн пользователей:', err)
       }
     },
 
-    //  Проверка онлайн статуса пользователя
     isUserOnline(userId) {
       return wsService.isUserOnline(userId) || this.onlineUserIds.has(userId)
     },
 
-    //Проверка онлайн статуса друга
     isFriendOnline(friendship) {
       const friendId =
         friendship.user.id === this.currentUserId ? friendship.friend.id : friendship.user.id
@@ -320,7 +312,7 @@ export default {
 .users-page {
   min-height: 100vh;
   background: linear-gradient(to bottom, #0a0a0a, #000);
-  padding: 25px 0 60px;
+  padding: 20px 0 80px;
 }
 
 .users-container {
@@ -330,26 +322,76 @@ export default {
 }
 
 /* ═══════════════════════════════════════════ */
-/* ЗАГОЛОВОК */
+/* КОМПАКТНЫЙ ХЕДЕР */
 /* ═══════════════════════════════════════════ */
 .page-header {
-  margin-bottom: 40px;
+  margin-bottom: 32px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 16px;
 }
 
 .page-title {
   display: flex;
   align-items: center;
-  gap: 16px;
-  font-size: 48px;
-  font-weight: 900;
-  margin: 0 0 32px;
+  gap: 12px;
+  font-size: 28px;
+  font-weight: 700;
+  margin: 0;
   color: white;
 }
 
 .title-icon {
-  width: 56px;
-  height: 56px;
+  width: 32px;
+  height: 32px;
   color: #ff416c;
+  flex-shrink: 0;
+}
+
+/* ═══════════════════════════════════════════ */
+/* ОНЛАЙН СТАТИСТИКА */
+/* ═══════════════════════════════════════════ */
+.online-stats {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(76, 175, 80, 0.1);
+  border: 1px solid rgba(76, 175, 80, 0.3);
+  border-radius: 10px;
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #4caf50;
+  box-shadow: 0 0 8px rgba(76, 175, 80, 0.6);
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%,
+  100% {
+    box-shadow: 0 0 8px rgba(76, 175, 80, 0.6);
+  }
+  50% {
+    box-shadow: 0 0 12px rgba(76, 175, 80, 0.8);
+  }
+}
+
+.online-count {
+  font-size: 13px;
+  font-weight: 700;
+  color: #4caf50;
 }
 
 /* ═══════════════════════════════════════════ */
@@ -357,28 +399,28 @@ export default {
 /* ═══════════════════════════════════════════ */
 .tabs {
   display: flex;
-  gap: 12px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
 .tab {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 14px 24px;
+  gap: 6px;
+  padding: 10px 18px;
   background: rgba(255, 255, 255, 0.05);
-  border: 2px solid rgba(255, 255, 255, 0.1);
-  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
   color: rgba(255, 255, 255, 0.6);
-  font-size: 15px;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.3s;
-  position: relative;
+  white-space: nowrap;
 }
 
 .tab:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.08);
   border-color: rgba(255, 255, 255, 0.2);
   color: white;
 }
@@ -387,170 +429,116 @@ export default {
   background: linear-gradient(135deg, #ff416c, #ff4b2b);
   border-color: #ff416c;
   color: white;
-  box-shadow: 0 8px 24px rgba(255, 65, 108, 0.3);
+  box-shadow: 0 4px 12px rgba(255, 65, 108, 0.3);
 }
 
 .tab svg {
-  width: 20px;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.tab-badge,
+.tab-count {
+  min-width: 20px;
   height: 20px;
-}
-
-.tab-badge {
-  min-width: 24px;
-  height: 24px;
-  padding: 0 8px;
+  padding: 0 6px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 12px;
-  font-size: 13px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  font-size: 11px;
   font-weight: 700;
 }
 
-.tab.active .tab-badge {
-  background: rgba(255, 255, 255, 0.3);
-}
-
-/* ═══════════════════════════════════════════ */
-/* СТАТИСТИКА ОНЛАЙН */
-/* ═══════════════════════════════════════════ */
-.online-stats {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 20px;
-  background: rgba(76, 175, 80, 0.1);
-  border: 1px solid rgba(76, 175, 80, 0.3);
-  border-radius: 12px;
-  margin-bottom: 24px;
-  width: fit-content;
-}
-
-.online-indicator-small {
-  width: 24px;
-  height: 24px;
-  background: rgba(0, 0, 0, 0.3);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.online-indicator-small .status-dot {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #4caf50, #66bb6a);
-  box-shadow:
-    0 0 0 2px rgba(76, 175, 80, 0.2),
-    0 0 8px rgba(76, 175, 80, 0.6);
-  animation: pulse-small 2s ease-in-out infinite;
-}
-
-@keyframes pulse-small {
-  0%,
-  100% {
-    box-shadow:
-      0 0 0 2px rgba(76, 175, 80, 0.2),
-      0 0 8px rgba(76, 175, 80, 0.6);
-  }
-  50% {
-    box-shadow:
-      0 0 0 3px rgba(76, 175, 80, 0.3),
-      0 0 12px rgba(76, 175, 80, 0.8);
-  }
-}
-
-.online-count {
-  font-size: 15px;
-  font-weight: 700;
-  color: #4caf50;
+.tab.active .tab-badge,
+.tab.active .tab-count {
+  background: rgba(255, 255, 255, 0.25);
 }
 
 /* ═══════════════════════════════════════════ */
 /* ПОИСК */
 /* ═══════════════════════════════════════════ */
 .search-section {
-  margin-bottom: 40px;
+  margin-bottom: 32px;
 }
 
 .search-box {
   position: relative;
   max-width: 600px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  transition: all 0.3s;
+}
+
+.search-box:focus-within {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 65, 108, 0.5);
+  box-shadow: 0 0 20px rgba(255, 65, 108, 0.15);
 }
 
 .search-icon {
-  position: absolute;
-  left: 20px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 24px;
-  height: 24px;
-  color: rgba(255, 255, 255, 0.4);
-  pointer-events: none;
+  width: 20px;
+  height: 20px;
+  color: rgba(255, 255, 255, 0.5);
+  flex-shrink: 0;
 }
 
 .search-input {
-  width: 100%;
-  padding: 18px 60px 18px 56px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 2px solid rgba(255, 255, 255, 0.1);
-  border-radius: 14px;
-  color: white;
-  font-size: 16px;
-  font-weight: 600;
+  flex: 1;
+  background: none;
+  border: none;
   outline: none;
-  transition: all 0.3s;
+  color: white;
+  font-size: 15px;
+  font-weight: 500;
 }
 
 .search-input::placeholder {
   color: rgba(255, 255, 255, 0.4);
 }
 
-.search-input:focus {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 65, 108, 0.5);
-}
-
 .clear-btn {
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 36px;
-  height: 36px;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: rgba(255, 255, 255, 0.1);
   border: none;
-  border-radius: 8px;
-  color: white;
+  border-radius: 6px;
   cursor: pointer;
   transition: all 0.3s;
+  flex-shrink: 0;
 }
 
 .clear-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 65, 108, 0.3);
 }
 
 .clear-btn svg {
-  width: 20px;
-  height: 20px;
+  width: 16px;
+  height: 16px;
+  color: rgba(255, 255, 255, 0.7);
 }
 
 /* ═══════════════════════════════════════════ */
 /* КОНТЕНТ */
 /* ═══════════════════════════════════════════ */
 .tab-content {
-  min-height: 400px;
+  min-height: 300px;
 }
 
 .users-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 24px;
+  gap: 20px;
 }
 
 /* ═══════════════════════════════════════════ */
@@ -559,24 +547,25 @@ export default {
 .no-results {
   grid-column: 1 / -1;
   text-align: center;
-  padding: 100px 20px;
+  padding: 80px 20px;
 }
 
 .no-results-icon {
-  font-size: 100px;
-  margin-bottom: 24px;
+  font-size: 80px;
+  margin-bottom: 20px;
+  opacity: 0.5;
 }
 
 .no-results h3 {
-  font-size: 32px;
-  font-weight: 900;
-  margin: 0 0 12px;
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0 0 8px;
   color: white;
 }
 
 .no-results p {
-  font-size: 16px;
-  color: rgba(255, 255, 255, 0.6);
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.5);
   margin: 0;
 }
 
@@ -588,18 +577,92 @@ export default {
     padding: 0 20px;
   }
 
+  .page-header {
+    margin-bottom: 24px;
+    padding-bottom: 20px;
+  }
+
+  .header-top {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
   .page-title {
-    font-size: 32px;
+    font-size: 24px;
   }
 
   .title-icon {
-    width: 40px;
-    height: 40px;
+    width: 28px;
+    height: 28px;
+  }
+
+  .online-stats {
+    align-self: flex-start;
+  }
+
+  .tabs {
+    width: 100%;
+    gap: 8px;
+  }
+
+  .tab {
+    flex: 1;
+    justify-content: center;
+    padding: 10px 12px;
+    font-size: 13px;
+    min-width: 0;
+  }
+
+  .tab svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .search-section {
+    margin-bottom: 24px;
+  }
+
+  .search-box {
+    max-width: 100%;
+    padding: 12px 16px;
+  }
+
+  .search-input {
+    font-size: 14px;
   }
 
   .users-grid {
     grid-template-columns: 1fr;
     gap: 16px;
+  }
+
+  .no-results {
+    padding: 60px 20px;
+  }
+
+  .no-results-icon {
+    font-size: 64px;
+  }
+
+  .no-results h3 {
+    font-size: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .users-container {
+    padding: 0 16px;
+  }
+
+  .page-title {
+    font-size: 20px;
+    gap: 10px;
+  }
+
+  .title-icon {
+    width: 24px;
+    height: 24px;
   }
 
   .tabs {
@@ -608,7 +671,12 @@ export default {
 
   .tab {
     width: 100%;
-    justify-content: center;
+    justify-content: flex-start;
+    padding: 12px 16px;
+  }
+
+  .search-box {
+    padding: 10px 14px;
   }
 }
 </style>

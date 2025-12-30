@@ -421,6 +421,18 @@ export default {
   padding: 0 30px;
   gap: 8px;
   flex-shrink: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Скрываем скроллбар, но оставляем возможность скролла */
+.modal-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.modal-tabs {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .tab-btn {
@@ -437,6 +449,8 @@ export default {
   transition: all 0.3s;
   border-bottom: 2px solid transparent;
   position: relative;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .tab-btn:hover {
@@ -451,6 +465,7 @@ export default {
 .tab-icon {
   width: 18px;
   height: 18px;
+  flex-shrink: 0;
 }
 
 /* ═══════════════════════════════════════════ */
@@ -664,27 +679,164 @@ textarea.settings-input {
 /* ═══════════════════════════════════════════ */
 /* АДАПТИВ */
 /* ═══════════════════════════════════════════ */
+
+/* Планшеты и средние экраны */
 @media (max-width: 768px) {
+  .modal-content {
+    max-width: 600px;
+  }
+
+  .modal-header {
+    padding: 20px 24px;
+  }
+
+  .modal-header h2 {
+    font-size: 20px;
+  }
+
   .modal-tabs {
-    padding: 0 20px;
+    padding: 0 24px;
+    gap: 6px;
   }
 
   .tab-btn {
     padding: 12px 16px;
     font-size: 13px;
+    gap: 6px;
   }
 
-  .tab-btn span {
-    display: none;
+  .tab-icon {
+    width: 16px;
+    height: 16px;
+  }
+
+  .modal-body {
+    padding: 24px;
+  }
+
+  .modal-footer {
+    padding: 20px 24px;
+  }
+
+  .settings-input {
+    font-size: 14px;
+    padding: 12px 14px;
+  }
+
+  .btn-primary,
+  .btn-secondary,
+  .btn-action {
+    padding: 11px 20px;
+    font-size: 14px;
+  }
+}
+
+/* Мобильные устройства */
+@media (max-width: 576px) {
+  .modal-overlay {
+    padding: 0;
+  }
+
+  .modal-content {
+    border-radius: 0;
+    max-height: 100vh;
+    height: 100%;
+  }
+
+  .modal-header {
+    padding: 16px 20px;
+  }
+
+  .modal-header h2 {
+    font-size: 18px;
+  }
+
+  .modal-close {
+    width: 36px;
+    height: 36px;
+  }
+
+  .modal-close svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .modal-tabs {
+    padding: 0 20px;
+    gap: 8px;
+  }
+
+  .tab-btn {
+    padding: 12px 0;
+    font-size: 11px;
+    gap: 6px;
+    flex: 1;
+    justify-content: center;
+    flex-direction: column;
+  }
+
+  .tab-icon {
+    width: 20px;
+    height: 20px;
   }
 
   .modal-body {
     padding: 20px;
   }
 
-  .modal-header,
   .modal-footer {
-    padding: 20px;
+    padding: 16px 20px;
+    flex-wrap: wrap;
+  }
+
+  .btn-primary,
+  .btn-secondary {
+    padding: 11px 18px;
+    font-size: 14px;
+  }
+
+  .btn-secondary {
+    flex: 1;
+  }
+
+  .btn-primary {
+    flex: 1;
+  }
+
+  .settings-input {
+    font-size: 14px;
+    padding: 12px;
+  }
+
+  .btn-action {
+    width: 100%;
+    padding: 12px;
+    font-size: 14px;
+  }
+
+  .empty-state {
+    padding: 40px 20px;
+  }
+
+  .empty-icon {
+    width: 64px;
+    height: 64px;
+  }
+
+  .empty-state h3 {
+    font-size: 18px;
+  }
+
+  .empty-state p {
+    font-size: 14px;
+  }
+
+  .section-title {
+    font-size: 15px;
+  }
+
+  .settings-group label {
+    font-size: 12px;
   }
 }
 </style>

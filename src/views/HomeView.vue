@@ -50,7 +50,41 @@
           </div>
         </div>
 
-        <SearchBar />
+        <!-- Search Bar -->
+        <div class="search-bar">
+          <div class="search-container">
+            <div class="search-input-wrapper">
+              <div class="search-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <circle cx="11" cy="11" r="8" stroke-width="2" />
+                  <path d="M21 21l-4.35-4.35" stroke-width="2" stroke-linecap="round" />
+                </svg>
+              </div>
+
+              <input
+                v-model="searchQuery"
+                type="text"
+                class="search-input"
+                placeholder="Поиск аниме..."
+                @keyup.enter="handleSearch"
+              />
+
+              <button v-if="searchQuery" class="clear-button" @click="clearSearch" type="button">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path d="M18 6L6 18M6 6l12 12" stroke-width="2" stroke-linecap="round" />
+                </svg>
+              </button>
+            </div>
+
+            <button class="search-button" @click="handleSearch" :disabled="!searchQuery.trim()">
+              <svg class="search-button-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <circle cx="11" cy="11" r="8" stroke-width="2" />
+                <path d="M21 21l-4.35-4.35" stroke-width="2" stroke-linecap="round" />
+              </svg>
+              <span class="search-button-text">Найти</span>
+            </button>
+          </div>
+        </div>
 
         <!-- Популярное -->
         <div v-if="trending.length" class="section">
@@ -86,7 +120,6 @@
 
 <script>
 import PageLoader from '@/components/PageLoader.vue'
-import SearchBar from '@/components/SearchBar.vue'
 import AnimeCard from '@/components/AnimeCard.vue'
 import { animeApi } from '@/api/animeApi'
 
@@ -94,7 +127,6 @@ export default {
   name: 'HomeView',
   components: {
     PageLoader,
-    SearchBar,
     AnimeCard,
   },
   data() {
@@ -102,6 +134,7 @@ export default {
       trending: [],
       initialLoading: true,
       loadingProgress: 0,
+      searchQuery: '',
     }
   },
   async mounted() {
@@ -134,6 +167,17 @@ export default {
           this.initialLoading = false
         }, 500)
       }
+    },
+    handleSearch() {
+      if (!this.searchQuery.trim()) return
+
+      this.$router.push({
+        name: 'Search',
+        query: { q: this.searchQuery.trim() },
+      })
+    },
+    clearSearch() {
+      this.searchQuery = ''
     },
   },
 }
@@ -518,6 +562,263 @@ export default {
 @media (max-width: 360px) {
   .anime-grid {
     grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  }
+}
+
+/* ═══════════════════════════════════════════ */
+/* SEARCH BAR */
+/* ═══════════════════════════════════════════ */
+.search-bar {
+  max-width: 800px;
+  margin: 0 auto 60px;
+  padding: 0 20px;
+  animation: fadeInUp 0.8s ease-out 0.8s both;
+}
+
+.search-container {
+  display: flex;
+  gap: 12px;
+  align-items: stretch;
+}
+
+.search-input-wrapper {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 20px;
+  color: rgba(255, 255, 255, 0.4);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.search-icon svg {
+  width: 22px;
+  height: 22px;
+  stroke-width: 2;
+}
+
+.search-input {
+  width: 100%;
+  height: 56px;
+  padding: 0 50px 0 56px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  color: white;
+  font-size: 16px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  outline: none;
+}
+
+.search-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.search-input:focus {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 65, 108, 0.5);
+  box-shadow: 0 0 0 4px rgba(255, 65, 108, 0.1);
+}
+
+.clear-button {
+  position: absolute;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  z-index: 2;
+}
+
+.clear-button:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+}
+
+.clear-button svg {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2;
+}
+
+.search-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 120px;
+  height: 56px;
+  padding: 0 28px;
+  background: linear-gradient(135deg, #ff416c, #ff4b2b);
+  border: none;
+  border-radius: 16px;
+  color: white;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 16px rgba(255, 65, 108, 0.3);
+  flex-shrink: 0;
+}
+
+.search-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(255, 65, 108, 0.4);
+}
+
+.search-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.search-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.search-button-icon {
+  width: 20px;
+  height: 20px;
+  stroke-width: 2;
+}
+
+.search-button-text {
+  white-space: nowrap;
+}
+
+/* ═══════════════════════════════════════════ */
+/* SEARCH BAR - АДАПТИВ */
+/* ═══════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  .search-bar {
+    margin-bottom: 40px;
+    padding: 0 16px;
+  }
+
+  .search-container {
+    gap: 10px;
+  }
+
+  .search-input {
+    height: 50px;
+    font-size: 15px;
+    padding: 0 50px 0 52px;
+  }
+
+  .search-icon svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .search-button {
+    min-width: 100px;
+    height: 50px;
+    padding: 0 20px;
+    font-size: 15px;
+  }
+
+  .search-button-icon {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .search-bar {
+    padding: 0 12px;
+  }
+
+  .search-container {
+    gap: 8px;
+  }
+
+  .search-input {
+    height: 48px;
+    font-size: 14px;
+    padding: 0 44px 0 48px;
+    border-radius: 14px;
+  }
+
+  .search-icon {
+    left: 16px;
+  }
+
+  .search-icon svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .clear-button {
+    right: 12px;
+    width: 28px;
+    height: 28px;
+  }
+
+  .clear-button svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  /* КНОПКА НА МОБИЛКАХ - ТОЛЬКО ИКОНКА */
+  .search-button {
+    min-width: 48px;
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    border-radius: 14px;
+  }
+
+  /* Скрываем текст на мобилках */
+  .search-button-text {
+    display: none;
+  }
+
+  /* Иконка по центру */
+  .search-button-icon {
+    width: 20px;
+    height: 20px;
+    margin: 0;
+  }
+}
+
+@media (max-width: 360px) {
+  .search-input {
+    height: 44px;
+    font-size: 13px;
+    padding: 0 40px 0 44px;
+  }
+
+  .search-icon {
+    left: 14px;
+  }
+
+  .search-icon svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .search-button {
+    min-width: 44px;
+    width: 44px;
+    height: 44px;
+  }
+
+  .search-button-icon {
+    width: 18px;
+    height: 18px;
   }
 }
 </style>

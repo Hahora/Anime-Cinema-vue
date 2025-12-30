@@ -1,8 +1,8 @@
 <template>
   <div class="search-page">
     <div class="search-container">
-      <!-- Заголовок -->
-      <div class="page-header">
+      <!-- Компактный заголовок + поиск -->
+      <div class="search-header">
         <h1 class="page-title">
           <svg viewBox="0 0 24 24" class="title-icon">
             <path
@@ -10,12 +10,10 @@
               fill="currentColor"
             />
           </svg>
-          Поиск аниме
+          Поиск
         </h1>
-      </div>
 
-      <!-- Поисковая строка -->
-      <div class="search-bar-wrapper">
+        <!-- Поисковая строка -->
         <div class="search-bar">
           <svg viewBox="0 0 24 24" class="search-icon">
             <path
@@ -28,7 +26,7 @@
             @input="handleSearchInput"
             @keyup.enter="performSearch"
             type="text"
-            placeholder="Введите название аниме..."
+            placeholder="Найти аниме..."
             class="search-input"
             autofocus
           />
@@ -46,14 +44,14 @@
       <!-- Загрузка -->
       <div v-if="loading" class="loading-state">
         <div class="spinner"></div>
-        <p>Поиск аниме...</p>
+        <p>Поиск...</p>
       </div>
 
       <!-- Результаты поиска -->
       <div v-else-if="results.length > 0" class="search-results">
         <div class="results-header">
           <h2>Найдено: {{ results.length }}</h2>
-          <span class="query-text">по запросу "{{ currentQuery }}"</span>
+          <span class="query-text">"{{ currentQuery }}"</span>
         </div>
 
         <div class="anime-grid">
@@ -70,21 +68,23 @@
           <h4>Попробуйте:</h4>
           <ul>
             <li>Проверить правильность написания</li>
-            <li>Использовать другое название (например, оригинальное)</li>
-            <li>Убрать лишние слова из запроса</li>
+            <li>Использовать другое название</li>
+            <li>Убрать лишние слова</li>
           </ul>
         </div>
       </div>
 
       <!-- Начальное состояние -->
       <div v-else class="initial-state">
-        <div class="initial-icon">🔍</div>
-        <h3>Начните поиск</h3>
-        <p>Введите название аниме в поисковую строку выше</p>
+        <div class="initial-content">
+          <div class="initial-icon">🔍</div>
+          <h3>Начните вводить название</h3>
+          <p>Поиск начнется автоматически</p>
+        </div>
 
-        <!-- Популярные запросы (опционально) -->
+        <!-- Популярные запросы -->
         <div class="popular-searches">
-          <h4>Популярные запросы:</h4>
+          <h4>Популярные:</h4>
           <div class="search-tags">
             <button
               v-for="tag in popularSearches"
@@ -128,7 +128,6 @@ export default {
     }
   },
   mounted() {
-    // Читаем query параметр из URL
     const query = this.$route.query.q
     if (query) {
       this.searchQuery = query
@@ -136,7 +135,6 @@ export default {
     }
   },
   watch: {
-    // Отслеживаем изменения query параметра
     '$route.query.q'(newQuery) {
       if (newQuery && newQuery !== this.currentQuery) {
         this.searchQuery = newQuery
@@ -146,11 +144,13 @@ export default {
   },
   methods: {
     handleSearchInput() {
-      // Debounce для автопоиска (опционально)
       clearTimeout(this.searchTimeout)
       this.searchTimeout = setTimeout(() => {
         if (this.searchQuery.trim().length >= 2) {
           this.performSearch()
+        } else if (this.searchQuery.trim().length === 0) {
+          this.results = []
+          this.currentQuery = ''
         }
       }, 500)
     },
@@ -164,7 +164,6 @@ export default {
         return
       }
 
-      // Обновляем URL без перезагрузки страницы
       if (this.$route.query.q !== query) {
         this.$router.push({ path: '/search', query: { q: query } })
       }
@@ -174,7 +173,6 @@ export default {
 
       try {
         this.results = await animeApi.search(query, 100)
-        console.log(`🔍 Найдено: ${this.results.length} аниме`)
       } catch (err) {
         console.error('Search error:', err)
         this.results = []
@@ -202,7 +200,7 @@ export default {
 .search-page {
   min-height: 100vh;
   background: linear-gradient(to bottom, #0a0a0a, #000);
-  padding: 25px 0 60px;
+  padding: 20px 0 80px;
 }
 
 .search-container {
@@ -212,58 +210,61 @@ export default {
 }
 
 /* ═══════════════════════════════════════════ */
-/* ЗАГОЛОВОК */
+/* КОМПАКТНЫЙ ХЕДЕР */
 /* ═══════════════════════════════════════════ */
-.page-header {
+.search-header {
+  display: flex;
+  align-items: center;
+  gap: 24px;
   margin-bottom: 40px;
+  padding: 20px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .page-title {
   display: flex;
   align-items: center;
-  gap: 16px;
-  font-size: 48px;
-  font-weight: 900;
+  gap: 12px;
+  font-size: 28px;
+  font-weight: 700;
   margin: 0;
   color: white;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .title-icon {
-  width: 56px;
-  height: 56px;
+  width: 32px;
+  height: 32px;
   color: #ff416c;
+  flex-shrink: 0;
 }
 
 /* ═══════════════════════════════════════════ */
-/* ПОИСКОВАЯ СТРОКА */
+/* ПОИСКОВАЯ СТРОКА (КАК НА ГЛАВНОЙ) */
 /* ═══════════════════════════════════════════ */
-.search-bar-wrapper {
-  margin-bottom: 60px;
-}
-
 .search-bar {
   position: relative;
-  max-width: 800px;
-  margin: 0 auto;
+  flex: 1;
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 20px 24px;
+  gap: 12px;
+  padding: 14px 20px;
   background: rgba(255, 255, 255, 0.05);
-  border: 2px solid rgba(255, 255, 255, 0.1);
-  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
   transition: all 0.3s;
 }
 
 .search-bar:focus-within {
   background: rgba(255, 255, 255, 0.08);
   border-color: rgba(255, 65, 108, 0.5);
-  box-shadow: 0 0 30px rgba(255, 65, 108, 0.2);
+  box-shadow: 0 0 20px rgba(255, 65, 108, 0.15);
 }
 
 .search-icon {
-  width: 28px;
-  height: 28px;
+  width: 20px;
+  height: 20px;
   color: rgba(255, 255, 255, 0.5);
   flex-shrink: 0;
 }
@@ -274,7 +275,7 @@ export default {
   border: none;
   outline: none;
   color: white;
-  font-size: 18px;
+  font-size: 15px;
   font-weight: 500;
 }
 
@@ -283,25 +284,26 @@ export default {
 }
 
 .clear-btn {
-  width: 36px;
-  height: 36px;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: rgba(255, 255, 255, 0.1);
   border: none;
-  border-radius: 8px;
+  border-radius: 6px;
   cursor: pointer;
   transition: all 0.3s;
+  flex-shrink: 0;
 }
 
 .clear-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 65, 108, 0.3);
 }
 
 .clear-btn svg {
-  width: 20px;
-  height: 20px;
+  width: 16px;
+  height: 16px;
   color: rgba(255, 255, 255, 0.7);
 }
 
@@ -309,25 +311,28 @@ export default {
 /* РЕЗУЛЬТАТЫ */
 /* ═══════════════════════════════════════════ */
 .results-header {
-  margin-bottom: 30px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
 }
 
 .results-header h2 {
-  font-size: 32px;
+  font-size: 24px;
   font-weight: 700;
-  margin: 0 0 8px;
+  margin: 0;
   color: white;
 }
 
 .query-text {
-  font-size: 16px;
-  color: rgba(255, 255, 255, 0.6);
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .anime-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 24px;
+  gap: 20px;
 }
 
 /* ═══════════════════════════════════════════ */
@@ -338,14 +343,14 @@ export default {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 100px 20px;
-  gap: 24px;
+  padding: 60px 20px;
+  gap: 20px;
 }
 
 .spinner {
-  width: 60px;
-  height: 60px;
-  border: 4px solid rgba(255, 255, 255, 0.1);
+  width: 48px;
+  height: 48px;
+  border: 3px solid rgba(255, 255, 255, 0.1);
   border-top-color: #ff416c;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
@@ -358,53 +363,54 @@ export default {
 }
 
 .loading-state p {
-  font-size: 16px;
-  color: rgba(255, 255, 255, 0.6);
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0;
 }
 
 /* ═══════════════════════════════════════════ */
 /* ПУСТОЕ СОСТОЯНИЕ */
 /* ═══════════════════════════════════════════ */
 .empty-state {
-  max-width: 600px;
-  margin: 100px auto;
+  max-width: 500px;
+  margin: 60px auto;
   text-align: center;
-  padding: 60px 40px;
+  padding: 40px 30px;
   background: rgba(255, 255, 255, 0.02);
-  border-radius: 24px;
+  border-radius: 20px;
   border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .empty-icon {
-  font-size: 100px;
-  margin-bottom: 24px;
+  font-size: 80px;
+  margin-bottom: 20px;
 }
 
 .empty-state h3 {
-  font-size: 32px;
-  font-weight: 900;
-  margin: 0 0 16px;
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0 0 12px;
   color: white;
 }
 
 .empty-state p {
-  font-size: 18px;
-  color: rgba(255, 255, 255, 0.6);
-  margin: 0 0 40px;
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0 0 30px;
 }
 
 .empty-suggestions {
   text-align: left;
   background: rgba(255, 255, 255, 0.03);
-  padding: 24px;
-  border-radius: 16px;
+  padding: 20px;
+  border-radius: 12px;
 }
 
 .empty-suggestions h4 {
-  font-size: 16px;
-  font-weight: 700;
-  margin: 0 0 16px;
-  color: rgba(255, 255, 255, 0.8);
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 0 12px;
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .empty-suggestions ul {
@@ -413,14 +419,14 @@ export default {
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 }
 
 .empty-suggestions li {
   display: flex;
   align-items: center;
-  gap: 12px;
-  font-size: 15px;
+  gap: 10px;
+  font-size: 13px;
   color: rgba(255, 255, 255, 0.6);
 }
 
@@ -428,62 +434,64 @@ export default {
   content: '→';
   color: #ff416c;
   font-weight: 700;
-  font-size: 18px;
+  font-size: 16px;
 }
 
 /* ═══════════════════════════════════════════ */
 /* НАЧАЛЬНОЕ СОСТОЯНИЕ */
 /* ═══════════════════════════════════════════ */
 .initial-state {
-  max-width: 700px;
-  margin: 100px auto;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  max-width: 800px;
+  margin: 40px auto 0;
+}
+
+.initial-content {
   text-align: center;
-  padding: 60px 40px;
+  padding: 40px 20px;
 }
 
 .initial-icon {
-  font-size: 120px;
-  margin-bottom: 24px;
-  opacity: 0.5;
+  font-size: 80px;
+  margin-bottom: 20px;
+  opacity: 0.3;
 }
 
 .initial-state h3 {
-  font-size: 32px;
-  font-weight: 900;
-  margin: 0 0 16px;
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0 0 8px;
   color: white;
 }
 
 .initial-state p {
-  font-size: 18px;
-  color: rgba(255, 255, 255, 0.6);
-  margin: 0 0 60px;
-}
-
-.popular-searches {
-  text-align: left;
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0;
 }
 
 .popular-searches h4 {
-  font-size: 18px;
-  font-weight: 700;
-  margin: 0 0 20px;
-  color: rgba(255, 255, 255, 0.8);
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 16px;
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .search-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 10px;
 }
 
 .search-tag {
-  padding: 12px 24px;
+  padding: 10px 20px;
   background: rgba(255, 65, 108, 0.1);
   border: 1px solid rgba(255, 65, 108, 0.3);
-  border-radius: 12px;
+  border-radius: 10px;
   color: white;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s;
@@ -493,6 +501,7 @@ export default {
   background: rgba(255, 65, 108, 0.2);
   border-color: rgba(255, 65, 108, 0.5);
   transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 65, 108, 0.2);
 }
 
 /* ═══════════════════════════════════════════ */
@@ -503,26 +512,108 @@ export default {
     padding: 0 20px;
   }
 
+  .search-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+    padding: 16px 0;
+  }
+
   .page-title {
-    font-size: 32px;
+    font-size: 24px;
+    justify-content: center;
   }
 
   .title-icon {
-    width: 40px;
-    height: 40px;
+    width: 28px;
+    height: 28px;
   }
 
   .search-bar {
-    padding: 16px 20px;
+    padding: 12px 16px;
   }
 
   .search-input {
-    font-size: 16px;
+    font-size: 14px;
   }
 
   .anime-grid {
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
     gap: 16px;
+  }
+
+  .results-header {
+    flex-direction: column;
+    gap: 4px;
+    align-items: flex-start;
+  }
+
+  .results-header h2 {
+    font-size: 20px;
+  }
+
+  .initial-state {
+    margin-top: 20px;
+    gap: 30px;
+  }
+
+  .initial-content {
+    padding: 30px 20px;
+  }
+
+  .initial-icon {
+    font-size: 64px;
+  }
+
+  .initial-state h3 {
+    font-size: 20px;
+  }
+
+  .initial-state p {
+    font-size: 14px;
+  }
+
+  .empty-state {
+    margin: 40px auto;
+    padding: 30px 24px;
+  }
+
+  .empty-icon {
+    font-size: 64px;
+  }
+
+  .empty-state h3 {
+    font-size: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .search-container {
+    padding: 0 16px;
+  }
+
+  .page-title {
+    font-size: 20px;
+    gap: 10px;
+  }
+
+  .title-icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  .anime-grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 12px;
+  }
+
+  .search-tags {
+    gap: 8px;
+  }
+
+  .search-tag {
+    padding: 8px 16px;
+    font-size: 13px;
   }
 }
 </style>
