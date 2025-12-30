@@ -1,13 +1,5 @@
 <template>
   <div class="home">
-    <!-- Анимированный фон -->
-    <div class="animated-bg">
-      <div class="bg-gradient gradient-1"></div>
-      <div class="bg-gradient gradient-2"></div>
-      <div class="bg-gradient gradient-3"></div>
-      <div class="stars"></div>
-    </div>
-
     <transition name="fade-out">
       <PageLoader v-if="initialLoading" :progress="loadingProgress" />
     </transition>
@@ -151,91 +143,7 @@ export default {
 .home {
   position: relative;
   min-height: 100vh;
-  background: #000;
   overflow-x: hidden;
-}
-
-/* ═══════════════════════════════════════════ */
-/* АНИМИРОВАННЫЙ ФОН */
-/* ═══════════════════════════════════════════ */
-.animated-bg {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  overflow: hidden;
-}
-
-.bg-gradient {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(80px);
-  opacity: 0.3;
-  animation: float 20s infinite ease-in-out;
-}
-
-.gradient-1 {
-  width: 600px;
-  height: 600px;
-  background: radial-gradient(circle, #ff416c, transparent);
-  top: -300px;
-  left: -200px;
-  animation-delay: 0s;
-}
-
-.gradient-2 {
-  width: 800px;
-  height: 800px;
-  background: radial-gradient(circle, #ff4b2b, transparent);
-  bottom: -400px;
-  right: -300px;
-  animation-delay: 7s;
-}
-
-.gradient-3 {
-  width: 500px;
-  height: 500px;
-  background: radial-gradient(circle, #9c27b0, transparent);
-  top: 40%;
-  left: 50%;
-  animation-delay: 14s;
-}
-
-.stars {
-  position: absolute;
-  inset: 0;
-  background-image:
-    radial-gradient(2px 2px at 20% 30%, white, transparent),
-    radial-gradient(2px 2px at 60% 70%, white, transparent),
-    radial-gradient(1px 1px at 50% 50%, white, transparent),
-    radial-gradient(1px 1px at 80% 10%, white, transparent),
-    radial-gradient(2px 2px at 90% 60%, white, transparent),
-    radial-gradient(1px 1px at 33% 80%, white, transparent);
-  background-size: 200% 200%;
-  animation: twinkle 8s ease-in-out infinite;
-  opacity: 0.5;
-}
-
-@keyframes float {
-  0%,
-  100% {
-    transform: translate(0, 0) scale(1);
-  }
-  33% {
-    transform: translate(50px, -50px) scale(1.1);
-  }
-  66% {
-    transform: translate(-50px, 50px) scale(0.9);
-  }
-}
-
-@keyframes twinkle {
-  0%,
-  100% {
-    opacity: 0.5;
-  }
-  50% {
-    opacity: 0.8;
-  }
 }
 
 /* ═══════════════════════════════════════════ */
@@ -453,6 +361,16 @@ export default {
   animation: float 3s ease-in-out infinite;
 }
 
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
 .empty-state h3 {
   font-size: 24px;
   margin: 0 0 12px;
@@ -597,22 +515,6 @@ export default {
 
   .empty-state p {
     font-size: 14px;
-  }
-
-  /* Уменьшаем фоновые градиенты */
-  .gradient-1 {
-    width: 400px;
-    height: 400px;
-  }
-
-  .gradient-2 {
-    width: 500px;
-    height: 500px;
-  }
-
-  .gradient-3 {
-    width: 300px;
-    height: 300px;
   }
 }
 

@@ -1,11 +1,15 @@
 <template>
   <div id="app">
+    <!-- Глобальный анимированный фон -->
+    <AnimatedBackground />
+
     <AppHeader v-if="showHeader" />
     <router-view />
   </div>
 </template>
 
 <script>
+import AnimatedBackground from './components/backgr/AnimatedBackground.vue'
 import AppHeader from './components/AppHeader.vue'
 import { wsService } from './services/websocket'
 import { animeApi } from './api/animeApi'
@@ -13,6 +17,7 @@ import { animeApi } from './api/animeApi'
 export default {
   name: 'App',
   components: {
+    AnimatedBackground,
     AppHeader,
   },
   data() {
@@ -38,7 +43,6 @@ export default {
       this.checkServerHealth()
     }, 30000)
 
-    // ✅ Подключаем WebSocket если пользователь авторизован
     await this.connectWebSocket()
   },
   beforeUnmount() {
@@ -46,17 +50,14 @@ export default {
       clearInterval(this.healthCheckInterval)
     }
 
-    // ✅ Отключаем WebSocket при выходе
     wsService.disconnect()
   },
   watch: {
     async $route(to, from) {
-      // ✅ Подключаем WebSocket после логина/регистрации
       if (from.name === 'login' || from.name === 'Register') {
         await this.connectWebSocket()
       }
 
-      // ✅ Отключаем WebSocket на странице логина/регистрации
       if (to.name === 'login' || to.name === 'Register') {
         wsService.disconnect()
       }
@@ -155,6 +156,7 @@ body {
 
 #app {
   min-height: 100vh;
+  position: relative;
 }
 
 /* Scrollbar */
