@@ -266,11 +266,51 @@ export default {
     await this.loadUserProfile()
     await this.loadUnreadCount()
 
+    // Сохраняем ID пользователя
+    try {
+      const profile = await animeApi.getProfile()
+      this.currentUserId = profile.id
+    } catch (err) {
+      console.error('Ошибка получения ID:', err)
+    }
+
     // Подписываемся на новые сообщения
-    this.newMessageHandler = () => {
+    this.newMessageHandler = (data) => {
+      // Увеличиваем счётчик только если сообщение не от нас
+      if (data.sender_id !== this.currentUserId) {
+        this.unreadMessagesCount++
+      }
+    }
+
+    // Подписываемся на прочтение сообщений
+    this.messageReadHandler = (data) => {
+      console.log('📬 AppHeader: message_read event', data)
       this.loadUnreadCount()
     }
+
     wsService.on('new_message', this.newMessageHandler)
+    wsService.on('message_read', this.messageReadHandler)
+  },
+
+  beforeUnmount() {
+    if (this.newMessageHandler) {
+      wsService.off('new_message', this.newMessageHandler)
+    }
+    if (this.messageReadHandler) {
+      wsService.off('message_read', this.messageReadHandler)
+    }
+  },
+
+  data() {
+    return {
+      userMenuOpen: false,
+      mobileMenuOpen: false,
+      userName: 'Загрузка...',
+      userEmail: '',
+      userAvatar: 'https://i.pravatar.cc/150?img=68',
+      unreadMessagesCount: 0,
+      currentUserId: null, // ← ДОБАВЬ ЭТО
+    }
   },
   beforeUnmount() {
     if (this.newMessageHandler) {

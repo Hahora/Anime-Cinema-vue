@@ -3,7 +3,6 @@
     <div class="bg-gradient gradient-1"></div>
     <div class="bg-gradient gradient-2"></div>
     <div class="bg-gradient gradient-3"></div>
-    <div class="stars"></div>
   </div>
 </template>
 
@@ -55,21 +54,6 @@ export default {
   top: 40%;
   left: 50%;
   animation-delay: 14s;
-}
-
-.stars {
-  position: absolute;
-  inset: 0;
-  background-image:
-    radial-gradient(2px 2px at 20% 30%, white, transparent),
-    radial-gradient(2px 2px at 60% 70%, white, transparent),
-    radial-gradient(1px 1px at 50% 50%, white, transparent),
-    radial-gradient(1px 1px at 80% 10%, white, transparent),
-    radial-gradient(2px 2px at 90% 60%, white, transparent),
-    radial-gradient(1px 1px at 33% 80%, white, transparent);
-  background-size: 200% 200%;
-  animation: twinkle 8s ease-in-out infinite;
-  opacity: 0.5;
 }
 
 @keyframes float {

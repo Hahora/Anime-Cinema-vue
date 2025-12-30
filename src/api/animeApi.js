@@ -411,6 +411,56 @@ class AnimeAPI {
     return await res.json()
   }
 
+  async editMessage(chatId, messageId, content) {
+    const token = this.getToken()
+    if (!token) throw new Error('Не авторизован')
+
+    const res = await fetch(`${API_URL}/chats/${chatId}/messages/${messageId}`, {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ content }),
+    })
+
+    if (!res.ok) {
+      const error = await res.json()
+      throw error
+    }
+    return await res.json()
+  }
+
+  async deleteMessage(chatId, messageId) {
+    const token = this.getToken()
+    if (!token) throw new Error('Не авторизован')
+
+    const res = await fetch(`${API_URL}/chats/${chatId}/messages/${messageId}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    })
+
+    if (!res.ok) {
+      const error = await res.json()
+      throw error
+    }
+  }
+
+  async deleteChat(chatId) {
+    const token = this.getToken()
+    if (!token) throw new Error('Не авторизован')
+
+    const res = await fetch(`${API_URL}/chats/${chatId}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    })
+
+    if (!res.ok) {
+      const error = await res.json()
+      throw error
+    }
+  }
+
   // ═══════════════════════════════════════════
   // FAVORITES
   // ═══════════════════════════════════════════

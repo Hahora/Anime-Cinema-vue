@@ -82,6 +82,24 @@ class WebSocketService {
       console.log('⌨️ User typing:', data)
       this.triggerListeners('user_typing', data)
     })
+
+    // ✅ Обработка прочтения сообщений
+    this.socket.on('message_read', (data) => {
+      console.log('✓✓ Message read event:', data)
+      this.triggerListeners('message_read', data)
+    })
+
+    // ✅ Обработка редактирования сообщений
+    this.socket.on('message_edited', (data) => {
+      console.log('✏️ Message edited event:', data)
+      this.triggerListeners('message_edited', data)
+    })
+
+    // ✅ Обработка удаления сообщений
+    this.socket.on('message_deleted', (data) => {
+      console.log('🗑️ Message deleted event:', data)
+      this.triggerListeners('message_deleted', data)
+    })
   }
 
   /**
