@@ -1,0 +1,655 @@
+<template>
+  <div class="anime-details">
+    <!-- Заголовок и рейтинг -->
+    <div class="details-header">
+      <div class="header-titles">
+        <h1 class="anime-title">{{ anime.title }}</h1>
+        <p class="anime-title-orig" v-if="anime.title_orig">{{ anime.title_orig }}</p>
+      </div>
+      <div class="anime-rating" v-if="anime.rating">
+        <div class="rating-star">⭐</div>
+        <div class="rating-info">
+          <span class="rating-value">{{ anime.rating }}</span>
+          <span class="rating-label">Shikimori</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Мета-информация -->
+    <div class="anime-meta">
+      <div class="meta-item">
+        <div class="meta-icon">
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M18 3v2h-2V3H8v2H6V3H4v18h2v-2h2v2h8v-2h2v2h2V3h-2zM8 17H6v-2h2v2zm0-4H6v-2h2v2zm0-4H6V7h2v2zm10 8h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V7h2v2z"
+              fill="currentColor"
+            />
+          </svg>
+        </div>
+        <div class="meta-content">
+          <span class="meta-label">Тип</span>
+          <span class="meta-value">{{ anime.type }}</span>
+        </div>
+      </div>
+
+      <div class="meta-item" v-if="anime.year">
+        <div class="meta-icon">
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm2-7h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z"
+              fill="currentColor"
+            />
+          </svg>
+        </div>
+        <div class="meta-content">
+          <span class="meta-label">Год</span>
+          <span class="meta-value">{{ anime.year }}</span>
+        </div>
+      </div>
+
+      <div class="meta-item" v-if="anime.status">
+        <div class="meta-icon">
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
+              fill="currentColor"
+            />
+          </svg>
+        </div>
+        <div class="meta-content">
+          <span class="meta-label">Статус</span>
+          <span class="meta-value">{{ anime.status }}</span>
+        </div>
+      </div>
+
+      <div class="meta-item" v-if="anime.episodes_count">
+        <div class="meta-icon">
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9H9V9h10v2zm-4 4H9v-2h6v2zm4-8H9V5h10v2z"
+              fill="currentColor"
+            />
+          </svg>
+        </div>
+        <div class="meta-content">
+          <span class="meta-label">Эпизодов</span>
+          <span class="meta-value">
+            {{ anime.episodes_aired || anime.episodes_count }}
+            <span class="meta-total">/ {{ anime.episodes_count }}</span>
+          </span>
+        </div>
+      </div>
+
+      <div class="meta-item" v-if="anime.duration">
+        <div class="meta-icon">
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"
+              fill="currentColor"
+            />
+          </svg>
+        </div>
+        <div class="meta-content">
+          <span class="meta-label">Длительность</span>
+          <span class="meta-value">{{ anime.duration }} мин</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Разделитель -->
+    <div class="divider"></div>
+
+    <!-- Основная информация -->
+    <div class="details-sections">
+      <!-- Описание -->
+      <div class="details-section">
+        <h3 class="section-header">
+          <svg viewBox="0 0 24 24" class="section-icon">
+            <path
+              d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"
+              fill="currentColor"
+            />
+          </svg>
+          Описание
+        </h3>
+        <p class="description-text" v-if="anime.description">{{ anime.description }}</p>
+        <p class="no-data" v-else>Описание отсутствует</p>
+      </div>
+
+      <!-- Жанры -->
+      <div class="details-section" v-if="anime.genres && anime.genres.length">
+        <h3 class="section-header">
+          <svg viewBox="0 0 24 24" class="section-icon">
+            <path
+              d="M12 2l-5.5 9h11z M17.5 11L12 20l5.5-9z M6.5 11L12 2 6.5 11z M12 20l-5.5-9H6.5L12 20z"
+              fill="currentColor"
+            />
+          </svg>
+          Жанры
+        </h3>
+        <div class="genres-list">
+          <span v-for="genre in anime.genres" :key="genre" class="genre-badge">
+            {{ genre }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Студия и производство -->
+      <div class="details-section" v-if="anime.studios">
+        <h3 class="section-header">
+          <svg viewBox="0 0 24 24" class="section-icon">
+            <path
+              d="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z"
+              fill="currentColor"
+            />
+          </svg>
+          Студия
+        </h3>
+        <p class="info-text">{{ anime.studios }}</p>
+      </div>
+
+      <!-- Следующий эпизод -->
+      <div class="next-episode-card" v-if="anime.next_episode_at">
+        <div class="next-episode-icon">📅</div>
+        <div class="next-episode-content">
+          <h4>Следующий эпизод</h4>
+          <p>{{ formatDate(anime.next_episode_at) }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Дополнительная информация -->
+    <div class="additional-info" v-if="anime.age_rating || anime.source || anime.season">
+      <h3 class="section-header">
+        <svg viewBox="0 0 24 24" class="section-icon">
+          <path
+            d="M11 17h2v-6h-2v6zm1-15C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zM11 9h2V7h-2v2z"
+            fill="currentColor"
+          />
+        </svg>
+        Дополнительная информация
+      </h3>
+      <div class="info-grid">
+        <div class="info-item" v-if="anime.age_rating">
+          <span class="info-label">Возрастной рейтинг:</span>
+          <span class="info-value">{{ anime.age_rating }}</span>
+        </div>
+        <div class="info-item" v-if="anime.source">
+          <span class="info-label">Источник:</span>
+          <span class="info-value">{{ anime.source }}</span>
+        </div>
+        <div class="info-item" v-if="anime.season">
+          <span class="info-label">Сезон:</span>
+          <span class="info-value">{{ anime.season }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+export default {
+  name: 'AnimeDetails',
+  props: {
+    anime: {
+      type: Object,
+      required: true,
+    },
+  },
+  methods: {
+    formatDate(dateString) {
+      if (!dateString) return ''
+      const date = new Date(dateString)
+      const options = {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      }
+      return date.toLocaleDateString('ru-RU', options)
+    },
+  },
+}
+</script>
+
+<style scoped>
+.anime-details {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Заголовок и рейтинг */
+.details-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  margin-bottom: 8px;
+}
+
+.header-titles {
+  flex: 1;
+  min-width: 0;
+}
+
+.anime-title {
+  font-size: clamp(24px, 5vw, 32px);
+  font-weight: 800;
+  margin: 0 0 8px;
+  color: white;
+  line-height: 1.2;
+  word-break: break-word;
+}
+
+.anime-title-orig {
+  font-size: clamp(14px, 3vw, 16px);
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0;
+  font-weight: 500;
+}
+
+.anime-rating {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  background: rgba(255, 193, 7, 0.1);
+  border: 2px solid rgba(255, 193, 7, 0.3);
+  border-radius: 16px;
+  flex-shrink: 0;
+}
+
+.rating-star {
+  font-size: 32px;
+  line-height: 1;
+}
+
+.rating-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.rating-value {
+  font-size: 22px;
+  font-weight: 800;
+  color: #ffc107;
+  line-height: 1;
+}
+
+.rating-label {
+  font-size: 11px;
+  color: rgba(255, 193, 7, 0.8);
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+/* Мета-информация */
+.anime-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.3s;
+  min-width: 0;
+}
+
+.meta-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.meta-icon {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 65, 108, 0.1);
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+.meta-icon svg {
+  width: 20px;
+  height: 20px;
+  color: #ff416c;
+}
+
+.meta-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.meta-label {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.meta-value {
+  font-size: 15px;
+  font-weight: 700;
+  color: white;
+  word-break: break-word;
+}
+
+.meta-total {
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 600;
+}
+
+/* Разделитель */
+.divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.05);
+  margin: 8px 0;
+}
+
+/* Секции с описанием */
+.details-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.details-section {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 20px;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0 0 16px;
+  color: white;
+}
+
+.section-icon {
+  width: 20px;
+  height: 20px;
+  color: #ff416c;
+  flex-shrink: 0;
+}
+
+.description-text {
+  font-size: 15px;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.8);
+  margin: 0;
+}
+
+.no-data {
+  color: rgba(255, 255, 255, 0.4);
+  font-style: italic;
+  margin: 0;
+}
+
+.genres-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.genre-badge {
+  padding: 8px 16px;
+  background: rgba(255, 65, 108, 0.1);
+  border: 1px solid rgba(255, 65, 108, 0.3);
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #ff416c;
+  transition: all 0.3s;
+}
+
+.genre-badge:hover {
+  background: rgba(255, 65, 108, 0.2);
+  border-color: rgba(255, 65, 108, 0.5);
+  transform: translateY(-2px);
+}
+
+.info-text {
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.8);
+  margin: 0;
+}
+
+.next-episode-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.15), rgba(56, 142, 60, 0.15));
+  border: 2px solid rgba(76, 175, 80, 0.3);
+  border-radius: 16px;
+  padding: 20px;
+}
+
+.next-episode-icon {
+  font-size: 32px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.next-episode-content h4 {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0 0 6px;
+  color: #4caf50;
+}
+
+.next-episode-content p {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0;
+}
+
+.additional-info {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 20px;
+}
+
+.info-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.info-item:last-child {
+  border-bottom: none;
+}
+
+.info-label {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 500;
+}
+
+.info-value {
+  font-size: 14px;
+  color: white;
+  font-weight: 600;
+}
+
+/* Адаптив */
+@media (max-width: 768px) {
+  .anime-details {
+    gap: 16px;
+  }
+
+  .details-header {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .anime-rating {
+    align-self: flex-start;
+    padding: 12px 16px;
+  }
+
+  .rating-star {
+    font-size: 28px;
+  }
+
+  .rating-value {
+    font-size: 20px;
+  }
+
+  .anime-meta {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .details-sections {
+    gap: 16px;
+  }
+
+  .details-section {
+    padding: 16px;
+    border-radius: 14px;
+  }
+
+  .section-header {
+    font-size: 16px;
+    margin-bottom: 12px;
+  }
+
+  .section-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .description-text {
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .genres-list {
+    gap: 6px;
+  }
+
+  .genre-badge {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  .next-episode-icon {
+    font-size: 28px;
+  }
+
+  .additional-info {
+    padding: 16px;
+  }
+
+  .info-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    padding: 10px 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .anime-title {
+    font-size: 20px;
+  }
+
+  .anime-title-orig {
+    font-size: 13px;
+  }
+
+  .anime-rating {
+    padding: 10px 14px;
+  }
+
+  .rating-star {
+    font-size: 24px;
+  }
+
+  .rating-value {
+    font-size: 18px;
+  }
+
+  .anime-meta {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .meta-item {
+    padding: 10px;
+  }
+
+  .meta-icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .meta-icon svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .details-section {
+    padding: 12px;
+  }
+
+  .section-header {
+    font-size: 15px;
+    margin-bottom: 10px;
+  }
+
+  .description-text {
+    font-size: 13px;
+  }
+
+  .genre-badge {
+    padding: 5px 10px;
+    font-size: 11px;
+  }
+
+  .next-episode-icon {
+    font-size: 24px;
+  }
+
+  .next-episode-content h4 {
+    font-size: 14px;
+  }
+
+  .next-episode-content p {
+    font-size: 12px;
+  }
+
+  .additional-info {
+    padding: 12px;
+  }
+}
+</style>
