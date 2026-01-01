@@ -80,15 +80,77 @@
 
           <!-- ✅ ПРИВАТНОСТЬ -->
           <div v-show="currentTab === 'privacy'" class="tab-content">
-            <div class="empty-state">
-              <svg viewBox="0 0 24 24" class="empty-icon">
-                <path
-                  d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"
-                  fill="currentColor"
-                />
-              </svg>
-              <h3>Настройки приватности</h3>
-              <p>Скоро здесь появятся настройки приватности профиля</p>
+            <div class="settings-section">
+              <h3 class="section-title">Кто может писать сообщения</h3>
+              <p class="section-description">Выберите, кто может отправлять вам личные сообщения</p>
+
+              <div class="privacy-options">
+                <label
+                  :class="['privacy-option', { active: formData.message_privacy === 'all' }]"
+                  @click="formData.message_privacy = 'all'"
+                >
+                  <div class="option-radio">
+                    <div class="radio-dot"></div>
+                  </div>
+                  <div class="option-content">
+                    <div class="option-header">
+                      <svg viewBox="0 0 24 24" class="option-icon">
+                        <path
+                          d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"
+                          fill="currentColor"
+                        />
+                      </svg>
+                      <h4>Все пользователи</h4>
+                    </div>
+                    <p>Любой пользователь может написать вам сообщение</p>
+                  </div>
+                </label>
+
+                <label
+                  :class="[
+                    'privacy-option',
+                    { active: formData.message_privacy === 'friends_only' },
+                  ]"
+                  @click="formData.message_privacy = 'friends_only'"
+                >
+                  <div class="option-radio">
+                    <div class="radio-dot"></div>
+                  </div>
+                  <div class="option-content">
+                    <div class="option-header">
+                      <svg viewBox="0 0 24 24" class="option-icon">
+                        <path
+                          d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"
+                          fill="currentColor"
+                        />
+                      </svg>
+                      <h4>Только друзья</h4>
+                    </div>
+                    <p>Только пользователи из вашего списка друзей могут писать вам</p>
+                  </div>
+                </label>
+
+                <label
+                  :class="['privacy-option', { active: formData.message_privacy === 'nobody' }]"
+                  @click="formData.message_privacy = 'nobody'"
+                >
+                  <div class="option-radio">
+                    <div class="radio-dot"></div>
+                  </div>
+                  <div class="option-content">
+                    <div class="option-header">
+                      <svg viewBox="0 0 24 24" class="option-icon">
+                        <path
+                          d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8 0-1.85.63-3.55 1.69-4.9L16.9 18.31C15.55 19.37 13.85 20 12 20zm6.31-3.1L7.1 5.69C8.45 4.63 10.15 4 12 4c4.42 0 8 3.58 8 8 0 1.85-.63 3.55-1.69 4.9z"
+                          fill="currentColor"
+                        />
+                      </svg>
+                      <h4>Никто</h4>
+                    </div>
+                    <p>Полная блокировка: вы не сможете ни писать, ни получать сообщения</p>
+                  </div>
+                </label>
+              </div>
             </div>
           </div>
 
@@ -163,7 +225,7 @@
         <div class="modal-footer">
           <button class="btn-secondary" @click="$emit('close')">Закрыть</button>
           <button
-            v-if="currentTab === 'general'"
+            v-if="currentTab === 'general' || currentTab === 'privacy'"
             class="btn-primary"
             @click="save"
             :disabled="saving"
@@ -194,6 +256,7 @@ export default {
         bio: '',
         avatar_url: '',
         cover_url: '',
+        message_privacy: 'all', // ✅ Добавлено
       },
       securityData: {
         newUsername: '',
@@ -226,6 +289,7 @@ export default {
             bio: newProfile.bio,
             avatar_url: newProfile.avatar_url,
             cover_url: newProfile.cover_url,
+            message_privacy: newProfile.message_privacy || 'all', // ✅ Синхронизация
           }
         }
       },
@@ -246,7 +310,18 @@ export default {
     async save() {
       this.saving = true
       try {
+        console.log('💾 Сохранение настроек:', this.formData)
+
+        // Отправляем обновленные данные
         await this.$emit('save', this.formData)
+
+        console.log('✅ Настройки сохранены успешно')
+
+        // Показываем уведомление (опционально)
+        // alert('Настройки успешно сохранены!')
+      } catch (err) {
+        console.error('❌ Ошибка сохранения:', err)
+        alert('Не удалось сохранить настройки')
       } finally {
         this.saving = false
       }
@@ -425,7 +500,6 @@ export default {
   -webkit-overflow-scrolling: touch;
 }
 
-/* Скрываем скроллбар, но оставляем возможность скролла */
 .modal-tabs::-webkit-scrollbar {
   display: none;
 }
@@ -534,39 +608,7 @@ textarea.settings-input {
 }
 
 /* ═══════════════════════════════════════════ */
-/* ПУСТОЕ СОСТОЯНИЕ */
-/* ═══════════════════════════════════════════ */
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 60px 20px;
-  text-align: center;
-}
-
-.empty-icon {
-  width: 80px;
-  height: 80px;
-  color: rgba(255, 255, 255, 0.2);
-  margin-bottom: 20px;
-}
-
-.empty-state h3 {
-  font-size: 20px;
-  font-weight: 700;
-  color: white;
-  margin: 0 0 8px;
-}
-
-.empty-state p {
-  font-size: 15px;
-  color: rgba(255, 255, 255, 0.5);
-  margin: 0;
-}
-
-/* ═══════════════════════════════════════════ */
-/* СЕКЦИИ БЕЗОПАСНОСТИ */
+/* НАСТРОЙКИ ПРИВАТНОСТИ */
 /* ═══════════════════════════════════════════ */
 .settings-section {
   margin-bottom: 30px;
@@ -576,9 +618,133 @@ textarea.settings-input {
   font-size: 16px;
   font-weight: 700;
   color: white;
-  margin: 0 0 16px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  margin: 0 0 8px;
+}
+
+.section-description {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0 0 20px;
+  line-height: 1.5;
+}
+
+.privacy-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.privacy-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 18px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 2px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.privacy-option:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.privacy-option.active {
+  background: rgba(255, 65, 108, 0.1);
+  border-color: rgba(255, 65, 108, 0.5);
+}
+
+.option-radio {
+  width: 24px;
+  height: 24px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.3s;
+  margin-top: 2px;
+}
+
+.privacy-option.active .option-radio {
+  border-color: #ff416c;
+  background: rgba(255, 65, 108, 0.2);
+}
+
+.radio-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: transparent;
+  transition: all 0.3s;
+}
+
+.privacy-option.active .radio-dot {
+  background: #ff416c;
+  box-shadow: 0 0 8px rgba(255, 65, 108, 0.6);
+}
+
+.option-content {
+  flex: 1;
+}
+
+.option-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.option-icon {
+  width: 22px;
+  height: 22px;
+  color: rgba(255, 255, 255, 0.6);
+  flex-shrink: 0;
+}
+
+.privacy-option.active .option-icon {
+  color: #ff416c;
+}
+
+.option-header h4 {
+  font-size: 16px;
+  font-weight: 700;
+  color: white;
+  margin: 0;
+}
+
+.option-content p {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.privacy-notice {
+  display: flex;
+  gap: 12px;
+  padding: 14px;
+  background: rgba(66, 153, 225, 0.1);
+  border: 1px solid rgba(66, 153, 225, 0.3);
+  border-radius: 12px;
+  margin-top: 20px;
+}
+
+.notice-icon {
+  width: 22px;
+  height: 22px;
+  color: #4299e1;
+  flex-shrink: 0;
+}
+
+.privacy-notice p {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0;
+  line-height: 1.5;
 }
 
 .settings-divider {
@@ -679,8 +845,6 @@ textarea.settings-input {
 /* ═══════════════════════════════════════════ */
 /* АДАПТИВ */
 /* ═══════════════════════════════════════════ */
-
-/* Планшеты и средние экраны */
 @media (max-width: 768px) {
   .modal-content {
     max-width: 600px;
@@ -717,21 +881,8 @@ textarea.settings-input {
   .modal-footer {
     padding: 20px 24px;
   }
-
-  .settings-input {
-    font-size: 14px;
-    padding: 12px 14px;
-  }
-
-  .btn-primary,
-  .btn-secondary,
-  .btn-action {
-    padding: 11px 20px;
-    font-size: 14px;
-  }
 }
 
-/* Мобильные устройства */
 @media (max-width: 576px) {
   .modal-overlay {
     padding: 0;
@@ -751,25 +902,13 @@ textarea.settings-input {
     font-size: 18px;
   }
 
-  .modal-close {
-    width: 36px;
-    height: 36px;
-  }
-
-  .modal-close svg {
-    width: 18px;
-    height: 18px;
-  }
-
   .modal-tabs {
     padding: 0 20px;
-    gap: 8px;
   }
 
   .tab-btn {
     padding: 12px 0;
     font-size: 11px;
-    gap: 6px;
     flex: 1;
     justify-content: center;
     flex-direction: column;
@@ -786,57 +925,33 @@ textarea.settings-input {
 
   .modal-footer {
     padding: 16px 20px;
-    flex-wrap: wrap;
   }
 
-  .btn-primary,
-  .btn-secondary {
-    padding: 11px 18px;
-    font-size: 14px;
+  .privacy-option {
+    padding: 14px;
   }
 
-  .btn-secondary {
-    flex: 1;
+  .option-radio {
+    width: 20px;
+    height: 20px;
   }
 
-  .btn-primary {
-    flex: 1;
+  .radio-dot {
+    width: 10px;
+    height: 10px;
   }
 
-  .settings-input {
-    font-size: 14px;
-    padding: 12px;
+  .option-icon {
+    width: 20px;
+    height: 20px;
   }
 
-  .btn-action {
-    width: 100%;
-    padding: 12px;
-    font-size: 14px;
-  }
-
-  .empty-state {
-    padding: 40px 20px;
-  }
-
-  .empty-icon {
-    width: 64px;
-    height: 64px;
-  }
-
-  .empty-state h3 {
-    font-size: 18px;
-  }
-
-  .empty-state p {
-    font-size: 14px;
-  }
-
-  .section-title {
+  .option-header h4 {
     font-size: 15px;
   }
 
-  .settings-group label {
-    font-size: 12px;
+  .option-content p {
+    font-size: 13px;
   }
 }
 </style>

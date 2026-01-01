@@ -321,23 +321,68 @@
           </div>
 
           <!-- Предупреждение если не друзья -->
-          <div v-else class="chat-blocked-notice">
-            <div class="blocked-icon">
-              <svg viewBox="0 0 24 24">
+          <!-- Предупреждение если нельзя писать -->
+          <div v-else-if="!checkingPermission" class="chat-blocked-notice">
+            <div class="blocked-icon" :class="blockReason">
+              <!-- Иконка для "Сообщения отключены" -->
+              <template v-if="blockReason === 'privacy_nobody'">
+                <svg viewBox="0 0 24 24">
+                  <path
+                    d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"
+                    fill="currentColor"
+                  />
+                </svg>
+              </template>
+
+              <!-- Иконка для "Только друзья" -->
+              <template v-else-if="blockReason === 'privacy_friends_only'">
+                <svg viewBox="0 0 24 24">
+                  <path
+                    d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"
+                    fill="currentColor"
+                  />
+                </svg>
+              </template>
+
+              <!-- Иконка для "Не друзья" -->
+              <template v-else>
+                <svg viewBox="0 0 24 24">
+                  <path
+                    d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8 0-1.85.63-3.55 1.69-4.9L16.9 18.31C15.55 19.37 13.85 20 12 20zm6.31-3.1L7.1 5.69C8.45 4.63 10.15 4 12 4c4.42 0 8 3.58 8 8 0 1.85-.63 3.55-1.69 4.9z"
+                    fill="currentColor"
+                  />
+                </svg>
+              </template>
+            </div>
+
+            <h4>{{ blockMessage.title }}</h4>
+            <p>{{ blockMessage.text }}</p>
+
+            <!-- Кнопка действия зависит от причины -->
+            <router-link
+              v-if="blockReason !== 'privacy_nobody'"
+              :to="`/profile/${selectedChat.other_user_id}`"
+              class="view-profile-btn"
+            >
+              Перейти в профиль
+            </router-link>
+
+            <!-- Подсказка для полной блокировки -->
+            <div v-else class="blocked-hint">
+              <svg viewBox="0 0 24 24" class="hint-icon">
                 <path
-                  d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8 0-1.85.63-3.55 1.69-4.9L16.9 18.31C15.55 19.37 13.85 20 12 20zm6.31-3.1L7.1 5.69C8.45 4.63 10.15 4 12 4c4.42 0 8 3.58 8 8 0 1.85-.63 3.55-1.69 4.9z"
+                  d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
                   fill="currentColor"
                 />
               </svg>
+              <span>Пользователь полностью отключил возможность получения сообщений</span>
             </div>
-            <h4>Переписка недоступна</h4>
-            <p>
-              Вы больше не друзья с {{ selectedChat.other_user_name }}. Добавьте пользователя в
-              друзья, чтобы продолжить общение.
-            </p>
-            <router-link :to="`/profile/${selectedChat.other_user_id}`" class="view-profile-btn">
-              Перейти в профиль
-            </router-link>
+          </div>
+
+          <!-- Индикатор загрузки при проверке -->
+          <div v-else class="checking-permission">
+            <div class="spinner"></div>
+            <p>Проверка доступа...</p>
           </div>
         </div>
 
@@ -422,9 +467,48 @@ export default {
       activeMessageMenu: null,
       editingMessageId: null,
       editingMessageText: '',
+      blockReason: null,
+      checkingPermission: false,
     }
   },
   computed: {
+    blockMessage() {
+      if (!this.blockReason) return null
+
+      const messages = {
+        not_friends: {
+          title: 'Переписка недоступна',
+          text: `Вы не друзья с ${this.selectedChat?.other_user_name}. Добавьте пользователя в друзья, чтобы продолжить общение.`,
+        },
+        privacy_nobody: {
+          title: 'Сообщения отключены',
+          text: `${this.selectedChat?.other_user_name} отключил(а) возможность получения сообщений.`,
+        },
+        privacy_friends_only: {
+          title: 'Только для друзей',
+          text: `${this.selectedChat?.other_user_name} принимает сообщения только от друзей. Добавьте пользователя в друзья, чтобы продолжить общение.`,
+        },
+        sender_privacy_nobody: {
+          title: 'Отправка отключена',
+          text: `Вы отключили возможность отправки сообщений в настройках приватности.`,
+        },
+        sender_privacy_friends_only: {
+          title: 'Только друзьям',
+          text: `Вы можете отправлять сообщения только друзьям. Добавьте ${this.selectedChat?.other_user_name} в друзья.`,
+        },
+        both_friends_only: {
+          title: 'Требуется дружба',
+          text: `Вы оба принимаете сообщения только от друзей. Добавьте друг друга в друзья для общения.`,
+        },
+      }
+
+      return messages[this.blockReason] || messages['not_friends']
+    },
+    canSendMessages() {
+      if (!this.selectedChat) return false
+      // Если нет причины блокировки - можно писать
+      return this.blockReason === null
+    },
     selectedChat() {
       return this.chats.find((c) => c.id === this.selectedChatId) || null
     },
@@ -447,7 +531,6 @@ export default {
 
       this.messages.forEach((message) => {
         const messageDate = this.getDateLabel(message.created_at)
-
         if (messageDate !== currentDate) {
           if (currentGroup.length > 0) {
             groups.push({ date: currentDate, messages: currentGroup })
@@ -462,16 +545,7 @@ export default {
       if (currentGroup.length > 0) {
         groups.push({ date: currentDate, messages: currentGroup })
       }
-
       return groups
-    },
-    // Проверяем, в друзьях ли собеседник
-    canSendMessages() {
-      if (!this.selectedChat) return false
-
-      // Проверяем, есть ли собеседник в списке друзей
-      const isFriend = this.friends.some((f) => f.id === this.selectedChat.other_user_id)
-      return isFriend
     },
   },
   async mounted() {
@@ -658,6 +732,54 @@ export default {
       }
     },
 
+    async checkMessagePermission() {
+      if (!this.selectedChat) return
+
+      this.checkingPermission = true
+      this.blockReason = null
+
+      try {
+        const result = await animeApi.checkCanMessage(this.selectedChat.other_user_id)
+
+        console.log('🔍 Проверка прав на отправку:', result)
+
+        if (!result.can_message) {
+          const reason = result.reason || ''
+
+          // Блокировка ОТПРАВИТЕЛЯ
+          if (reason.includes('Вы отключили возможность отправки')) {
+            this.blockReason = 'sender_privacy_nobody'
+          } else if (reason.includes('Вы можете отправлять сообщения только друзьям')) {
+            this.blockReason = 'sender_privacy_friends_only'
+          }
+          // Блокировка ПОЛУЧАТЕЛЯ
+          else if (reason.includes('запретил получать сообщения')) {
+            this.blockReason = 'privacy_nobody'
+          } else if (reason.includes('принимает сообщения только от друзей')) {
+            this.blockReason = 'privacy_friends_only'
+          }
+          // Оба требуют дружбу
+          else if (reason.includes('оба принимаете сообщения только от друзей')) {
+            this.blockReason = 'both_friends_only'
+          }
+          // Общий случай
+          else {
+            this.blockReason = 'not_friends'
+          }
+
+          console.log('❌ Блокировка:', this.blockReason, reason)
+        } else {
+          this.blockReason = null
+          console.log('✅ Можно отправлять сообщения')
+        }
+      } catch (err) {
+        console.error('Ошибка проверки прав:', err)
+        this.blockReason = 'not_friends'
+      } finally {
+        this.checkingPermission = false
+      }
+    },
+
     async loadOnlineUsers() {
       try {
         const data = await animeApi.getOnlineUsers()
@@ -689,9 +811,13 @@ export default {
 
     async selectChat(chatId) {
       this.selectedChatId = chatId
-      await this.loadMessages()
+      this.blockReason = null // Сбрасываем при смене чата
 
+      await this.loadMessages()
       await this.markChatAsRead(chatId)
+
+      // ✅ Проверяем права на отправку
+      await this.checkMessagePermission()
     },
 
     async markChatAsRead(chatId) {
@@ -743,7 +869,17 @@ export default {
         })
       } catch (err) {
         console.error('Ошибка отправки сообщения:', err)
-        alert('Не удалось отправить сообщение')
+
+        // ✅ Проверяем код ошибки
+        if (err.response?.status === 403) {
+          // Обновляем причину блокировки
+          await this.checkMessagePermission()
+
+          // Показываем конкретное сообщение
+          alert(err.response?.data?.detail || 'Вы не можете отправить сообщение этому пользователю')
+        } else {
+          alert('Не удалось отправить сообщение')
+        }
       } finally {
         this.sending = false
       }
@@ -1384,6 +1520,94 @@ export default {
   width: 20px;
   height: 20px;
   color: white;
+}
+
+/* Разные цвета иконок в зависимости от причины */
+.blocked-icon.privacy_nobody {
+  background: rgba(255, 193, 7, 0.1);
+  border-color: rgba(255, 193, 7, 0.3);
+  color: #ffc107;
+}
+
+.blocked-icon.privacy_friends_only {
+  background: rgba(66, 153, 225, 0.1);
+  border-color: rgba(66, 153, 225, 0.3);
+  color: #4299e1;
+}
+
+.blocked-icon.not_friends {
+  background: rgba(255, 75, 43, 0.1);
+  border-color: rgba(255, 75, 43, 0.3);
+  color: #ff4b2b;
+}
+
+/* Блокировка отправителя - фиолетовый */
+.blocked-icon.sender_privacy_nobody,
+.blocked-icon.sender_privacy_friends_only {
+  background: rgba(139, 92, 246, 0.1);
+  border-color: rgba(139, 92, 246, 0.3);
+  color: #8b5cf6;
+}
+
+/* Взаимная блокировка - оранжевый */
+.blocked-icon.both_friends_only {
+  background: rgba(251, 146, 60, 0.1);
+  border-color: rgba(251, 146, 60, 0.3);
+  color: #fb923c;
+}
+
+/* Подсказка для полной блокировки */
+.blocked-hint {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 20px;
+  background: rgba(255, 193, 7, 0.1);
+  border: 1px solid rgba(255, 193, 7, 0.3);
+  border-radius: 12px;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 13px;
+  max-width: 400px;
+  text-align: left;
+}
+
+.hint-icon {
+  width: 20px;
+  height: 20px;
+  color: #ffc107;
+  flex-shrink: 0;
+}
+
+/* Индикатор проверки прав */
+.checking-permission {
+  padding: 40px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  border-top-color: #ff416c;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.checking-permission p {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0;
 }
 
 @media (max-width: 1024px) {

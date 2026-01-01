@@ -115,13 +115,26 @@ export default {
       }
     },
 
-    async saveSettings(data) {
+    async saveSettings(formData) {
       try {
-        this.profile = await animeApi.updateProfile(data)
+        console.log('💾 Сохранение настроек профиля:', formData)
+
+        // ✅ Отправляем данные на сервер
+        const updatedProfile = await animeApi.updateProfile(formData)
+
+        console.log('✅ Профиль обновлён:', updatedProfile)
+
+        // ✅ Обновляем локальный профиль
+        this.profile = updatedProfile
+
+        // ✅ Закрываем модальное окно
         this.showSettings = false
+
+        // ✅ Показываем уведомление
+        alert('Настройки успешно сохранены!')
       } catch (err) {
-        console.error('Ошибка сохранения:', err)
-        alert('Ошибка сохранения профиля')
+        console.error('❌ Ошибка сохранения профиля:', err)
+        alert('Ошибка сохранения: ' + (err.message || 'Неизвестная ошибка'))
       }
     },
 

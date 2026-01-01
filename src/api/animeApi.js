@@ -58,15 +58,40 @@ class AnimeAPI {
   // ═══════════════════════════════════════════
 
   async getProfile() {
-    const token = this.getToken()
-    if (!token) throw new Error('Не авторизован')
-
-    const res = await fetch(`${API_URL}/profile/me`, {
-      headers: { Authorization: `Bearer ${token}` },
+    const response = await fetch(`${API_URL}/profile/me`, {
+      headers: {
+        Authorization: `Bearer ${this.getToken()}`,
+      },
     })
 
-    if (!res.ok) throw new Error('Ошибка загрузки профиля')
-    return await res.json()
+    if (!response.ok) {
+      throw new Error('Не удалось загрузить профиль')
+    }
+
+    return response.json()
+  }
+
+  async updateProfile(data) {
+    console.log('📤 Отправка данных профиля:', data)
+
+    const response = await fetch(`${API_URL}/profile/me`, {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${this.getToken()}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.detail || 'Не удалось обновить профиль')
+    }
+
+    const updatedProfile = await response.json()
+    console.log('✅ Профиль обновлён:', updatedProfile)
+
+    return updatedProfile
   }
 
   async getUserProfile(userId) {
@@ -100,23 +125,6 @@ class AnimeAPI {
     } catch (err) {
       return null
     }
-  }
-
-  async updateProfile(data) {
-    const token = this.getToken()
-    if (!token) throw new Error('Не авторизован')
-
-    const res = await fetch(`${API_URL}/profile/me`, {
-      method: 'PUT',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    })
-
-    if (!res.ok) throw new Error('Ошибка обновления профиля')
-    return await res.json()
   }
 
   // МЕТОДЫ для онлайн статусов
@@ -230,6 +238,21 @@ class AnimeAPI {
 
     if (!res.ok) throw new Error('Ошибка загрузки друзей')
     return await res.json()
+  }
+
+  async checkCanMessage(userId) {
+    const response = await fetch(`${API_URL}/users/${userId}/can-message`, {
+      headers: {
+        Authorization: `Bearer ${this.getToken()}`,
+        'Content-Type': 'application/json',
+      },
+    })
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+
+    return response.json()
   }
 
   async getFriendRequests() {
