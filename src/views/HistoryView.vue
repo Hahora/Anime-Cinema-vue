@@ -10,12 +10,7 @@
           :class="{ active: activeTab === 'history' }"
           @click="activeTab = 'history'"
         >
-          <svg viewBox="0 0 24 24" class="tab-icon">
-            <path
-              d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"
-              fill="currentColor"
-            />
-          </svg>
+          <IconClock :size="22" class="tab-icon" />
           История просмотров
         </button>
         <button
@@ -23,12 +18,7 @@
           :class="{ active: activeTab === 'watched' }"
           @click="activeTab = 'watched'"
         >
-          <svg viewBox="0 0 24 24" class="tab-icon">
-            <path
-              d="M19 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.11 0 2-.9 2-2V5c0-1.1-.89-2-2-2zm-9 14l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
-              fill="currentColor"
-            />
-          </svg>
+          <IconCheckSquare :size="22" class="tab-icon" />
           Отмеченные
         </button>
       </div>
@@ -74,12 +64,7 @@
         </div>
 
         <div v-else class="empty-state">
-          <svg viewBox="0 0 24 24" class="empty-icon">
-            <path
-              d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"
-              fill="currentColor"
-            />
-          </svg>
+          <IconClock :size="80" class="empty-icon" />
           <p>История просмотров пуста</p>
           <router-link to="/" class="btn-primary">Начать смотреть</router-link>
         </div>
@@ -104,9 +89,7 @@
                 :alt="item.title"
               />
               <div class="watch-badge" :class="{ completed: item.is_completed }">
-                <svg v-if="item.is_completed" viewBox="0 0 24 24" class="badge-icon">
-                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" fill="currentColor" />
-                </svg>
+                <IconCheck v-if="item.is_completed" :size="16" class="badge-icon" />
                 <span v-else class="badge-text">
                   {{ item.episodes_watched }}/{{ item.total_episodes }}
                 </span>
@@ -135,12 +118,7 @@
         </div>
 
         <div v-else class="empty-state">
-          <svg viewBox="0 0 24 24" class="empty-icon">
-            <path
-              d="M19 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.11 0 2-.9 2-2V5c0-1.1-.89-2-2-2zm-9 14l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
-              fill="currentColor"
-            />
-          </svg>
+          <IconCheckSquare :size="80" class="empty-icon" />
           <p>Нет отмеченных аниме</p>
           <router-link to="/" class="btn-primary">Найти аниме</router-link>
         </div>
@@ -282,11 +260,6 @@ h1 {
   border-bottom-color: #ff416c;
 }
 
-.tab-icon {
-  width: 22px;
-  height: 22px;
-}
-
 .tab-content {
   animation: fadeIn 0.3s ease;
 }
@@ -392,11 +365,6 @@ h1 {
   background: rgba(76, 175, 80, 0.9);
 }
 
-.badge-icon {
-  width: 16px;
-  height: 16px;
-}
-
 .badge-text {
   font-size: 12px;
 }
@@ -461,8 +429,6 @@ h1 {
 }
 
 .empty-icon {
-  width: 80px;
-  height: 80px;
   margin-bottom: 20px;
   opacity: 0.3;
 }

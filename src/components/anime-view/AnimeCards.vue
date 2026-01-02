@@ -3,12 +3,7 @@
     <!-- Шапка с поиском -->
     <div class="cards-header">
       <div class="search-box">
-        <svg viewBox="0 0 24 24" class="search-icon">
-          <path
-            d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
-            fill="currentColor"
-          />
-        </svg>
+        <IconSearch :size="20" class="search-icon" />
         <input
           v-model="searchQuery"
           type="text"
@@ -16,12 +11,7 @@
           class="search-input"
         />
         <button v-if="searchQuery" @click="searchQuery = ''" class="clear-btn">
-          <svg viewBox="0 0 24 24">
-            <path
-              d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
-              fill="currentColor"
-            />
-          </svg>
+          <IconX :size="14" />
         </button>
       </div>
     </div>
@@ -34,9 +24,7 @@
           <input type="checkbox" v-model="showUpgradeable" />
           <span class="checkbox-custom"></span>
           <span class="checkbox-label">
-            <svg viewBox="0 0 24 24" class="upgrade-icon">
-              <path d="M7 14l5-5 5 5z" fill="currentColor" />
-            </svg>
+            <IconArrowUp :size="18" class="upgrade-icon" />
             Можно улучшить
             <span class="upgrade-count">({{ upgradeableCount }})</span>
           </span>
@@ -82,18 +70,11 @@
 
       <div class="filter-actions">
         <button @click="selectAll" class="action-btn">
-          <svg viewBox="0 0 24 24" class="btn-icon">
-            <path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z" fill="currentColor" />
-          </svg>
+          <IconCheck :size="16" class="btn-icon" />
           Все
         </button>
         <button @click="clearAll" class="action-btn">
-          <svg viewBox="0 0 24 24" class="btn-icon">
-            <path
-              d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
-              fill="currentColor"
-            />
-          </svg>
+          <IconX :size="16" class="btn-icon" />
           Сбросить
         </button>
       </div>
@@ -119,9 +100,7 @@
             ]"
           >
             {{ card.rank }}
-            <svg v-if="card.canUpgrade" viewBox="0 0 24 24" class="upgrade-arrow">
-              <path d="M7 14l5-5 5 5z" fill="currentColor" />
-            </svg>
+            <IconArrowUp :size="14" class="upgrade-arrow" />
           </div>
         </div>
         <div class="card-content">
@@ -129,21 +108,11 @@
           <p class="card-name-jp" v-if="card.nameJp">{{ card.nameJp }}</p>
           <div class="card-stats">
             <div class="stat-item">
-              <svg viewBox="0 0 24 24" class="stat-icon">
-                <path
-                  d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"
-                  fill="currentColor"
-                />
-              </svg>
+              <IconStar :size="14" class="stat-icon" />
               <span>{{ card.rating }}</span>
             </div>
             <div class="stat-item">
-              <svg viewBox="0 0 24 24" class="stat-icon">
-                <path
-                  d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"
-                  fill="currentColor"
-                />
-              </svg>
+              <IconUsers :size="14" class="stat-icon" />
               <span>{{ card.fans }}</span>
             </div>
           </div>
@@ -393,8 +362,6 @@ export default {
   left: 16px;
   top: 50%;
   transform: translateY(-50%);
-  width: 20px;
-  height: 20px;
   color: rgba(255, 255, 255, 0.4);
   pointer-events: none;
 }
@@ -443,11 +410,6 @@ export default {
 .clear-btn:hover {
   background: rgba(255, 65, 108, 0.2);
   color: white;
-}
-
-.clear-btn svg {
-  width: 14px;
-  height: 14px;
 }
 
 /* Фильтры */
@@ -522,8 +484,6 @@ export default {
 }
 
 .upgrade-icon {
-  width: 18px;
-  height: 18px;
   color: #4caf50;
 }
 
@@ -707,11 +667,6 @@ export default {
   color: white;
 }
 
-.btn-icon {
-  width: 16px;
-  height: 16px;
-}
-
 /* Счетчик результатов */
 .results-info {
   display: flex;
@@ -811,8 +766,6 @@ export default {
 }
 
 .upgrade-arrow {
-  width: 14px;
-  height: 14px;
   color: #4caf50;
   animation: bounce-arrow 1.5s ease-in-out infinite;
 }
@@ -916,8 +869,6 @@ export default {
 }
 
 .stat-icon {
-  width: 14px;
-  height: 14px;
   color: #ffc107;
 }
 
@@ -971,11 +922,6 @@ export default {
 
   .checkbox-label {
     font-size: 14px;
-  }
-
-  .upgrade-icon {
-    width: 16px;
-    height: 16px;
   }
 
   .filter-buttons {
@@ -1049,11 +995,6 @@ export default {
     font-size: 12px;
   }
 
-  .btn-icon {
-    width: 14px;
-    height: 14px;
-  }
-
   .cards-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 10px;
@@ -1062,11 +1003,6 @@ export default {
   .card-rank {
     padding: 4px 8px;
     font-size: 12px;
-  }
-
-  .upgrade-arrow {
-    width: 12px;
-    height: 12px;
   }
 
   .card-content {
@@ -1083,11 +1019,6 @@ export default {
 
   .stat-item {
     font-size: 11px;
-  }
-
-  .stat-icon {
-    width: 12px;
-    height: 12px;
   }
 
   .empty-icon {

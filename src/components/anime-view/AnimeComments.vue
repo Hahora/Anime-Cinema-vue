@@ -2,12 +2,7 @@
   <div class="anime-comments">
     <div class="comments-header">
       <h2 class="comments-title">
-        <svg viewBox="0 0 24 24" class="title-icon">
-          <path
-            d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"
-            fill="currentColor"
-          />
-        </svg>
+        <IconMessageSquare :size="26" class="title-icon" />
         Комментарии
         <span class="comments-count" v-if="comments.length">{{ comments.length }}</span>
       </h2>
@@ -16,12 +11,7 @@
     <!-- Форма добавления комментария -->
     <div class="add-comment-form">
       <div class="user-avatar-small">
-        <svg viewBox="0 0 24 24" class="avatar-icon">
-          <path
-            d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
-            fill="currentColor"
-          />
-        </svg>
+        <IconUser :size="24" class="avatar-icon" />
       </div>
       <div class="form-wrapper">
         <textarea
@@ -32,9 +22,7 @@
         ></textarea>
         <div class="form-actions">
           <button @click="addComment" :disabled="!newComment.trim()" class="submit-btn">
-            <svg viewBox="0 0 24 24" class="submit-icon">
-              <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" fill="currentColor" />
-            </svg>
+            <IconSend :size="18" class="submit-icon" />
             Отправить
           </button>
         </div>
@@ -55,21 +43,11 @@
           <p class="comment-text">{{ comment.text }}</p>
           <div class="comment-actions">
             <button class="comment-action-btn" @click="likeComment(comment.id)">
-              <svg viewBox="0 0 24 24" class="action-icon">
-                <path
-                  d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z"
-                  fill="currentColor"
-                />
-              </svg>
+              <IconThumbsUp :size="14" class="action-icon" />
               <span>{{ comment.likes || 0 }}</span>
             </button>
             <button class="comment-action-btn" @click="replyToComment(comment.id)">
-              <svg viewBox="0 0 24 24" class="action-icon">
-                <path
-                  d="M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11z"
-                  fill="currentColor"
-                />
-              </svg>
+              <IconCornerUpLeft :size="14" class="action-icon" />
               <span>Ответить</span>
             </button>
           </div>
@@ -220,8 +198,6 @@ export default {
 }
 
 .title-icon {
-  width: 26px;
-  height: 26px;
   color: #ff416c;
 }
 
@@ -261,8 +237,6 @@ export default {
 }
 
 .avatar-icon {
-  width: 24px;
-  height: 24px;
   color: rgba(255, 255, 255, 0.6);
 }
 
@@ -325,11 +299,6 @@ export default {
 .submit-btn:not(:disabled):hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 20px rgba(255, 65, 108, 0.4);
-}
-
-.submit-icon {
-  width: 18px;
-  height: 18px;
 }
 
 .comments-list {
@@ -420,11 +389,6 @@ export default {
   color: white;
 }
 
-.action-icon {
-  width: 14px;
-  height: 14px;
-}
-
 .replies {
   margin-top: 16px;
   padding-left: 20px;
@@ -471,11 +435,6 @@ export default {
 
   .comments-title {
     font-size: 20px;
-  }
-
-  .title-icon {
-    width: 24px;
-    height: 24px;
   }
 
   .add-comment-form {

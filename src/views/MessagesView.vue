@@ -5,30 +5,18 @@
       <div class="chats-sidebar">
         <div class="sidebar-header">
           <h2 class="sidebar-title">
-            <svg viewBox="0 0 24 24" class="title-icon">
-              <path
-                d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"
-                fill="currentColor"
-              />
-            </svg>
+            <IconMessageSquare :size="28" class="title-icon" />
             Сообщения
           </h2>
           <button class="new-chat-btn" @click="showNewChatDialog = true" title="Новый чат">
-            <svg viewBox="0 0 24 24">
-              <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" fill="currentColor" />
-            </svg>
+            <IconPlus :size="20" />
           </button>
         </div>
 
         <!-- Поиск чатов -->
         <div class="search-container">
           <div class="search-bar">
-            <svg viewBox="0 0 24 24" class="search-icon">
-              <path
-                d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
-                fill="currentColor"
-              />
-            </svg>
+            <IconSearch :size="20" class="search-icon" />
             <input
               v-model="searchQuery"
               @input="handleSearchInput"
@@ -37,12 +25,7 @@
               class="search-input"
             />
             <button v-if="searchQuery" @click="clearSearch" class="clear-search-btn">
-              <svg viewBox="0 0 24 24">
-                <path
-                  d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
-                  fill="currentColor"
-                />
-              </svg>
+              <IconX :size="16" />
             </button>
           </div>
         </div>
@@ -103,12 +86,7 @@
           <!-- Шапка чата -->
           <div class="chat-header">
             <button class="back-btn" @click="closeChatView">
-              <svg viewBox="0 0 24 24">
-                <path
-                  d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"
-                  fill="currentColor"
-                />
-              </svg>
+              <IconArrowLeft :size="20" />
             </button>
             <router-link :to="`/profile/${selectedChat.other_user_id}`" class="chat-user-info">
               <div class="chat-user-avatar">
@@ -131,36 +109,21 @@
             <!-- Меню действий -->
             <div class="chat-actions">
               <button class="action-menu-btn" @click="toggleChatMenu">
-                <svg viewBox="0 0 24 24">
-                  <path
-                    d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"
-                    fill="currentColor"
-                  />
-                </svg>
+                <IconMoreVertical :size="20" />
               </button>
 
               <!-- Выпадающее меню -->
               <transition name="menu-fade">
                 <div v-if="chatMenuOpen" class="action-menu" @click.stop>
                   <button class="menu-action-item" @click="handleProposeExchange">
-                    <svg viewBox="0 0 24 24" class="menu-action-icon">
-                      <path
-                        d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
-                        fill="currentColor"
-                      />
-                    </svg>
+                    <IconCheckCircle :size="20" class="menu-action-icon" />
                     <span>Предложить обмен</span>
                   </button>
 
                   <div class="menu-divider"></div>
 
                   <button class="menu-action-item danger" @click="handleDeleteChat">
-                    <svg viewBox="0 0 24 24" class="menu-action-icon">
-                      <path
-                        d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
-                        fill="currentColor"
-                      />
-                    </svg>
+                    <IconTrash :size="20" class="menu-action-icon" />
                     <span>Удалить чат у себя</span>
                   </button>
                 </div>
@@ -206,19 +169,14 @@
                       <!-- Статус для своих сообщений -->
                       <div v-if="message.sender_id === currentUserId" class="message-status">
                         <!-- Две галочки (прочитано) -->
-                        <svg v-if="message.is_read" viewBox="0 0 24 24" class="status-icon read">
-                          <path
-                            d="M0.41,13.41L6,19L7.41,17.58L1.83,12M22.24,5.58L11.66,16.17L7.5,12L6.07,13.41L11.66,19L23.66,7M18,7L16.59,5.58L10.24,11.93L11.66,13.34L18,7Z"
-                            fill="currentColor"
-                          />
-                        </svg>
+                        <IconCheckCheck
+                          v-if="message.is_read"
+                          :size="16"
+                          class="status-icon read"
+                        />
+
                         <!-- Одна галочка (доставлено) -->
-                        <svg v-else viewBox="0 0 24 24" class="status-icon delivered">
-                          <path
-                            d="M9,20.42L2.79,14.21L5.62,11.38L9,14.77L18.88,4.88L21.71,7.71L9,20.42Z"
-                            fill="currentColor"
-                          />
-                        </svg>
+                        <IconCheck v-else :size="16" class="status-icon delivered" />
                       </div>
                     </div>
                   </div>
@@ -230,21 +188,11 @@
                       class="message-menu"
                     >
                       <button @click="startEditMessage(message)" class="message-menu-btn edit">
-                        <svg viewBox="0 0 24 24">
-                          <path
-                            d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
-                            fill="currentColor"
-                          />
-                        </svg>
+                        <IconEdit2 :size="18" />
                         <span>Редактировать</span>
                       </button>
                       <button @click="deleteMessage(message.id)" class="message-menu-btn delete">
-                        <svg viewBox="0 0 24 24">
-                          <path
-                            d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
-                            fill="currentColor"
-                          />
-                        </svg>
+                        <IconTrash :size="18" />
                         <span>Удалить</span>
                       </button>
                     </div>
@@ -267,20 +215,10 @@
             <!-- Индикатор редактирования -->
             <transition name="slide-down">
               <div v-if="editingMessageId" class="editing-indicator">
-                <svg viewBox="0 0 24 24" class="editing-icon">
-                  <path
-                    d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
-                    fill="currentColor"
-                  />
-                </svg>
+                <IconEdit2 :size="18" class="editing-icon" />
                 <span>Редактирование сообщения</span>
                 <button @click="cancelEdit" class="cancel-edit-btn">
-                  <svg viewBox="0 0 24 24">
-                    <path
-                      d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
-                      fill="currentColor"
-                    />
-                  </svg>
+                  <IconX :size="16" />
                 </button>
               </div>
             </transition>
@@ -307,15 +245,8 @@
                 class="send-btn"
                 :title="editingMessageId ? 'Сохранить' : 'Отправить'"
               >
-                <svg v-if="!editingMessageId" viewBox="0 0 24 24">
-                  <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" fill="currentColor" />
-                </svg>
-                <svg v-else viewBox="0 0 24 24">
-                  <path
-                    d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"
-                    fill="currentColor"
-                  />
-                </svg>
+                <IconSend v-if="!editingMessageId" :size="22" />
+                <IconCheck v-else :size="22" />
               </button>
             </div>
           </div>
@@ -325,34 +256,13 @@
           <div v-else-if="!checkingPermission" class="chat-blocked-notice">
             <div class="blocked-icon" :class="blockReason">
               <!-- Иконка для "Сообщения отключены" -->
-              <template v-if="blockReason === 'privacy_nobody'">
-                <svg viewBox="0 0 24 24">
-                  <path
-                    d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"
-                    fill="currentColor"
-                  />
-                </svg>
-              </template>
+              <IconLock v-if="blockReason === 'privacy_nobody'" :size="32" />
 
               <!-- Иконка для "Только друзья" -->
-              <template v-else-if="blockReason === 'privacy_friends_only'">
-                <svg viewBox="0 0 24 24">
-                  <path
-                    d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"
-                    fill="currentColor"
-                  />
-                </svg>
-              </template>
+              <IconUsers v-else-if="blockReason === 'privacy_friends_only'" :size="32" />
 
               <!-- Иконка для "Не друзья" -->
-              <template v-else>
-                <svg viewBox="0 0 24 24">
-                  <path
-                    d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8 0-1.85.63-3.55 1.69-4.9L16.9 18.31C15.55 19.37 13.85 20 12 20zm6.31-3.1L7.1 5.69C8.45 4.63 10.15 4 12 4c4.42 0 8 3.58 8 8 0 1.85-.63 3.55-1.69 4.9z"
-                    fill="currentColor"
-                  />
-                </svg>
-              </template>
+              <IconUserX v-else :size="32" />
             </div>
 
             <h4>{{ blockMessage.title }}</h4>
@@ -369,12 +279,7 @@
 
             <!-- Подсказка для полной блокировки -->
             <div v-else class="blocked-hint">
-              <svg viewBox="0 0 24 24" class="hint-icon">
-                <path
-                  d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
-                  fill="currentColor"
-                />
-              </svg>
+              <IconInfo :size="20" class="hint-icon" />
               <span>Пользователь полностью отключил возможность получения сообщений</span>
             </div>
           </div>
@@ -401,12 +306,7 @@
           <div class="modal-header">
             <h3>Новый чат</h3>
             <button class="modal-close" @click="showNewChatDialog = false">
-              <svg viewBox="0 0 24 24">
-                <path
-                  d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
-                  fill="currentColor"
-                />
-              </svg>
+              <IconX :size="18" />
             </button>
           </div>
 
@@ -421,12 +321,7 @@
             >
               <img :src="friend.avatar_url" :alt="friend.name" class="friend-avatar" />
               <span class="friend-name">{{ friend.name }}</span>
-              <svg viewBox="0 0 24 24" class="friend-arrow">
-                <path
-                  d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"
-                  fill="currentColor"
-                />
-              </svg>
+              <IconChevronRight :size="20" class="friend-arrow" />
             </div>
 
             <div v-if="friendsWithoutChat.length === 0" class="no-friends">
@@ -1274,12 +1169,6 @@ export default {
   color: white;
 }
 
-.title-icon {
-  width: 28px;
-  height: 28px;
-  color: #ff416c;
-}
-
 .new-chat-btn {
   width: 44px;
   height: 44px;
@@ -1291,17 +1180,12 @@ export default {
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.3s;
+  color: white;
 }
 
 .new-chat-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 20px rgba(255, 65, 108, 0.4);
-}
-
-.new-chat-btn svg {
-  width: 20px;
-  height: 20px;
-  color: white;
 }
 
 /* Поиск чатов */
@@ -1322,16 +1206,14 @@ export default {
   transition: all 0.3s;
 }
 
+.search-icon {
+  color: rgba(255, 255, 255, 0.5);
+  flex-shrink: 0;
+}
+
 .search-bar:focus-within {
   background: rgba(255, 255, 255, 0.08);
   border-color: rgba(255, 65, 108, 0.3);
-}
-
-.search-icon {
-  width: 20px;
-  height: 20px;
-  color: rgba(255, 255, 255, 0.5);
-  flex-shrink: 0;
 }
 
 .search-input {
@@ -1360,17 +1242,12 @@ export default {
   cursor: pointer;
   transition: all 0.3s;
   flex-shrink: 0;
+  color: rgba(255, 255, 255, 0.6);
 }
 
 .clear-search-btn:hover {
   background: rgba(255, 65, 108, 0.2);
   transform: rotate(90deg);
-}
-
-.clear-search-btn svg {
-  width: 16px;
-  height: 16px;
-  color: rgba(255, 255, 255, 0.6);
 }
 
 .chats-list {
@@ -1582,12 +1459,6 @@ export default {
   background: rgba(255, 255, 255, 0.1);
 }
 
-.back-btn svg {
-  width: 20px;
-  height: 20px;
-  color: white;
-}
-
 /* Разные цвета иконок в зависимости от причины */
 .blocked-icon.privacy_nobody {
   background: rgba(255, 193, 7, 0.1);
@@ -1635,13 +1506,6 @@ export default {
   font-size: 13px;
   max-width: 400px;
   text-align: left;
-}
-
-.hint-icon {
-  width: 20px;
-  height: 20px;
-  color: #ffc107;
-  flex-shrink: 0;
 }
 
 /* Индикатор проверки прав */
@@ -1753,11 +1617,6 @@ export default {
   color: white;
 }
 
-.action-menu-btn svg {
-  width: 20px;
-  height: 20px;
-}
-
 .action-menu {
   position: absolute;
   top: calc(100% + 8px);
@@ -1799,12 +1658,6 @@ export default {
 
 .menu-action-item.danger:hover {
   background: rgba(255, 75, 43, 0.15);
-}
-
-.menu-action-icon {
-  width: 20px;
-  height: 20px;
-  flex-shrink: 0;
 }
 
 .menu-divider {
@@ -1991,12 +1844,6 @@ export default {
   flex-shrink: 0;
 }
 
-.status-icon {
-  width: 16px;
-  height: 16px;
-  flex-shrink: 0;
-}
-
 .status-icon.delivered {
   color: rgba(255, 255, 255, 0.5);
 }
@@ -2032,12 +1879,6 @@ export default {
   cursor: pointer;
   transition: all 0.3s;
   white-space: nowrap;
-}
-
-.message-menu-btn svg {
-  width: 18px;
-  height: 18px;
-  flex-shrink: 0;
 }
 
 .message-menu-btn.edit:hover {
@@ -2076,11 +1917,6 @@ export default {
   border: 2px solid rgba(255, 75, 43, 0.3);
   border-radius: 50%;
   color: #ff4b2b;
-}
-
-.blocked-icon svg {
-  width: 32px;
-  height: 32px;
 }
 
 .chat-blocked-notice h4 {
@@ -2183,12 +2019,6 @@ export default {
   font-weight: 600;
 }
 
-.editing-icon {
-  width: 18px;
-  height: 18px;
-  flex-shrink: 0;
-}
-
 .editing-indicator span {
   flex: 1;
 }
@@ -2211,11 +2041,6 @@ export default {
 .cancel-edit-btn:hover {
   background: rgba(255, 255, 255, 0.2);
   color: white;
-}
-
-.cancel-edit-btn svg {
-  width: 16px;
-  height: 16px;
 }
 
 .input-wrapper {
@@ -2260,6 +2085,7 @@ export default {
   cursor: pointer;
   transition: all 0.3s;
   flex-shrink: 0;
+  color: white;
 }
 
 .send-btn:hover:not(:disabled) {
@@ -2270,12 +2096,6 @@ export default {
 .send-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-}
-
-.send-btn svg {
-  width: 22px;
-  height: 22px;
-  color: white;
 }
 
 .no-chat-selected {
@@ -2304,6 +2124,11 @@ export default {
   color: rgba(255, 255, 255, 0.5);
   margin: 0;
   text-align: center;
+}
+
+.friend-arrow {
+  color: rgba(255, 255, 255, 0.4);
+  flex-shrink: 0;
 }
 
 /* ═══════════════════════════════════════════ */
@@ -2360,17 +2185,12 @@ export default {
   border-radius: 10px;
   cursor: pointer;
   transition: all 0.3s;
+  color: white;
 }
 
 .modal-close:hover {
   background: rgba(255, 65, 108, 0.2);
   transform: rotate(90deg);
-}
-
-.modal-close svg {
-  width: 18px;
-  height: 18px;
-  color: white;
 }
 
 .modal-description {
@@ -2417,13 +2237,6 @@ export default {
   font-size: 16px;
   font-weight: 600;
   color: white;
-}
-
-.friend-arrow {
-  width: 20px;
-  height: 20px;
-  color: rgba(255, 255, 255, 0.4);
-  flex-shrink: 0;
 }
 
 .no-friends {

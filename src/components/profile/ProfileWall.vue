@@ -2,12 +2,7 @@
   <div class="section wall-section">
     <div class="section-header">
       <h2 class="section-title">
-        <svg viewBox="0 0 24 24" class="section-icon">
-          <path
-            d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"
-            fill="currentColor"
-          />
-        </svg>
+        <IconMessageSquare :size="28" class="section-icon" />
         Стена
       </h2>
     </div>
@@ -24,12 +19,7 @@
         ></textarea>
         <div class="post-actions">
           <button class="post-action-btn">
-            <svg viewBox="0 0 24 24">
-              <path
-                d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"
-                fill="currentColor"
-              />
-            </svg>
+            <IconImage :size="20" />
           </button>
           <button class="btn-post" :disabled="!newPost.trim()" @click="addPost">
             Опубликовать
@@ -52,12 +42,7 @@
           <p class="post-text">{{ post.text }}</p>
           <div class="post-footer">
             <button class="post-react-btn">
-              <svg viewBox="0 0 24 24">
-                <path
-                  d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
-                  fill="currentColor"
-                />
-              </svg>
+              <IconHeart :size="18" />
               {{ post.likes }}
             </button>
           </div>
@@ -137,8 +122,6 @@ export default {
 }
 
 .section-icon {
-  width: 28px;
-  height: 28px;
   color: #ff416c;
 }
 
@@ -211,10 +194,8 @@ export default {
   background: rgba(255, 255, 255, 0.1);
 }
 
-.post-action-btn svg {
-  width: 20px;
-  height: 20px;
-  color: rgba(255, 255, 255, 0.7);
+.post-action-btn {
+  color: rgba(255, 255, 255, 0.7); /* Цвет для иконки */
 }
 
 .btn-post {
@@ -319,10 +300,5 @@ export default {
 .post-react-btn:hover {
   background: rgba(255, 255, 255, 0.05);
   color: white;
-}
-
-.post-react-btn svg {
-  width: 18px;
-  height: 18px;
 }
 </style>

@@ -60,51 +60,29 @@
             </div>
           </div>
           <button class="close-btn" @click="$emit('close')">
-            <svg viewBox="0 0 24 24">
-              <path
-                d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
-                fill="currentColor"
-              />
-            </svg>
+            <IconX :size="20" />
           </button>
         </div>
 
         <!-- ✅ ТОЛЬКО СТРАНИЦЫ -->
         <nav class="menu-nav">
           <router-link to="/" class="menu-item" @click="$emit('close')">
-            <svg viewBox="0 0 24 24" class="menu-icon">
-              <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" fill="currentColor" />
-            </svg>
+            <IconHome :size="26" class="menu-icon" />
             <span>Главная</span>
           </router-link>
 
           <router-link to="/search" class="menu-item" @click="$emit('close')">
-            <svg viewBox="0 0 24 24" class="menu-icon">
-              <path
-                d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
-                fill="currentColor"
-              />
-            </svg>
+            <IconSearch :size="26" class="menu-icon" />
             <span>Поиск</span>
           </router-link>
 
           <router-link to="/genres" class="menu-item" @click="$emit('close')">
-            <svg viewBox="0 0 24 24" class="menu-icon">
-              <path
-                d="M12 2l-5.5 9h11z M17.5 11L12 20l5.5-9z M6.5 11L12 2 6.5 11z M12 20l-5.5-9H6.5L12 20z"
-                fill="currentColor"
-              />
-            </svg>
+            <IconGrid :size="26" class="menu-icon" />
             <span>Жанры</span>
           </router-link>
 
           <router-link to="/users" class="menu-item" @click="$emit('close')">
-            <svg viewBox="0 0 24 24" class="menu-icon">
-              <path
-                d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"
-                fill="currentColor"
-              />
-            </svg>
+            <IconUsers :size="26" class="menu-icon" />
             <span>Пользователи</span>
           </router-link>
         </nav>
@@ -206,11 +184,6 @@ export default {
   transform: rotate(90deg);
 }
 
-.close-btn svg {
-  width: 20px;
-  height: 20px;
-}
-
 /* ═══════════════════════════════════════════ */
 /* НАВИГАЦИЯ */
 /* ═══════════════════════════════════════════ */
@@ -260,11 +233,8 @@ export default {
 }
 
 .menu-icon {
-  width: 26px;
-  height: 26px;
   flex-shrink: 0;
 }
-
 /* ═══════════════════════════════════════════ */
 /* АНИМАЦИИ */
 /* ═══════════════════════════════════════════ */

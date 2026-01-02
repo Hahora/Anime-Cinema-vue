@@ -4,23 +4,13 @@
       <!-- Компактный заголовок + поиск -->
       <div class="search-header">
         <h1 class="page-title">
-          <svg viewBox="0 0 24 24" class="title-icon">
-            <path
-              d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
-              fill="currentColor"
-            />
-          </svg>
+          <IconSearch :size="32" class="title-icon" />
           Поиск
         </h1>
 
         <!-- Поисковая строка -->
         <div class="search-bar">
-          <svg viewBox="0 0 24 24" class="search-icon">
-            <path
-              d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
-              fill="currentColor"
-            />
-          </svg>
+          <IconSearch :size="20" class="search-icon" />
           <input
             v-model="searchQuery"
             @input="handleSearchInput"
@@ -31,12 +21,7 @@
             autofocus
           />
           <button v-if="searchQuery" @click="clearSearch" class="clear-btn">
-            <svg viewBox="0 0 24 24">
-              <path
-                d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
-                fill="currentColor"
-              />
-            </svg>
+            <IconX :size="16" />
           </button>
         </div>
       </div>
@@ -234,12 +219,9 @@ export default {
 }
 
 .title-icon {
-  width: 32px;
-  height: 32px;
   color: #ff416c;
   flex-shrink: 0;
 }
-
 /* ═══════════════════════════════════════════ */
 /* ПОИСКОВАЯ СТРОКА (КАК НА ГЛАВНОЙ) */
 /* ═══════════════════════════════════════════ */
@@ -263,8 +245,6 @@ export default {
 }
 
 .search-icon {
-  width: 20px;
-  height: 20px;
   color: rgba(255, 255, 255, 0.5);
   flex-shrink: 0;
 }
@@ -295,16 +275,11 @@ export default {
   cursor: pointer;
   transition: all 0.3s;
   flex-shrink: 0;
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .clear-btn:hover {
   background: rgba(255, 65, 108, 0.3);
-}
-
-.clear-btn svg {
-  width: 16px;
-  height: 16px;
-  color: rgba(255, 255, 255, 0.7);
 }
 
 /* ═══════════════════════════════════════════ */
@@ -524,11 +499,6 @@ export default {
     justify-content: center;
   }
 
-  .title-icon {
-    width: 28px;
-    height: 28px;
-  }
-
   .search-bar {
     padding: 12px 16px;
   }
@@ -595,11 +565,6 @@ export default {
   .page-title {
     font-size: 20px;
     gap: 10px;
-  }
-
-  .title-icon {
-    width: 24px;
-    height: 24px;
   }
 
   .anime-grid {

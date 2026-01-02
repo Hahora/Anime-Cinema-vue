@@ -3,9 +3,7 @@
     <div class="reviews-header">
       <h3 class="reviews-title">Отзывы зрителей</h3>
       <button class="add-review-btn" @click="showAddReview = true">
-        <svg viewBox="0 0 24 24" class="btn-icon">
-          <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" fill="currentColor" />
-        </svg>
+        <IconPlus :size="18" class="btn-icon" />
         Написать отзыв
       </button>
     </div>
@@ -25,18 +23,14 @@
           </div>
           <div class="review-rating">
             <div class="stars">
-              <svg
+              <IconStar
                 v-for="i in 5"
                 :key="i"
-                viewBox="0 0 24 24"
+                :size="16"
                 class="star"
                 :class="{ filled: i <= review.rating }"
-              >
-                <path
-                  d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"
-                  fill="currentColor"
-                />
-              </svg>
+                :fill="i <= review.rating ? 'currentColor' : 'none'"
+              />
             </div>
             <span class="rating-value">{{ review.rating }}/5</span>
           </div>
@@ -44,21 +38,11 @@
         <p class="review-text">{{ review.text }}</p>
         <div class="review-actions">
           <button class="action-btn">
-            <svg viewBox="0 0 24 24" class="action-icon">
-              <path
-                d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z"
-                fill="currentColor"
-              />
-            </svg>
+            <IconThumbsUp :size="16" class="action-icon" />
             <span>{{ review.likes || 0 }}</span>
           </button>
           <button class="action-btn">
-            <svg viewBox="0 0 24 24" class="action-icon">
-              <path
-                d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"
-                fill="currentColor"
-              />
-            </svg>
+            <IconMessageSquare :size="16" class="action-icon" />
             <span>Ответить</span>
           </button>
         </div>
@@ -181,11 +165,6 @@ export default {
   box-shadow: 0 8px 20px rgba(255, 65, 108, 0.4);
 }
 
-.btn-icon {
-  width: 18px;
-  height: 18px;
-}
-
 .reviews-list {
   display: flex;
   flex-direction: column;
@@ -263,8 +242,6 @@ export default {
 }
 
 .star {
-  width: 16px;
-  height: 16px;
   color: rgba(255, 193, 7, 0.3);
   transition: all 0.2s;
 }
@@ -309,11 +286,6 @@ export default {
 .action-btn:hover {
   background: rgba(255, 255, 255, 0.1);
   color: white;
-}
-
-.action-icon {
-  width: 16px;
-  height: 16px;
 }
 
 /* Пустое состояние */

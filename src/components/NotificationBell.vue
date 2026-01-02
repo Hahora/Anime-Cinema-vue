@@ -1,12 +1,7 @@
 <template>
   <div class="notification-bell">
     <button class="bell-button" @click="togglePanel" :class="{ active: showPanel }">
-      <svg viewBox="0 0 24 24" class="bell-icon">
-        <path
-          d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"
-          fill="currentColor"
-        />
-      </svg>
+      <IconBell :size="22" class="bell-icon" />
       <span v-if="unreadCount > 0" class="badge">{{ unreadCount }}</span>
     </button>
 
@@ -26,12 +21,7 @@
         </div>
 
         <div v-else-if="notifications.length === 0" class="panel-empty">
-          <svg viewBox="0 0 24 24" class="empty-icon">
-            <path
-              d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"
-              fill="currentColor"
-            />
-          </svg>
+          <IconBell :size="60" class="empty-icon" />
           <p>Нет уведомлений</p>
         </div>
 
@@ -249,11 +239,6 @@ export default {
   transform: translateY(-2px);
 }
 
-.bell-icon {
-  width: 22px;
-  height: 22px;
-}
-
 .badge {
   position: absolute;
   top: -4px;
@@ -353,8 +338,6 @@ export default {
 }
 
 .empty-icon {
-  width: 60px;
-  height: 60px;
   color: rgba(255, 255, 255, 0.3);
 }
 

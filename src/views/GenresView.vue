@@ -6,12 +6,7 @@
     <!-- Контент -->
     <div v-else class="genres-container">
       <h1 class="page-title">
-        <svg viewBox="0 0 24 24" class="title-icon">
-          <path
-            d="M12 2l-5.5 9h11z M17.5 11L12 20l5.5-9z M6.5 11L12 2 6.5 11z M12 20l-5.5-9H6.5L12 20z"
-            fill="currentColor"
-          />
-        </svg>
+        <IconTags :size="56" class="title-icon" />
         Жанры
       </h1>
 
@@ -33,12 +28,7 @@
         <!-- Хлебные крошки -->
         <div class="breadcrumbs">
           <button @click="selectedGenre = null" class="breadcrumb-btn">
-            <svg viewBox="0 0 24 24" class="breadcrumb-icon">
-              <path
-                d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"
-                fill="currentColor"
-              />
-            </svg>
+            <IconArrowLeft :size="20" class="breadcrumb-icon" />
             Все жанры
           </button>
           <span class="breadcrumb-separator">/</span>
@@ -189,8 +179,6 @@ export default {
 }
 
 .title-icon {
-  width: 56px;
-  height: 56px;
   color: #ff416c;
 }
 
@@ -278,11 +266,6 @@ export default {
   background: rgba(255, 255, 255, 0.1);
   border-color: rgba(255, 65, 108, 0.5);
   transform: translateX(-4px);
-}
-
-.breadcrumb-icon {
-  width: 20px;
-  height: 20px;
 }
 
 .breadcrumb-separator {
@@ -451,11 +434,6 @@ export default {
 
   .page-title {
     font-size: 32px;
-  }
-
-  .title-icon {
-    width: 40px;
-    height: 40px;
   }
 
   .genres-grid {

@@ -26,22 +26,12 @@
         <!-- Навигация -->
         <nav class="dropdown-nav">
           <router-link to="/profile" class="dropdown-item" @click="close">
-            <svg viewBox="0 0 24 24" class="dropdown-icon">
-              <path
-                d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"
-                fill="currentColor"
-              />
-            </svg>
+            <IconUser :size="20" class="dropdown-icon" />
             <span>Личный кабинет</span>
           </router-link>
 
           <router-link to="/messages" class="dropdown-item" @click="close">
-            <svg viewBox="0 0 24 24" class="dropdown-icon">
-              <path
-                d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"
-                fill="currentColor"
-              />
-            </svg>
+            <IconMessage :size="20" class="dropdown-icon" />
             <span>Сообщения</span>
             <span v-if="unreadMessagesCount > 0" class="dropdown-badge">
               {{ unreadMessagesCount }}
@@ -49,32 +39,17 @@
           </router-link>
 
           <router-link to="/users?tab=friends" class="dropdown-item" @click="close">
-            <svg viewBox="0 0 24 24" class="dropdown-icon">
-              <path
-                d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"
-                fill="currentColor"
-              />
-            </svg>
+            <IconUsers :size="20" class="dropdown-icon" />
             <span>Мои друзья</span>
           </router-link>
 
           <router-link to="/favorites" class="dropdown-item" @click="close">
-            <svg viewBox="0 0 24 24" class="dropdown-icon">
-              <path
-                d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
-                fill="currentColor"
-              />
-            </svg>
+            <IconHeart :size="20" class="dropdown-icon" />
             <span>Избранное</span>
           </router-link>
 
           <router-link to="/history" class="dropdown-item" @click="close">
-            <svg viewBox="0 0 24 24" class="dropdown-icon">
-              <path
-                d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"
-                fill="currentColor"
-              />
-            </svg>
+            <IconClock :size="20" class="dropdown-icon" />
             <span>История</span>
           </router-link>
         </nav>
@@ -83,12 +58,7 @@
 
         <!-- Выход -->
         <button class="dropdown-item logout" @click="handleLogout">
-          <svg viewBox="0 0 24 24" class="dropdown-icon">
-            <path
-              d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"
-              fill="currentColor"
-            />
-          </svg>
+          <IconLogOut :size="20" class="dropdown-icon" />
           <span>Выйти</span>
         </button>
       </div>
@@ -108,12 +78,7 @@
               </div>
             </div>
             <button class="mobile-close" @click="close">
-              <svg viewBox="0 0 24 24">
-                <path
-                  d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
-                  fill="currentColor"
-                />
-              </svg>
+              <IconX :size="20" />
             </button>
           </div>
 
@@ -122,22 +87,12 @@
           <!-- Навигация -->
           <nav class="mobile-nav">
             <router-link to="/profile" class="mobile-item" @click="close">
-              <svg viewBox="0 0 24 24" class="mobile-icon">
-                <path
-                  d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"
-                  fill="currentColor"
-                />
-              </svg>
+              <IconUser :size="24" class="mobile-icon" />
               <span>Личный кабинет</span>
             </router-link>
 
             <router-link to="/messages" class="mobile-item" @click="close">
-              <svg viewBox="0 0 24 24" class="mobile-icon">
-                <path
-                  d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"
-                  fill="currentColor"
-                />
-              </svg>
+              <IconMessage :size="24" class="mobile-icon" />
               <span>Сообщения</span>
               <span v-if="unreadMessagesCount > 0" class="mobile-badge">
                 {{ unreadMessagesCount }}
@@ -145,32 +100,17 @@
             </router-link>
 
             <router-link to="/users?tab=friends" class="mobile-item" @click="close">
-              <svg viewBox="0 0 24 24" class="mobile-icon">
-                <path
-                  d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"
-                  fill="currentColor"
-                />
-              </svg>
+              <IconUsers :size="24" class="mobile-icon" />
               <span>Мои друзья</span>
             </router-link>
 
             <router-link to="/favorites" class="mobile-item" @click="close">
-              <svg viewBox="0 0 24 24" class="mobile-icon">
-                <path
-                  d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
-                  fill="currentColor"
-                />
-              </svg>
+              <IconHeart :size="24" class="mobile-icon" />
               <span>Избранное</span>
             </router-link>
 
             <router-link to="/history" class="mobile-item" @click="close">
-              <svg viewBox="0 0 24 24" class="mobile-icon">
-                <path
-                  d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"
-                  fill="currentColor"
-                />
-              </svg>
+              <IconClock :size="24" class="mobile-icon" />
               <span>История</span>
             </router-link>
           </nav>
@@ -179,12 +119,7 @@
 
           <!-- Выход -->
           <button class="mobile-item logout" @click="handleLogout">
-            <svg viewBox="0 0 24 24" class="mobile-icon">
-              <path
-                d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"
-                fill="currentColor"
-              />
-            </svg>
+            <IconLogOut :size="24" class="mobile-icon" />
             <span>Выйти</span>
           </button>
         </div>
@@ -412,8 +347,6 @@ export default {
 }
 
 .dropdown-icon {
-  width: 20px;
-  height: 20px;
   flex-shrink: 0;
 }
 
@@ -540,11 +473,6 @@ export default {
   transform: rotate(90deg);
 }
 
-.mobile-close svg {
-  width: 20px;
-  height: 20px;
-}
-
 .mobile-divider {
   height: 1px;
   background: rgba(255, 255, 255, 0.1);
@@ -592,8 +520,6 @@ export default {
 }
 
 .mobile-icon {
-  width: 24px;
-  height: 24px;
   flex-shrink: 0;
 }
 

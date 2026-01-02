@@ -2,12 +2,7 @@
   <div class="profile-actions">
     <div class="actions-header">
       <h2 class="actions-title">
-        <svg viewBox="0 0 24 24" class="section-icon">
-          <path
-            d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
-            fill="currentColor"
-          />
-        </svg>
+        <IconStar :size="20" class="section-icon" />
         Активность
       </h2>
     </div>
@@ -15,12 +10,7 @@
     <div class="actions-list">
       <router-link to="/reviews" class="action-item reviews">
         <div class="action-icon">
-          <svg viewBox="0 0 24 24">
-            <path
-              d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20l4-4h10c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-3 12H6v-2h5v2zm3-3H6V9h8v2zm0-3H6V6h8v2z"
-              fill="currentColor"
-            />
-          </svg>
+          <IconMessageSquare :size="20" />
         </div>
         <div class="action-content">
           <h3 class="action-name">{{ isOwnProfile ? 'Мои отзывы' : 'Отзывы' }}</h3>
@@ -30,12 +20,7 @@
 
       <router-link to="/comments" class="action-item comments">
         <div class="action-icon">
-          <svg viewBox="0 0 24 24">
-            <path
-              d="M21.99 4c0-1.1-.89-2-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.89 2 2 2h14l4 4-.01-18zM18 14H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"
-              fill="currentColor"
-            />
-          </svg>
+          <IconMessagesSquare :size="20" />
         </div>
         <div class="action-content">
           <h3 class="action-name">{{ isOwnProfile ? 'Мои комментарии' : 'Комментарии' }}</h3>
@@ -148,8 +133,6 @@ export default {
 }
 
 .section-icon {
-  width: 20px;
-  height: 20px;
   color: #ff416c;
 }
 
@@ -203,12 +186,6 @@ export default {
 
 .action-item.comments .action-icon {
   background: rgba(33, 150, 243, 0.1);
-}
-
-.action-icon svg {
-  width: 20px;
-  height: 20px;
-  color: #ff416c;
 }
 
 .action-item.reviews .action-icon svg {

@@ -19,12 +19,7 @@
     <div class="anime-meta">
       <div class="meta-item">
         <div class="meta-icon">
-          <svg viewBox="0 0 24 24">
-            <path
-              d="M18 3v2h-2V3H8v2H6V3H4v18h2v-2h2v2h8v-2h2v2h2V3h-2zM8 17H6v-2h2v2zm0-4H6v-2h2v2zm0-4H6V7h2v2zm10 8h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V7h2v2z"
-              fill="currentColor"
-            />
-          </svg>
+          <IconFilm :size="20" />
         </div>
         <div class="meta-content">
           <span class="meta-label">Тип</span>
@@ -34,12 +29,7 @@
 
       <div class="meta-item" v-if="anime.year">
         <div class="meta-icon">
-          <svg viewBox="0 0 24 24">
-            <path
-              d="M9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm2-7h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z"
-              fill="currentColor"
-            />
-          </svg>
+          <IconCalendar :size="20" />
         </div>
         <div class="meta-content">
           <span class="meta-label">Год</span>
@@ -49,12 +39,7 @@
 
       <div class="meta-item" v-if="anime.status">
         <div class="meta-icon">
-          <svg viewBox="0 0 24 24">
-            <path
-              d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
-              fill="currentColor"
-            />
-          </svg>
+          <IconCheckCircle :size="20" />
         </div>
         <div class="meta-content">
           <span class="meta-label">Статус</span>
@@ -64,12 +49,7 @@
 
       <div class="meta-item" v-if="anime.episodes_count">
         <div class="meta-icon">
-          <svg viewBox="0 0 24 24">
-            <path
-              d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9H9V9h10v2zm-4 4H9v-2h6v2zm4-8H9V5h10v2z"
-              fill="currentColor"
-            />
-          </svg>
+          <IconList :size="20" />
         </div>
         <div class="meta-content">
           <span class="meta-label">Эпизодов</span>
@@ -82,12 +62,7 @@
 
       <div class="meta-item" v-if="anime.duration">
         <div class="meta-icon">
-          <svg viewBox="0 0 24 24">
-            <path
-              d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"
-              fill="currentColor"
-            />
-          </svg>
+          <IconClock :size="20" />
         </div>
         <div class="meta-content">
           <span class="meta-label">Длительность</span>
@@ -104,12 +79,7 @@
       <!-- Описание -->
       <div class="details-section">
         <h3 class="section-header">
-          <svg viewBox="0 0 24 24" class="section-icon">
-            <path
-              d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"
-              fill="currentColor"
-            />
-          </svg>
+          <IconFileText :size="20" class="section-icon" />
           Описание
         </h3>
         <p class="description-text" v-if="anime.description">{{ anime.description }}</p>
@@ -119,12 +89,7 @@
       <!-- Жанры -->
       <div class="details-section" v-if="anime.genres && anime.genres.length">
         <h3 class="section-header">
-          <svg viewBox="0 0 24 24" class="section-icon">
-            <path
-              d="M12 2l-5.5 9h11z M17.5 11L12 20l5.5-9z M6.5 11L12 2 6.5 11z M12 20l-5.5-9H6.5L12 20z"
-              fill="currentColor"
-            />
-          </svg>
+          <IconTags :size="20" class="section-icon" />
           Жанры
         </h3>
         <div class="genres-list">
@@ -137,12 +102,7 @@
       <!-- Студия и производство -->
       <div class="details-section" v-if="anime.studios">
         <h3 class="section-header">
-          <svg viewBox="0 0 24 24" class="section-icon">
-            <path
-              d="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z"
-              fill="currentColor"
-            />
-          </svg>
+          <IconBuilding :size="20" class="section-icon" />
           Студия
         </h3>
         <p class="info-text">{{ anime.studios }}</p>
@@ -161,12 +121,7 @@
     <!-- Дополнительная информация -->
     <div class="additional-info" v-if="anime.age_rating || anime.source || anime.season">
       <h3 class="section-header">
-        <svg viewBox="0 0 24 24" class="section-icon">
-          <path
-            d="M11 17h2v-6h-2v6zm1-15C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zM11 9h2V7h-2v2z"
-            fill="currentColor"
-          />
-        </svg>
+        <IconInfo :size="20" class="section-icon" />
         Дополнительная информация
       </h3>
       <div class="info-grid">
@@ -321,10 +276,8 @@ export default {
   flex-shrink: 0;
 }
 
-.meta-icon svg {
-  width: 20px;
-  height: 20px;
-  color: #ff416c;
+.meta-icon {
+  color: #ff416c; /* Цвет для всех иконок внутри */
 }
 
 .meta-content {
@@ -387,8 +340,6 @@ export default {
 }
 
 .section-icon {
-  width: 20px;
-  height: 20px;
   color: #ff416c;
   flex-shrink: 0;
 }
@@ -543,11 +494,6 @@ export default {
     margin-bottom: 12px;
   }
 
-  .section-icon {
-    width: 18px;
-    height: 18px;
-  }
-
   .description-text {
     font-size: 14px;
     line-height: 1.6;
@@ -611,11 +557,6 @@ export default {
   .meta-icon {
     width: 32px;
     height: 32px;
-  }
-
-  .meta-icon svg {
-    width: 18px;
-    height: 18px;
   }
 
   .details-section {

@@ -3,12 +3,7 @@
     <div class="error-container">
       <div class="error-animation">
         <div class="server-icon">
-          <svg viewBox="0 0 24 24" class="icon-main">
-            <path
-              d="M20 13H4c-.55 0-1 .45-1 1v6c0 .55.45 1 1 1h16c.55 0 1-.45 1-1v-6c0-.55-.45-1-1-1zM7 19c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zM20 3H4c-.55 0-1 .45-1 1v6c0 .55.45 1 1 1h16c.55 0 1-.45 1-1V4c0-.55-.45-1-1-1zM7 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"
-              fill="currentColor"
-            />
-          </svg>
+          <IconServer :size="120" class="icon-main" />
           <div class="pulse-ring"></div>
           <div class="pulse-ring delay-1"></div>
           <div class="pulse-ring delay-2"></div>
@@ -58,20 +53,13 @@
 
         <div class="error-actions">
           <button @click="retryConnection" class="action-btn primary" :disabled="retrying">
-            <svg v-if="!retrying" viewBox="0 0 24 24">
-              <path
-                d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"
-                fill="currentColor"
-              />
-            </svg>
+            <IconRefreshCw v-if="!retrying" :size="22" />
             <div v-else class="btn-spinner"></div>
             {{ retrying ? 'Проверка...' : 'Попробовать снова' }}
           </button>
 
           <router-link to="/" class="action-btn secondary">
-            <svg viewBox="0 0 24 24">
-              <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" fill="currentColor" />
-            </svg>
+            <IconHome :size="22" />
             На главную
           </router-link>
         </div>
@@ -215,8 +203,6 @@ export default {
 }
 
 .icon-main {
-  width: 120px;
-  height: 120px;
   color: #ff416c;
   filter: drop-shadow(0 0 30px rgba(255, 65, 108, 0.5));
   animation: serverPulse 2s ease-in-out infinite;
@@ -432,16 +418,12 @@ export default {
   transition: all 0.3s;
   text-decoration: none;
   border: none;
+  color: white;
 }
 
 .action-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
-}
-
-.action-btn svg {
-  width: 22px;
-  height: 22px;
 }
 
 .action-btn.primary {
@@ -491,11 +473,6 @@ export default {
 /* АДАПТИВ */
 /* ═══════════════════════════════════════════ */
 @media (max-width: 768px) {
-  .icon-main {
-    width: 80px;
-    height: 80px;
-  }
-
   .error-code {
     font-size: 80px;
   }

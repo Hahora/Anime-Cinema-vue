@@ -55,10 +55,7 @@
           <div class="search-container">
             <div class="search-input-wrapper">
               <div class="search-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <circle cx="11" cy="11" r="8" stroke-width="2" />
-                  <path d="M21 21l-4.35-4.35" stroke-width="2" stroke-linecap="round" />
-                </svg>
+                <IconSearch :size="22" />
               </div>
 
               <input
@@ -70,17 +67,12 @@
               />
 
               <button v-if="searchQuery" class="clear-button" @click="clearSearch" type="button">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path d="M18 6L6 18M6 6l12 12" stroke-width="2" stroke-linecap="round" />
-                </svg>
+                <IconX :size="16" />
               </button>
             </div>
 
             <button class="search-button" @click="handleSearch" :disabled="!searchQuery.trim()">
-              <svg class="search-button-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <circle cx="11" cy="11" r="8" stroke-width="2" />
-                <path d="M21 21l-4.35-4.35" stroke-width="2" stroke-linecap="round" />
-              </svg>
+              <IconSearch :size="20" class="search-button-icon" />
               <span class="search-button-text">Найти</span>
             </button>
           </div>
@@ -233,11 +225,6 @@ export default {
   margin-bottom: 32px;
   animation: fadeInDown 0.8s ease-out;
   /* Убрали backdrop-filter */
-}
-
-.hero-badge svg {
-  width: 20px;
-  height: 20px;
 }
 
 .hero-title {
@@ -596,12 +583,6 @@ export default {
   z-index: 2;
 }
 
-.search-icon svg {
-  width: 22px;
-  height: 22px;
-  stroke-width: 2;
-}
-
 .search-input {
   width: 100%;
   height: 56px;
@@ -648,12 +629,6 @@ export default {
   color: white;
 }
 
-.clear-button svg {
-  width: 16px;
-  height: 16px;
-  stroke-width: 2;
-}
-
 .search-button {
   display: flex;
   align-items: center;
@@ -688,12 +663,6 @@ export default {
   cursor: not-allowed;
 }
 
-.search-button-icon {
-  width: 20px;
-  height: 20px;
-  stroke-width: 2;
-}
-
 .search-button-text {
   white-space: nowrap;
 }
@@ -718,21 +687,11 @@ export default {
     padding: 0 50px 0 52px;
   }
 
-  .search-icon svg {
-    width: 20px;
-    height: 20px;
-  }
-
   .search-button {
     min-width: 100px;
     height: 50px;
     padding: 0 20px;
     font-size: 15px;
-  }
-
-  .search-button-icon {
-    width: 18px;
-    height: 18px;
   }
 }
 
@@ -756,20 +715,10 @@ export default {
     left: 16px;
   }
 
-  .search-icon svg {
-    width: 18px;
-    height: 18px;
-  }
-
   .clear-button {
     right: 12px;
     width: 28px;
     height: 28px;
-  }
-
-  .clear-button svg {
-    width: 14px;
-    height: 14px;
   }
 
   /* КНОПКА НА МОБИЛКАХ - ТОЛЬКО ИКОНКА */
@@ -785,13 +734,6 @@ export default {
   .search-button-text {
     display: none;
   }
-
-  /* Иконка по центру */
-  .search-button-icon {
-    width: 20px;
-    height: 20px;
-    margin: 0;
-  }
 }
 
 @media (max-width: 360px) {
@@ -805,20 +747,10 @@ export default {
     left: 14px;
   }
 
-  .search-icon svg {
-    width: 16px;
-    height: 16px;
-  }
-
   .search-button {
     min-width: 44px;
     width: 44px;
     height: 44px;
-  }
-
-  .search-button-icon {
-    width: 18px;
-    height: 18px;
   }
 }
 </style>

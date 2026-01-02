@@ -5,12 +5,7 @@
         <div class="modal-header">
           <h2>Настройки профиля</h2>
           <button class="modal-close" @click="$emit('close')">
-            <svg viewBox="0 0 24 24">
-              <path
-                d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
-                fill="currentColor"
-              />
-            </svg>
+            <IconX :size="20" />
           </button>
         </div>
 
@@ -20,36 +15,21 @@
             :class="['tab-btn', { active: currentTab === 'general' }]"
             @click="currentTab = 'general'"
           >
-            <svg viewBox="0 0 24 24" class="tab-icon">
-              <path
-                d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"
-                fill="currentColor"
-              />
-            </svg>
+            <IconUser :size="18" class="tab-icon" />
             Основное
           </button>
           <button
             :class="['tab-btn', { active: currentTab === 'privacy' }]"
             @click="currentTab = 'privacy'"
           >
-            <svg viewBox="0 0 24 24" class="tab-icon">
-              <path
-                d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"
-                fill="currentColor"
-              />
-            </svg>
+            <IconShield :size="18" class="tab-icon" />
             Приватность
           </button>
           <button
             :class="['tab-btn', { active: currentTab === 'security' }]"
             @click="currentTab = 'security'"
           >
-            <svg viewBox="0 0 24 24" class="tab-icon">
-              <path
-                d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"
-                fill="currentColor"
-              />
-            </svg>
+            <IconLock :size="18" class="tab-icon" />
             Безопасность
           </button>
         </div>
@@ -94,12 +74,7 @@
                   </div>
                   <div class="option-content">
                     <div class="option-header">
-                      <svg viewBox="0 0 24 24" class="option-icon">
-                        <path
-                          d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"
-                          fill="currentColor"
-                        />
-                      </svg>
+                      <IconUsers :size="22" class="option-icon" />
                       <h4>Все пользователи</h4>
                     </div>
                     <p>Любой пользователь может написать вам сообщение</p>
@@ -118,12 +93,7 @@
                   </div>
                   <div class="option-content">
                     <div class="option-header">
-                      <svg viewBox="0 0 24 24" class="option-icon">
-                        <path
-                          d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"
-                          fill="currentColor"
-                        />
-                      </svg>
+                      <IconUserCheck :size="22" class="option-icon" />
                       <h4>Только друзья</h4>
                     </div>
                     <p>Только пользователи из вашего списка друзей могут писать вам</p>
@@ -139,12 +109,7 @@
                   </div>
                   <div class="option-content">
                     <div class="option-header">
-                      <svg viewBox="0 0 24 24" class="option-icon">
-                        <path
-                          d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8 0-1.85.63-3.55 1.69-4.9L16.9 18.31C15.55 19.37 13.85 20 12 20zm6.31-3.1L7.1 5.69C8.45 4.63 10.15 4 12 4c4.42 0 8 3.58 8 8 0 1.85-.63 3.55-1.69 4.9z"
-                          fill="currentColor"
-                        />
-                      </svg>
+                      <IconUserX :size="22" class="option-icon" />
                       <h4>Никто</h4>
                     </div>
                     <p>Полная блокировка: вы не сможете ни писать, ни получать сообщения</p>
@@ -481,9 +446,7 @@ export default {
   transform: rotate(90deg);
 }
 
-.modal-close svg {
-  width: 20px;
-  height: 20px;
+.modal-close {
   color: white;
 }
 
@@ -537,8 +500,6 @@ export default {
 }
 
 .tab-icon {
-  width: 18px;
-  height: 18px;
   flex-shrink: 0;
 }
 
@@ -699,8 +660,6 @@ textarea.settings-input {
 }
 
 .option-icon {
-  width: 22px;
-  height: 22px;
   color: rgba(255, 255, 255, 0.6);
   flex-shrink: 0;
 }
@@ -869,11 +828,6 @@ textarea.settings-input {
     gap: 6px;
   }
 
-  .tab-icon {
-    width: 16px;
-    height: 16px;
-  }
-
   .modal-body {
     padding: 24px;
   }
@@ -914,11 +868,6 @@ textarea.settings-input {
     flex-direction: column;
   }
 
-  .tab-icon {
-    width: 20px;
-    height: 20px;
-  }
-
   .modal-body {
     padding: 20px;
   }
@@ -939,11 +888,6 @@ textarea.settings-input {
   .radio-dot {
     width: 10px;
     height: 10px;
-  }
-
-  .option-icon {
-    width: 20px;
-    height: 20px;
   }
 
   .option-header h4 {

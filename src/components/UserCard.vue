@@ -22,12 +22,7 @@
         class="action-btn pending"
         disabled
       >
-        <svg viewBox="0 0 24 24">
-          <path
-            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
-            fill="currentColor"
-          />
-        </svg>
+        <IconCheck :size="18" />
         Заявка отправлена
       </button>
 
@@ -37,9 +32,7 @@
         class="action-btn incoming"
         @click="handleAcceptRequest"
       >
-        <svg viewBox="0 0 24 24">
-          <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" fill="currentColor" />
-        </svg>
+        <IconCheck :size="18" />
         Принять заявку
       </button>
 
@@ -49,20 +42,13 @@
         class="action-btn friends"
         @click="handleRemoveFriend"
       >
-        <svg viewBox="0 0 24 24">
-          <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" fill="currentColor" />
-        </svg>
+        <IconCheck :size="18" />
         В друзьях
       </button>
 
       <!-- Добавить в друзья -->
       <button v-else class="action-btn add" @click="handleAddFriend" :disabled="adding">
-        <svg viewBox="0 0 24 24">
-          <path
-            d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
-            fill="currentColor"
-          />
-        </svg>
+        <IconUserPlus :size="18" />
         {{ adding ? 'Отправка...' : 'Добавить' }}
       </button>
     </div>
@@ -234,12 +220,6 @@ export default {
   transition: all 0.3s;
   border: none;
   white-space: nowrap;
-}
-
-.action-btn svg {
-  width: 18px;
-  height: 18px;
-  flex-shrink: 0;
 }
 
 .action-btn.add {

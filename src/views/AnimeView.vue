@@ -13,12 +13,7 @@
           <div class="header-content">
             <div class="header-top">
               <button @click="$router.go(-1)" class="back-btn">
-                <svg viewBox="0 0 24 24" class="back-icon">
-                  <path
-                    d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"
-                    fill="currentColor"
-                  />
-                </svg>
+                <IconArrowLeft :size="20" class="back-icon" />
                 <span class="back-text">Назад</span>
               </button>
 
@@ -95,12 +90,7 @@
 
           <div class="anime-sidebar" v-if="anime.screenshots && anime.screenshots.length > 1">
             <h3 class="sidebar-title">
-              <svg viewBox="0 0 24 24" class="sidebar-icon">
-                <path
-                  d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"
-                  fill="currentColor"
-                />
-              </svg>
+              <IconImage :size="22" class="sidebar-icon" />
               Скриншоты
             </h3>
             <div class="screenshots-grid">
@@ -112,12 +102,7 @@
               >
                 <img :src="img" :alt="`Screenshot ${i + 1}`" class="screenshot-thumb" />
                 <div class="screenshot-overlay">
-                  <svg viewBox="0 0 24 24" class="zoom-icon">
-                    <path
-                      d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
-                      fill="white"
-                    />
-                  </svg>
+                  <IconZoomIn :size="32" class="zoom-icon" />
                 </div>
               </div>
             </div>
@@ -133,12 +118,7 @@
         <transition name="modal-fade">
           <div v-if="selectedImage" class="image-modal" @click="closeImage">
             <button class="modal-close" @click.stop="closeImage">
-              <svg viewBox="0 0 24 24">
-                <path
-                  d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
-                  fill="currentColor"
-                />
-              </svg>
+              <IconX :size="24" />
             </button>
             <img :src="selectedImage" class="modal-image" @click.stop />
           </div>
@@ -153,9 +133,7 @@
         <h2>Аниме не найдено</h2>
         <p>К сожалению, мы не смогли найти это аниме</p>
         <button @click="$router.push('/')" class="btn-primary">
-          <svg viewBox="0 0 24 24" class="btn-icon">
-            <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" fill="currentColor" />
-          </svg>
+          <IconHome :size="20" class="btn-icon" />
           На главную
         </button>
       </div>
@@ -447,8 +425,6 @@ export default {
 }
 
 .back-icon {
-  width: 20px;
-  height: 20px;
   flex-shrink: 0;
 }
 
@@ -790,8 +766,6 @@ export default {
 }
 
 .sidebar-icon {
-  width: 22px;
-  height: 22px;
   color: #ff416c;
   flex-shrink: 0;
 }
@@ -843,11 +817,6 @@ export default {
   opacity: 1;
 }
 
-.zoom-icon {
-  width: 32px;
-  height: 32px;
-}
-
 /* ═══════════════════════════════════════════ */
 /* МОДАЛЬНОЕ ОКНО */
 /* ═══════════════════════════════════════════ */
@@ -887,10 +856,8 @@ export default {
   transform: rotate(90deg);
 }
 
-.modal-close svg {
-  width: 24px;
-  height: 24px;
-  color: white;
+.modal-close {
+  color: white; /* Цвет для IconX */
 }
 
 .modal-image {
@@ -968,11 +935,6 @@ export default {
 .btn-primary:hover {
   transform: translateY(-2px);
   box-shadow: 0 15px 40px rgba(255, 65, 108, 0.4);
-}
-
-.btn-icon {
-  width: 20px;
-  height: 20px;
 }
 
 /* ═══════════════════════════════════════════ */
@@ -1264,11 +1226,6 @@ export default {
     gap: 4px;
   }
 
-  .back-icon {
-    width: 16px;
-    height: 16px;
-  }
-
   .back-text {
     display: none;
   }
@@ -1486,11 +1443,6 @@ export default {
     right: 10px;
     width: 36px;
     height: 36px;
-  }
-
-  .modal-close svg {
-    width: 18px;
-    height: 18px;
   }
 
   .modal-image {
