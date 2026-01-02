@@ -1,6 +1,6 @@
 <template>
   <div class="messages-page">
-    <div :class="['messages-container', { 'chat-selected': selectedChatId }]">
+    <div :class="['messages-container', { 'chat-selected': selectedChat !== null }]">
       <!-- Левая панель - список чатов -->
       <div class="chats-sidebar">
         <div class="sidebar-header">
@@ -99,10 +99,10 @@
 
       <!-- Правая панель - сообщения -->
       <div class="chat-window">
-        <div v-if="selectedChatId" class="chat-content">
+        <div v-if="selectedChat" class="chat-content">
           <!-- Шапка чата -->
           <div class="chat-header">
-            <button class="back-btn" @click="selectedChatId = null">
+            <button class="back-btn" @click="closeChatView">
               <svg viewBox="0 0 24 24">
                 <path
                   d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"
@@ -469,6 +469,8 @@ export default {
       editingMessageText: '',
       blockReason: null,
       checkingPermission: false,
+      pendingChatUserId: null,
+      pendingChatUser: null,
     }
   },
   computed: {
@@ -505,13 +507,26 @@ export default {
       return messages[this.blockReason] || messages['not_friends']
     },
     canSendMessages() {
-      if (!this.selectedChat) return false
-      // Если нет причины блокировки - можно писать
-      return this.blockReason === null
+      return this.selectedChat !== null && this.blockReason === null
     },
     selectedChat() {
-      return this.chats.find((c) => c.id === this.selectedChatId) || null
+      if (this.selectedChatId) {
+        return this.chats.find((c) => c.id === this.selectedChatId) || null
+      }
+
+      if (this.pendingChatUser) {
+        return {
+          id: null,
+          other_user_id: this.pendingChatUser.id,
+          other_user_name: this.pendingChatUser.name,
+          other_user_username: this.pendingChatUser.username,
+          other_user_avatar: this.pendingChatUser.avatar_url,
+        }
+      }
+
+      return null
     },
+
     friendsWithoutChat() {
       const chatUserIds = new Set(this.chats.map((c) => c.other_user_id))
       return this.friends.filter((f) => !chatUserIds.has(f.id))
@@ -555,8 +570,13 @@ export default {
     await this.loadOnlineUsers()
 
     const chatId = this.$route.query.chat
+    const newChatUserId = this.$route.query.newChat
+
     if (chatId) {
       await this.selectChat(parseInt(chatId))
+      this.$router.replace({ query: {} })
+    } else if (newChatUserId) {
+      await this.prepareNewChat(parseInt(newChatUserId))
       this.$router.replace({ query: {} })
     }
 
@@ -708,6 +728,61 @@ export default {
         console.error('Ошибка загрузки пользователя:', err)
       }
     },
+    closeChatView() {
+      // ✅ Сбрасываем всё состояние
+      this.selectedChatId = null
+      this.pendingChatUserId = null
+      this.pendingChatUser = null
+      this.blockReason = null
+      this.messages = []
+    },
+
+    async prepareNewChat(userId) {
+      try {
+        // ✅ Загружаем данные пользователя
+        this.pendingChatUser = await animeApi.getUserProfile(userId)
+        this.pendingChatUserId = userId
+
+        // ✅ СРАЗУ проверяем можно ли писать
+        await this.checkCanMessage(userId)
+
+        console.log('📝 Готов к созданию чата с:', this.pendingChatUser.name)
+      } catch (err) {
+        console.error('Ошибка подготовки чата:', err)
+        alert('Не удалось загрузить данные пользователя')
+        this.$router.push('/messages')
+      }
+    },
+
+    async checkCanMessage(userId) {
+      try {
+        // ✅ Вызываем backend эндпоинт для проверки
+        const result = await animeApi.checkCanMessage(userId)
+
+        if (!result.can_message) {
+          // ✅ Определяем причину блокировки
+          const reason = result.reason || ''
+
+          if (reason.includes('запретил получать сообщения')) {
+            this.blockReason = 'privacy_nobody'
+          } else if (reason.includes('принимает сообщения только от друзей')) {
+            this.blockReason = 'privacy_friends_only'
+          } else {
+            this.blockReason = 'not_friends'
+          }
+
+          console.log('🚫 Блокировка:', this.blockReason, '-', reason)
+        } else {
+          // ✅ Всё ок - можно писать
+          this.blockReason = null
+          console.log('✅ Можно писать')
+        }
+      } catch (err) {
+        console.error('Ошибка проверки прав:', err)
+        // При ошибке не блокируем - попробуем при отправке
+        this.blockReason = null
+      }
+    },
 
     updateChatInList(messageData) {
       const chatIndex = this.chats.findIndex((c) => c.id === messageData.chat_id)
@@ -729,54 +804,6 @@ export default {
         this.chats.unshift(chat)
       } else {
         this.loadChats()
-      }
-    },
-
-    async checkMessagePermission() {
-      if (!this.selectedChat) return
-
-      this.checkingPermission = true
-      this.blockReason = null
-
-      try {
-        const result = await animeApi.checkCanMessage(this.selectedChat.other_user_id)
-
-        console.log('🔍 Проверка прав на отправку:', result)
-
-        if (!result.can_message) {
-          const reason = result.reason || ''
-
-          // Блокировка ОТПРАВИТЕЛЯ
-          if (reason.includes('Вы отключили возможность отправки')) {
-            this.blockReason = 'sender_privacy_nobody'
-          } else if (reason.includes('Вы можете отправлять сообщения только друзьям')) {
-            this.blockReason = 'sender_privacy_friends_only'
-          }
-          // Блокировка ПОЛУЧАТЕЛЯ
-          else if (reason.includes('запретил получать сообщения')) {
-            this.blockReason = 'privacy_nobody'
-          } else if (reason.includes('принимает сообщения только от друзей')) {
-            this.blockReason = 'privacy_friends_only'
-          }
-          // Оба требуют дружбу
-          else if (reason.includes('оба принимаете сообщения только от друзей')) {
-            this.blockReason = 'both_friends_only'
-          }
-          // Общий случай
-          else {
-            this.blockReason = 'not_friends'
-          }
-
-          console.log('❌ Блокировка:', this.blockReason, reason)
-        } else {
-          this.blockReason = null
-          console.log('✅ Можно отправлять сообщения')
-        }
-      } catch (err) {
-        console.error('Ошибка проверки прав:', err)
-        this.blockReason = 'not_friends'
-      } finally {
-        this.checkingPermission = false
       }
     },
 
@@ -813,11 +840,12 @@ export default {
       this.selectedChatId = chatId
       this.blockReason = null // Сбрасываем при смене чата
 
+      // ✅ Сбрасываем pending состояние
+      this.pendingChatUserId = null
+      this.pendingChatUser = null
+
       await this.loadMessages()
       await this.markChatAsRead(chatId)
-
-      // ✅ Проверяем права на отправку
-      await this.checkMessagePermission()
     },
 
     async markChatAsRead(chatId) {
@@ -858,25 +886,59 @@ export default {
 
       try {
         this.sending = true
+
+        // ✅ ПРОВЕРЯЕМ: Это новый чат?
+        if (this.pendingChatUserId && !this.selectedChatId) {
+          console.log('🆕 Создаём чат при отправке первого сообщения')
+
+          // Создаём чат
+          const chat = await animeApi.createChat(this.pendingChatUserId)
+
+          // Перезагружаем список чатов
+          await this.loadChats()
+
+          // Выбираем созданный чат
+          this.selectedChatId = chat.id
+
+          // Сбрасываем pending
+          this.pendingChatUserId = null
+          this.pendingChatUser = null
+
+          // Загружаем сообщения (пока пустые)
+          await this.loadMessages()
+        }
+
+        // ✅ Теперь отправляем сообщение в уже созданный чат
         const message = await animeApi.sendMessage(this.selectedChatId, this.messageText.trim())
+
         this.messages.push(message)
-
         this.updateChatInList(message)
-
         this.messageText = ''
+
         this.$nextTick(() => {
           this.scrollToBottom()
         })
       } catch (err) {
         console.error('Ошибка отправки сообщения:', err)
 
-        // ✅ Проверяем код ошибки
+        // ✅ Показываем причину блокировки
         if (err.response?.status === 403) {
-          // Обновляем причину блокировки
-          await this.checkMessagePermission()
+          const errorText = err.response?.data?.error || err.response?.data?.detail || ''
 
-          // Показываем конкретное сообщение
-          alert(err.response?.data?.detail || 'Вы не можете отправить сообщение этому пользователю')
+          // ✅ Определяем причину блокировки
+          if (errorText.includes('запретил получать сообщения')) {
+            this.blockReason = 'privacy_nobody'
+          } else if (errorText.includes('принимает сообщения только от друзей')) {
+            this.blockReason = 'privacy_friends_only'
+          } else {
+            this.blockReason = 'not_friends'
+          }
+
+          // Сбрасываем состояние создания чата
+          this.pendingChatUserId = null
+          this.pendingChatUser = null
+          this.selectedChatId = null
+          this.messageText = ''
         } else {
           alert('Не удалось отправить сообщение')
         }
@@ -886,6 +948,8 @@ export default {
     },
 
     handleTyping() {
+      if (!this.selectedChatId) return
+
       if (this.typingTimeout) {
         clearTimeout(this.typingTimeout)
       }
@@ -898,12 +962,14 @@ export default {
     async createNewChat(friendId) {
       try {
         const chat = await animeApi.createChat(friendId)
+
         this.showNewChatDialog = false
         await this.loadChats()
         this.selectChat(chat.id)
       } catch (err) {
         console.error('Ошибка создания чата:', err)
-        alert('Не удалось создать чат')
+
+        alert(err.response?.data?.detail || 'Не удалось создать чат')
       }
     },
 

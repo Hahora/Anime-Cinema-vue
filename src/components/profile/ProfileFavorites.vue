@@ -10,29 +10,32 @@
         </svg>
         Избранное
       </h3>
-      <span class="count-badge">{{ favorites.length }}</span>
+      <span v-if="favorites.length > 0" class="count-badge">{{ favorites.length }}</span>
     </div>
 
     <div v-if="loading" class="loading">Загрузка...</div>
 
-    <div v-else-if="favorites.length" class="favorites-list">
-      <router-link
-        v-for="anime in favorites.slice(0, 5)"
-        :key="anime.id"
-        :to="`/anime/${anime.anime_id}`"
-        class="favorite-item"
-      >
-        <img :src="anime.poster" :alt="anime.title" class="favorite-poster" />
-        <div class="favorite-info">
-          <h4 class="favorite-title">{{ anime.title }}</h4>
-          <p class="favorite-meta">{{ anime.year }} • {{ anime.rating }}</p>
-        </div>
-      </router-link>
+    <div v-else-if="favorites.length" class="favorites-container">
+      <div class="favorites-list">
+        <router-link
+          v-for="anime in favorites.slice(0, 6)"
+          :key="anime.id"
+          :to="`/anime/${anime.anime_id}`"
+          class="favorite-item"
+        >
+          <div class="favorite-poster">
+            <img :src="anime.poster" :alt="anime.title" />
+          </div>
+          <div class="favorite-info">
+            <h4 class="favorite-title">{{ anime.title }}</h4>
+            <p class="favorite-meta">{{ anime.year }} • {{ anime.rating }}</p>
+          </div>
+        </router-link>
+      </div>
     </div>
 
     <div v-else class="empty-state">Пока ничего не добавлено</div>
 
-    <!-- Ссылка "Показать все" - для своего профиля на /favorites, для чужого - модалка или ничего -->
     <router-link v-if="isOwnProfile" to="/favorites" class="see-all-link">
       Показать все →
     </router-link>
@@ -88,11 +91,15 @@ export default {
 </script>
 
 <style scoped>
+/* ═══════════════════════════════════════════ */
+/* ДЕСКТОП - ОБЫЧНЫЙ СПИСОК */
+/* ═══════════════════════════════════════════ */
 .sidebar-section {
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: 20px;
   padding: 24px;
+  margin-bottom: 20px;
 }
 
 .section-header {
@@ -127,11 +134,21 @@ export default {
   color: #ff416c;
 }
 
+.loading {
+  text-align: center;
+  padding: 40px 20px;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 14px;
+}
+
+.favorites-container {
+  margin-bottom: 20px;
+}
+
 .favorites-list {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  margin-bottom: 20px;
 }
 
 .favorite-item {
@@ -153,11 +170,16 @@ export default {
 }
 
 .favorite-poster {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.favorite-poster img {
   width: 60px;
   height: 80px;
   border-radius: 8px;
   object-fit: cover;
-  flex-shrink: 0;
+  display: block;
 }
 
 .favorite-info {
@@ -166,6 +188,7 @@ export default {
   flex-direction: column;
   justify-content: center;
   gap: 6px;
+  min-width: 0;
 }
 
 .favorite-title {
@@ -205,11 +228,167 @@ export default {
   color: white;
 }
 
-.loading,
 .empty-state {
   text-align: center;
   padding: 40px 20px;
   color: rgba(255, 255, 255, 0.5);
   font-size: 14px;
+}
+
+/* ═══════════════════════════════════════════ */
+/* МОБИЛЬНЫЕ - ГОРИЗОНТАЛЬНЫЙ СКРОЛЛ */
+/* ═══════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .sidebar-section {
+    padding: 20px;
+
+    /* ✅ Защита от выхода за границы */
+    max-width: 100%;
+    width: 100%;
+    box-sizing: border-box;
+    overflow-x: hidden;
+  }
+
+  .section-header {
+    margin-bottom: 16px;
+  }
+
+  .sidebar-title {
+    font-size: 16px;
+  }
+
+  .section-icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .count-badge {
+    padding: 3px 10px;
+    font-size: 12px;
+  }
+
+  .favorites-container {
+    margin-bottom: 16px;
+
+    /* ✅ Защита */
+    max-width: 100%;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .favorites-list {
+    /* ✅ Горизонтальный скролл */
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    -webkit-overflow-scrolling: touch;
+
+    max-width: 100%;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+  }
+
+  .favorites-list::-webkit-scrollbar {
+    display: none;
+  }
+
+  .favorite-item {
+    /* ✅ Вертикальная карточка */
+    flex-direction: column;
+
+    /* ✅ Фиксированная ширина БЕЗ calc() */
+    width: 110px;
+    min-width: 110px;
+    max-width: 110px;
+
+    flex-shrink: 0;
+    padding: 12px 8px;
+    scroll-snap-align: start;
+    text-align: center;
+  }
+
+  .favorite-item:hover {
+    transform: translateY(-4px);
+  }
+
+  .favorite-poster {
+    align-self: center;
+    margin-bottom: 8px;
+  }
+
+  .favorite-poster img {
+    width: 50px;
+    height: 70px;
+    border-radius: 8px;
+    display: block;
+  }
+
+  .favorite-info {
+    flex: none;
+    width: 100%;
+  }
+
+  .favorite-title {
+    font-size: 11px;
+    line-height: 1.3;
+    min-height: 28px;
+    text-align: center;
+    word-break: break-word;
+  }
+
+  .favorite-meta {
+    font-size: 10px;
+    text-align: center;
+  }
+
+  .see-all-link {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+
+  .loading,
+  .empty-state {
+    padding: 30px 15px;
+    font-size: 13px;
+  }
+}
+
+/* Очень маленькие экраны */
+@media (max-width: 480px) {
+  .sidebar-section {
+    padding: 16px;
+  }
+
+  .favorites-list {
+    gap: 8px;
+  }
+
+  .favorite-item {
+    width: 100px;
+    min-width: 100px;
+    max-width: 100px;
+    padding: 10px 6px;
+  }
+
+  .favorite-poster img {
+    width: 45px;
+    height: 65px;
+    border-radius: 6px;
+    display: block;
+  }
+
+  .favorite-title {
+    font-size: 10px;
+    min-height: 26px;
+  }
+
+  .favorite-meta {
+    font-size: 9px;
+  }
 }
 </style>

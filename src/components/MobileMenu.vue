@@ -5,7 +5,6 @@
         <!-- Заголовок -->
         <div class="menu-header">
           <div class="menu-logo">
-            <!-- ✅ ВАШ ОРИГИНАЛЬНЫЙ ЛОГОТИП -->
             <div class="logo-icon">
               <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path
@@ -70,16 +69,7 @@
           </button>
         </div>
 
-        <!-- Профиль -->
-        <div class="menu-profile">
-          <img :src="userAvatar" alt="User" class="profile-avatar" />
-          <div class="profile-info">
-            <h3>{{ userName }}</h3>
-            <p>@{{ userEmail }}</p>
-          </div>
-        </div>
-
-        <!-- Навигация -->
+        <!-- ✅ ТОЛЬКО СТРАНИЦЫ -->
         <nav class="menu-nav">
           <router-link to="/" class="menu-item" @click="$emit('close')">
             <svg viewBox="0 0 24 24" class="menu-icon">
@@ -118,93 +108,22 @@
             <span>Пользователи</span>
           </router-link>
         </nav>
-
-        <div class="menu-divider"></div>
-
-        <!-- Дополнительные ссылки -->
-        <nav class="menu-nav">
-          <router-link to="/profile" class="menu-item" @click="$emit('close')">
-            <svg viewBox="0 0 24 24" class="menu-icon">
-              <path
-                d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"
-                fill="currentColor"
-              />
-            </svg>
-            <span>Личный кабинет</span>
-          </router-link>
-
-          <router-link to="/users?tab=friends" class="menu-item" @click="$emit('close')">
-            <svg viewBox="0 0 24 24" class="menu-icon">
-              <path
-                d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"
-                fill="currentColor"
-              />
-            </svg>
-            <span>Мои друзья</span>
-          </router-link>
-
-          <router-link to="/favorites" class="menu-item" @click="$emit('close')">
-            <svg viewBox="0 0 24 24" class="menu-icon">
-              <path
-                d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
-                fill="currentColor"
-              />
-            </svg>
-            <span>Избранное</span>
-          </router-link>
-
-          <router-link to="/history" class="menu-item" @click="$emit('close')">
-            <svg viewBox="0 0 24 24" class="menu-icon">
-              <path
-                d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"
-                fill="currentColor"
-              />
-            </svg>
-            <span>История</span>
-          </router-link>
-        </nav>
-
-        <div class="menu-divider"></div>
-
-        <!-- Выход -->
-        <button class="logout-btn" @click="handleLogout">
-          <svg viewBox="0 0 24 24" class="menu-icon">
-            <path
-              d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"
-              fill="currentColor"
-            />
-          </svg>
-          <span>Выйти</span>
-        </button>
       </div>
     </div>
   </transition>
 </template>
 
 <script>
-import { animeApi } from '@/api/animeApi'
-
 export default {
   name: 'MobileMenu',
   props: {
     isOpen: Boolean,
-    userName: String,
-    userEmail: String,
-    userAvatar: String,
   },
   emits: ['close'],
-  methods: {
-    handleLogout() {
-      animeApi.logout()
-      this.$router.push('/login')
-      this.$emit('close')
-    },
-  },
 }
 </script>
 
 <style scoped>
-/* ✅ ИСПРАВЛЕНО: меню на всю высоту */
 .mobile-menu-overlay {
   position: fixed;
   inset: 0;
@@ -217,7 +136,7 @@ export default {
 .mobile-menu {
   width: 85%;
   max-width: 320px;
-  height: 100vh; /* ✅ На всю высоту */
+  height: 100vh;
   background: linear-gradient(180deg, #1a1a1a 0%, #0a0a0a 100%);
   padding: 24px 0;
   display: flex;
@@ -242,7 +161,6 @@ export default {
   gap: 12px;
 }
 
-/* ✅ ВАШ ОРИГИНАЛЬНЫЙ СТИЛЬ ЛОГОТИПА */
 .logo-icon {
   width: 36px;
   height: 36px;
@@ -294,37 +212,6 @@ export default {
 }
 
 /* ═══════════════════════════════════════════ */
-/* ПРОФИЛЬ */
-/* ═══════════════════════════════════════════ */
-.menu-profile {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 0 24px 24px;
-}
-
-.profile-avatar {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  border: 3px solid rgba(255, 65, 108, 0.5);
-  object-fit: cover;
-}
-
-.profile-info h3 {
-  font-size: 16px;
-  font-weight: 700;
-  color: white;
-  margin: 0 0 4px;
-}
-
-.profile-info p {
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.6);
-  margin: 0;
-}
-
-/* ═══════════════════════════════════════════ */
 /* НАВИГАЦИЯ */
 /* ═══════════════════════════════════════════ */
 .menu-nav {
@@ -337,11 +224,11 @@ export default {
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 14px 16px;
+  padding: 16px 16px;
   border-radius: 12px;
   color: rgba(255, 255, 255, 0.7);
   text-decoration: none;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
   transition: all 0.3s;
   position: relative;
@@ -369,46 +256,13 @@ export default {
 
 .menu-item:hover::before,
 .menu-item.router-link-active::before {
-  height: 32px;
+  height: 40px;
 }
 
 .menu-icon {
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   flex-shrink: 0;
-}
-
-/* ═══════════════════════════════════════════ */
-/* РАЗДЕЛИТЕЛЬ */
-/* ═══════════════════════════════════════════ */
-.menu-divider {
-  height: 1px;
-  background: rgba(255, 255, 255, 0.1);
-  margin: 16px 24px;
-}
-
-/* ═══════════════════════════════════════════ */
-/* ВЫХОД */
-/* ═══════════════════════════════════════════ */
-.logout-btn {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 14px 28px;
-  margin: 0 12px;
-  border-radius: 12px;
-  background: rgba(244, 67, 54, 0.1);
-  border: 1px solid rgba(244, 67, 54, 0.3);
-  color: #f44336;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.logout-btn:hover {
-  background: rgba(244, 67, 54, 0.2);
-  border-color: rgba(244, 67, 54, 0.5);
 }
 
 /* ═══════════════════════════════════════════ */

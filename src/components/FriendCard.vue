@@ -111,10 +111,20 @@ export default {
     async openChat() {
       try {
         this.loading = true
-        // Создаем или получаем существующий чат
-        const chat = await animeApi.createChat(this.otherUser.id)
-        // Переходим на страницу сообщений с ID чата
-        this.$router.push(`/messages?chat=${chat.id}`)
+
+        // ✅ Загружаем список чатов
+        const chats = await animeApi.getChats()
+
+        // ✅ Ищем существующий чат
+        const existingChat = chats.find((chat) => chat.other_user_id === this.otherUser.id)
+
+        if (existingChat) {
+          // ✅ Чат существует - открываем его
+          this.$router.push(`/messages?chat=${existingChat.id}`)
+        } else {
+          // ✅ Чата НЕТ - передаём ID для будущего чата (НЕ создаём!)
+          this.$router.push(`/messages?newChat=${this.otherUser.id}`)
+        }
       } catch (err) {
         console.error('Ошибка открытия чата:', err)
         alert('Не удалось открыть чат')

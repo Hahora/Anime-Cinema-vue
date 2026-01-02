@@ -16,16 +16,6 @@
             >
               <span class="status-dot"></span>
             </div>
-
-            <!-- Кнопка редактирования только для своего профиля -->
-            <button v-if="isOwnProfile" class="avatar-edit-btn" @click="$emit('edit-avatar')">
-              <svg viewBox="0 0 24 24">
-                <path
-                  d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
-                  fill="currentColor"
-                />
-              </svg>
-            </button>
           </div>
         </div>
 
@@ -86,6 +76,18 @@
           </svg>
           <span>{{ friendButtonText }}</span>
         </button>
+
+        <!-- Кнопка "Написать сообщение" для всех пользователей -->
+        <button class="action-btn message" @click="openChat" :disabled="chatLoading">
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"
+              fill="currentColor"
+            />
+          </svg>
+          {{ isOwnProfile ? 'Мои сообщения' : 'Написать сообщение' }}
+        </button>
+
         <!-- Кнопка "Поделиться" для всех -->
         <button class="action-btn secondary" @click="shareProfile" :class="{ copied: copied }">
           <svg v-if="!copied" viewBox="0 0 24 24">
@@ -148,10 +150,11 @@ export default {
       friendshipStatus: 'none',
       friendshipId: null,
       friendActionLoading: false,
-      isOnline: false, // ✅ Добавьте это
+      chatLoading: false,
+      isOnline: false,
     }
   },
-  emits: ['edit-avatar', 'open-settings'],
+  emits: ['open-settings'],
   computed: {
     friendStatusClass() {
       return {
@@ -182,13 +185,12 @@ export default {
       handler() {
         if (!this.isOwnProfile && this.profile) {
           this.loadFriendshipStatus()
-          this.checkOnlineStatus() // ✅ Проверяем онлайн статус
+          this.checkOnlineStatus()
         }
       },
     },
   },
   mounted() {
-    // ✅ Подписываемся на изменения онлайн статуса
     if (!this.isOwnProfile && this.profile) {
       this.onlineStatusHandler = (data) => {
         if (data.user_id === this.profile.id) {
@@ -202,27 +204,52 @@ export default {
     }
   },
   beforeUnmount() {
-    // ✅ Отписываемся от событий
     if (this.onlineStatusHandler) {
       wsService.off('online_status_changed', this.onlineStatusHandler)
     }
   },
   methods: {
-    // ✅ НОВЫЙ МЕТОД: Проверка онлайн статуса
     async checkOnlineStatus() {
       if (!this.profile) return
 
       try {
-        // Сначала проверяем в WebSocket сервисе
         this.isOnline = wsService.isUserOnline(this.profile.id)
-
-        // Затем запрашиваем с сервера (на случай если WS еще не подключен)
         const status = await animeApi.checkUserOnline(this.profile.id)
         this.isOnline = status.is_online
-
         console.log(`👤 User ${this.profile.name} online status:`, this.isOnline)
       } catch (err) {
         console.error('Ошибка проверки онлайн статуса:', err)
+      }
+    },
+
+    // Открытие чата
+    async openChat() {
+      try {
+        this.chatLoading = true
+
+        if (this.isOwnProfile) {
+          this.$router.push('/messages')
+          return
+        }
+
+        // ✅ Загружаем список чатов
+        const chats = await animeApi.getChats()
+
+        // ✅ Ищем существующий чат
+        const existingChat = chats.find((chat) => chat.other_user_id === this.profile.id)
+
+        if (existingChat) {
+          // ✅ Чат существует - открываем его
+          this.$router.push(`/messages?chat=${existingChat.id}`)
+        } else {
+          // ✅ Чата НЕТ - передаём ID для будущего чата (НЕ создаём!)
+          this.$router.push(`/messages?newChat=${this.profile.id}`)
+        }
+      } catch (err) {
+        console.error('Ошибка открытия чата:', err)
+        alert('Не удалось открыть чат')
+      } finally {
+        this.chatLoading = false
       }
     },
 
@@ -359,6 +386,28 @@ export default {
 }
 
 /* ═══════════════════════════════════════════ */
+/* КНОПКА СООБЩЕНИЙ */
+/* ═══════════════════════════════════════════ */
+
+.action-btn.message {
+  background: rgba(33, 150, 243, 0.15);
+  border: 1px solid rgba(33, 150, 243, 0.5);
+  color: #2196f3;
+  min-width: 200px;
+}
+
+.action-btn.message:hover:not(:disabled) {
+  background: rgba(33, 150, 243, 0.25);
+  border-color: rgba(33, 150, 243, 0.7);
+  transform: translateY(-2px);
+}
+
+.action-btn.message:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ═══════════════════════════════════════════ */
 /* АВАТАР */
 /* ═══════════════════════════════════════════ */
 .avatar-section {
@@ -378,34 +427,6 @@ export default {
   border: 6px solid #0a0a0a;
   object-fit: cover;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-}
-
-.avatar-edit-btn {
-  position: absolute;
-  bottom: 8px;
-  left: 8px;
-  width: 44px;
-  height: 44px;
-  background: linear-gradient(135deg, #ff416c, #ff4b2b);
-  border: 3px solid #0a0a0a;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.3s;
-  z-index: 2;
-}
-
-.avatar-edit-btn:hover {
-  transform: scale(1.1);
-  box-shadow: 0 0 20px rgba(255, 65, 108, 0.5);
-}
-
-.avatar-edit-btn svg {
-  width: 20px;
-  height: 20px;
-  color: white;
 }
 
 /* ═══════════════════════════════════════════ */
@@ -695,6 +716,132 @@ export default {
 }
 
 /* ═══════════════════════════════════════════ */
+/* МОДАЛЬНОЕ ОКНО ОШИБКИ */
+/* ═══════════════════════════════════════════ */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 20px;
+}
+
+.error-modal {
+  background: linear-gradient(135deg, rgba(26, 26, 26, 0.98), rgba(15, 15, 15, 0.98));
+  border: 1px solid rgba(255, 75, 43, 0.3);
+  border-radius: 20px;
+  padding: 40px;
+  max-width: 480px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(255, 75, 43, 0.3);
+  backdrop-filter: blur(20px);
+}
+
+.error-icon {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 75, 43, 0.15);
+  border: 3px solid rgba(255, 75, 43, 0.4);
+  border-radius: 50%;
+  color: #ff4b2b;
+}
+
+.error-icon svg {
+  width: 40px;
+  height: 40px;
+}
+
+.error-title {
+  font-size: 24px;
+  font-weight: 900;
+  color: white;
+  margin: 0 0 16px;
+}
+
+.error-message {
+  font-size: 16px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0 0 32px;
+}
+
+.error-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.error-btn {
+  padding: 14px 32px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s;
+  border: none;
+}
+
+.error-btn.primary {
+  background: linear-gradient(135deg, #ff416c, #ff4b2b);
+  color: white;
+  box-shadow: 0 8px 24px rgba(255, 65, 108, 0.3);
+}
+
+.error-btn.primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(255, 65, 108, 0.4);
+}
+
+.modal-fade-enter-active,
+.modal-fade-leave-active {
+  transition: all 0.3s ease;
+}
+
+.modal-fade-enter-from,
+.modal-fade-leave-to {
+  opacity: 0;
+}
+
+.modal-fade-enter-from .error-modal,
+.modal-fade-leave-to .error-modal {
+  transform: scale(0.9) translateY(20px);
+}
+
+@media (max-width: 768px) {
+  .error-modal {
+    padding: 32px 24px;
+    max-width: 100%;
+  }
+
+  .error-icon {
+    width: 64px;
+    height: 64px;
+  }
+
+  .error-icon svg {
+    width: 32px;
+    height: 32px;
+  }
+
+  .error-title {
+    font-size: 20px;
+  }
+
+  .error-message {
+    font-size: 14px;
+  }
+}
+
+/* ═══════════════════════════════════════════ */
 /* АДАПТИВ */
 /* ═══════════════════════════════════════════ */
 @media (max-width: 768px) {
@@ -715,18 +862,6 @@ export default {
   .avatar-wrapper {
     width: 120px;
     height: 120px;
-  }
-
-  .avatar-edit-btn {
-    width: 36px;
-    height: 36px;
-    bottom: 6px;
-    left: 6px;
-  }
-
-  .avatar-edit-btn svg {
-    width: 16px;
-    height: 16px;
   }
 
   .profile-name {
@@ -777,6 +912,10 @@ export default {
       0 0 0 2px rgba(76, 175, 80, 0.2),
       0 0 10px rgba(76, 175, 80, 0.6),
       0 0 20px rgba(76, 175, 80, 0.4);
+  }
+
+  .action-btn.message {
+    min-width: auto;
   }
 }
 </style>

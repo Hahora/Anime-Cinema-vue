@@ -241,18 +241,27 @@ class AnimeAPI {
   }
 
   async checkCanMessage(userId) {
-    const response = await fetch(`${API_URL}/users/${userId}/can-message`, {
+    const token = this.getToken()
+    if (!token) throw new Error('Не авторизован')
+
+    const res = await fetch(`${API_URL}/users/${userId}/can-message`, {
       headers: {
-        Authorization: `Bearer ${this.getToken()}`,
+        Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
     })
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
+    if (!res.ok) {
+      const error = await res.json()
+      const err = new Error(error.error || error.detail || 'Ошибка проверки')
+      err.response = {
+        status: res.status,
+        data: error,
+      }
+      throw err
     }
 
-    return response.json()
+    return await res.json()
   }
 
   async getFriendRequests() {
@@ -379,8 +388,15 @@ class AnimeAPI {
 
     if (!res.ok) {
       const error = await res.json()
-      throw new Error(error.detail || 'Ошибка создания чата')
+
+      const err = new Error(error.error || error.detail || 'Ошибка создания чата')
+      err.response = {
+        status: res.status,
+        data: error,
+      }
+      throw err
     }
+
     return await res.json()
   }
 

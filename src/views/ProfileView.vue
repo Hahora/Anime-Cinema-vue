@@ -10,26 +10,34 @@
 
     <div class="profile-content">
       <div class="content-main">
-        <!-- Стена только для своего профиля -->
+        <!-- 1. Блок "О себе" -->
+        <ProfileBio v-if="profile" :profile="profile" :isOwnProfile="isOwnProfile" />
+
+        <!-- 2. Коллекция карт -->
+        <ProfileCardsCollection v-if="profile" :userId="profile.id" :isOwnProfile="isOwnProfile" />
+
+        <!-- 3. Блок друзей -->
+        <ProfileFriendsBlock v-if="profile" :userId="profile.id" :isOwnProfile="isOwnProfile" />
+
+        <!-- 4. Стена (внизу, только для своего профиля) -->
         <ProfileWall
           v-if="profile && isOwnProfile"
           :avatar="profile.avatar_url"
           :userName="profile.name"
         />
-
-        <!-- Для чужого профиля -->
-        <div v-else-if="profile && !isOwnProfile" class="public-info">
-          <div class="info-card">
-            <h2>О пользователе</h2>
-            <p>{{ profile.bio }}</p>
-            <div class="joined-date">Присоединился {{ formatDate(profile.created_at) }}</div>
-          </div>
-        </div>
       </div>
 
       <div class="content-sidebar">
+        <!-- 1. История просмотров -->
         <ProfileHistory v-if="profile" :userId="profile.id" :isOwnProfile="isOwnProfile" />
+
+        <!-- 2. Избранное -->
         <ProfileFavorites v-if="profile" :userId="profile.id" :isOwnProfile="isOwnProfile" />
+
+        <!-- 3. Блок активности (под избранным) -->
+        <ProfileActions v-if="profile" :userId="profile.id" :isOwnProfile="isOwnProfile" />
+
+        <!-- 4. Достижения -->
         <ProfileAchievements
           v-if="profile"
           :totalAnime="profile.total_anime"
@@ -52,6 +60,10 @@
 <script>
 import { animeApi } from '@/api/animeApi'
 import ProfileHeader from '@/components/profile/ProfileHeader.vue'
+import ProfileBio from '@/components/profile/ProfileBio.vue'
+import ProfileCardsCollection from '@/components/profile/ProfileCardsCollection.vue'
+import ProfileFriendsBlock from '@/components/profile/ProfileFriendsBlock.vue'
+import ProfileActions from '@/components/profile/ProfileActions.vue'
 import ProfileWall from '@/components/profile/ProfileWall.vue'
 import ProfileHistory from '@/components/profile/ProfileHistory.vue'
 import ProfileFavorites from '@/components/profile/ProfileFavorites.vue'
@@ -62,6 +74,10 @@ export default {
   name: 'ProfileView',
   components: {
     ProfileHeader,
+    ProfileBio,
+    ProfileCardsCollection,
+    ProfileFriendsBlock,
+    ProfileActions,
     ProfileWall,
     ProfileHistory,
     ProfileFavorites,
@@ -154,6 +170,9 @@ export default {
   min-height: 100vh;
   background: linear-gradient(to bottom, #0a0a0a, #000);
   padding-bottom: 60px;
+  /* ✅ КРИТИЧНО */
+  overflow-x: hidden;
+  width: 100%;
 }
 
 .profile-content {
@@ -163,53 +182,31 @@ export default {
   display: grid;
   grid-template-columns: 1fr 400px;
   gap: 30px;
+
+  /* ✅ КРИТИЧНО */
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .content-main {
   display: flex;
   flex-direction: column;
-  gap: 30px;
+  gap: 0;
+
+  /* ✅ КРИТИЧНО */
+  min-width: 0;
+  overflow: hidden;
 }
 
 .content-sidebar {
   display: flex;
   flex-direction: column;
   gap: 20px;
-}
 
-/* Публичная информация для чужого профиля */
-.public-info {
-  display: flex;
-  flex-direction: column;
-  gap: 30px;
-}
-
-.info-card {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 20px;
-  padding: 30px;
-}
-
-.info-card h2 {
-  font-size: 24px;
-  font-weight: 700;
-  color: white;
-  margin: 0 0 16px;
-}
-
-.info-card p {
-  font-size: 16px;
-  line-height: 1.6;
-  color: rgba(255, 255, 255, 0.7);
-  margin: 0 0 20px;
-}
-
-.joined-date {
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.5);
-  padding-top: 20px;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  /* ✅ КРИТИЧНО */
+  min-width: 0;
+  overflow: hidden;
 }
 
 @media (max-width: 1200px) {
@@ -220,16 +217,38 @@ export default {
   .content-sidebar {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
   }
 }
 
 @media (max-width: 768px) {
   .profile-content {
+    /* ✅ УМЕНЬШАЕМ PADDING */
     padding: 0 20px;
+
+    /* ✅ ЖЁСТКО ОГРАНИЧИВАЕМ */
+    max-width: 100vw;
+    width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+
+  .content-main,
+  .content-sidebar {
+    /* ✅ ЖЁСТКО */
+    max-width: 100%;
+    overflow: hidden;
   }
 
   .content-sidebar {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .profile-content {
+    /* ✅ ЕЩЁ МЕНЬШЕ */
+    padding: 0 16px;
   }
 }
 </style>
